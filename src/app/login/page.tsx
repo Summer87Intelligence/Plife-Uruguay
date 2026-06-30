@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { devAuthLog, getSessionAndProfile, isValidProfile } from '@/lib/auth'
+import { devAuthLog, getAuthDebugInfo, getSessionAndProfile, isValidProfile } from '@/lib/auth'
 import { LoginForm } from './login-form'
 
 type LoginPageProps = {
@@ -19,5 +19,5 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     !!session.user &&
     (session.missingProfile || session.inactiveProfile || params.error === 'missing_profile')
 
-  return <LoginForm showMissingProfile={showMissingProfile} />
+  return <LoginForm showMissingProfile={showMissingProfile} debugInfo={getAuthDebugInfo(session)} />
 }

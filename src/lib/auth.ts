@@ -20,6 +20,24 @@ export function isValidProfile(session: Pick<SessionAndProfile, 'profile' | 'mis
   return !!session.profile && session.profile.is_active && !session.missingProfile && !session.inactiveProfile
 }
 
+export type AuthDebugInfo = {
+  userId: string
+  email: string | null
+  reason: 'missingProfile' | 'inactiveProfile'
+}
+
+export function getAuthDebugInfo(session: SessionAndProfile): AuthDebugInfo | null {
+  if (process.env.NODE_ENV !== 'development') return null
+  if (!session.user) return null
+  if (!session.missingProfile && !session.inactiveProfile) return null
+
+  return {
+    userId: session.user.id,
+    email: session.user.email ?? null,
+    reason: session.missingProfile ? 'missingProfile' : 'inactiveProfile',
+  }
+}
+
 export async function resolveSessionAndProfile(
   supabase: SupabaseClient<Database>
 ): Promise<SessionAndProfile> {
@@ -37,6 +55,13 @@ export async function resolveSessionAndProfile(
 
   const missingProfile = !profile
   const inactiveProfile = !!profile && !profile.is_active
+
+  devAuthLog('user.id', { value: user.id })
+  devAuthLog('user.email', { value: user.email })
+  devAuthLog('profile found', { value: !!profile })
+  if (profile) {
+    devAuthLog('profile role', { value: profile.role, isActive: profile.is_active })
+  }
 
   return { user, profile, missingProfile, inactiveProfile }
 }

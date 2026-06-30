@@ -6,12 +6,14 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Shield } from 'lucide-react'
+import type { AuthDebugInfo } from '@/lib/auth'
 
 type LoginFormProps = {
   showMissingProfile: boolean
+  debugInfo?: AuthDebugInfo | null
 }
 
-export function LoginForm({ showMissingProfile }: LoginFormProps) {
+export function LoginForm({ showMissingProfile, debugInfo }: LoginFormProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -60,6 +62,18 @@ export function LoginForm({ showMissingProfile }: LoginFormProps) {
                 Tu usuario existe, pero todavía no tiene perfil habilitado.
               </p>
             </div>
+
+            {debugInfo && (
+              <div className="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3 mb-6 font-mono text-xs text-slate-700 break-all">
+                <p className="font-semibold text-slate-500 mb-2 uppercase tracking-wide">
+                  Debug (solo desarrollo)
+                </p>
+                <p><span className="text-slate-400">email:</span> {debugInfo.email ?? '—'}</p>
+                <p><span className="text-slate-400">user.id:</span> {debugInfo.userId}</p>
+                <p><span className="text-slate-400">reason:</span> {debugInfo.reason}</p>
+              </div>
+            )}
+
             <Button
               type="button"
               variant="outline"
