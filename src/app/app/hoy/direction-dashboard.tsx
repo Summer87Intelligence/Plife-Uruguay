@@ -1,9 +1,10 @@
 import Link from 'next/link'
 import { StatCard } from '@/components/ui/stat-card'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Users, Building2, TrendingUp, Megaphone, AlertCircle } from 'lucide-react'
-import { OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS } from '@/lib/constants'
-import type { Profile, Opportunity } from '@/types/database'
+import { Users, Building2, TrendingUp, Megaphone, AlertCircle, Clock } from 'lucide-react'
+import { OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS, PIPELINE_STAGES } from '@/lib/constants'
+import { formatRelativeDate } from '@/lib/utils'
+import type { Profile, Opportunity, OpportunityStage, Contact } from '@/types/database'
 
 interface DirectionDashboardProps {
   metrics: {
@@ -13,10 +14,13 @@ interface DirectionDashboardProps {
     activeAdvisors: number
   }
   recentOpps: Partial<Opportunity>[]
+  stageCounts: Partial<Record<OpportunityStage, number>>
+  globalOverdue: Partial<Contact>[]
+  abandonedOpps: Partial<Opportunity>[]
   profile: Profile
 }
 
-export function DirectionDashboard({ metrics, recentOpps, profile }: DirectionDashboardProps) {
+export function DirectionDashboard({ metrics, recentOpps, stageCounts, globalOverdue, abandonedOpps }: DirectionDashboardProps) {
   return (
     <div className="space-y-6">
       <div>
@@ -33,6 +37,28 @@ export function DirectionDashboard({ metrics, recentOpps, profile }: DirectionDa
         <StatCard title="Asesores activos" value={metrics.activeAdvisors} icon={Users} color="green" />
       </div>
 
+      {/* Pipeline por etapa */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Pipeline por etapa</CardTitle>
+            <Link href="/app/oportunidades" className="text-xs text-[#1B3A6B] hover:underline">Ver pipeline completo</Link>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+            {PIPELINE_STAGES.map(stage => (
+              <div key={stage} className="rounded-lg bg-gray-50 p-3 text-center">
+                <p className="text-2xl font-bold text-gray-900">{stageCounts[stage] ?? 0}</p>
+                <p className={`text-[10px] font-medium mt-1 leading-tight ${OPPORTUNITY_STAGE_COLORS[stage].replace('bg-', 'text-').split(' ')[1]}`}>
+                  {OPPORTUNITY_STAGE_LABELS[stage]}
+                </p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
@@ -42,27 +68,78 @@ export function DirectionDashboard({ metrics, recentOpps, profile }: DirectionDa
             </div>
           </CardHeader>
           <CardContent>
-            <ul className="space-y-2">
-              {recentOpps.map(opp => (
-                <li key={opp.id}>
-                  <Link href={`/app/oportunidades/${opp.id}`} className="flex items-center justify-between rounded-lg px-3 py-2.5 hover:bg-gray-50">
-                    <p className="text-sm font-medium text-gray-900 truncate">{opp.title}</p>
-                    {opp.stage && (
-                      <span className={`ml-3 shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${OPPORTUNITY_STAGE_COLORS[opp.stage]}`}>
-                        {OPPORTUNITY_STAGE_LABELS[opp.stage]}
-                      </span>
-                    )}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            {recentOpps.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-6">Sin oportunidades registradas</p>
+            ) : (
+              <ul className="space-y-2">
+                {recentOpps.map(opp => (
+                  <li key={opp.id}>
+                    <Link href={`/app/oportunidades/${opp.id}`} className="flex items-center justify-between rounded-lg px-3 py-2.5 hover:bg-gray-50">
+                      <p className="text-sm font-medium text-gray-900 truncate">{opp.title}</p>
+                      {opp.stage && (
+                        <span className={`ml-3 shrink-0 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${OPPORTUNITY_STAGE_COLORS[opp.stage]}`}>
+                          {OPPORTUNITY_STAGE_LABELS[opp.stage]}
+                        </span>
+                      )}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Accesos rápidos</CardTitle>
+            <CardTitle className="flex items-center gap-2"><AlertCircle className="h-4 w-4 text-red-500" />Seguimientos vencidos (global)</CardTitle>
           </CardHeader>
+          <CardContent>
+            {globalOverdue.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-6">Sin seguimientos vencidos en el equipo</p>
+            ) : (
+              <ul className="space-y-2">
+                {globalOverdue.map(c => (
+                  <li key={c.id}>
+                    <Link href={`/app/contactos/${c.id}`} className="flex items-center justify-between rounded-lg px-3 py-2.5 hover:bg-gray-50">
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{c.first_name} {c.last_name}</p>
+                        <p className="text-xs text-gray-500 truncate">{c.next_action}</p>
+                      </div>
+                      <span className="text-xs text-red-600 shrink-0 ml-2">{c.next_action_date ? formatRelativeDate(c.next_action_date) : '—'}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+
+        {abandonedOpps.length > 0 && (
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-orange-700"><Clock className="h-4 w-4" />Oportunidades abandonadas (+7 días sin actividad)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {abandonedOpps.map(opp => (
+                  <li key={opp.id}>
+                    <Link href={`/app/oportunidades/${opp.id}`} className="flex items-center justify-between rounded-lg px-3 py-2.5 hover:bg-orange-50 border border-orange-100">
+                      <p className="text-sm text-gray-900 truncate">{opp.title}</p>
+                      {opp.stage && (
+                        <span className={`ml-2 shrink-0 inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${OPPORTUNITY_STAGE_COLORS[opp.stage]}`}>
+                          {OPPORTUNITY_STAGE_LABELS[opp.stage]}
+                        </span>
+                      )}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card>
+          <CardHeader><CardTitle>Accesos rápidos</CardTitle></CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-3">
               {([
@@ -71,7 +148,7 @@ export function DirectionDashboard({ metrics, recentOpps, profile }: DirectionDa
                 { href: '/app/campanas', label: 'Campañas', icon: Megaphone },
                 { href: '/app/admin', label: 'Admin', icon: Users },
               ] as const).map(item => (
-                <Link key={item.href} href={item.href} className="flex items-center gap-2 rounded-lg border border-gray-100 p-3 hover:bg-gray-50 transition-colors">
+                <Link key={item.href} href={item.href} className="flex items-center gap-2 rounded-lg border border-gray-100 p-3 hover:bg-gray-50">
                   <item.icon className="h-4 w-4 text-[#1B3A6B]" />
                   <span className="text-sm font-medium text-gray-700">{item.label}</span>
                 </Link>

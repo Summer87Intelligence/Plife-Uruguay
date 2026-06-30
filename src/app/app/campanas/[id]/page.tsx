@@ -4,7 +4,7 @@ import { getProfile } from '@/lib/auth'
 import { redirect, notFound } from 'next/navigation'
 import {
   ArrowLeft, Megaphone, Target, Users, MessageSquare, PhoneCall,
-  ShieldQuestion, Building2, TrendingUp,
+  ShieldQuestion, Building2, TrendingUp, Clock,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
@@ -14,11 +14,13 @@ import {
   OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS,
 } from '@/lib/constants'
 import { formatDate } from '@/lib/utils'
+import { CampaignActions } from './campaign-actions'
 
 export default async function CampanaDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const profile = await getProfile()
   if (!profile) redirect('/login')
+  const canManage = ['admin', 'direccion', 'lider_comercial'].includes(profile.role)
 
   const supabase = await createClient()
 
@@ -77,6 +79,7 @@ export default async function CampanaDetailPage({ params }: { params: Promise<{ 
             </div>
           </div>
         </div>
+        {canManage && <CampaignActions campaign={campaign} />}
       </div>
 
       {/* Métricas */}
@@ -150,6 +153,19 @@ export default async function CampanaDetailPage({ params }: { params: Promise<{ 
               )}
             </CardContent>
           </Card>
+
+          {campaign.follow_up_sequence != null && (
+            <Card>
+              <CardHeader><CardTitle className="flex items-center gap-2"><Clock className="h-4 w-4 text-[#1B3A6B]" />Secuencia de seguimiento</CardTitle></CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-700 whitespace-pre-wrap rounded-lg bg-gray-50 p-4">
+                  {typeof campaign.follow_up_sequence === 'string'
+                    ? campaign.follow_up_sequence
+                    : JSON.stringify(campaign.follow_up_sequence, null, 2)}
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Columna lateral: asociados */}

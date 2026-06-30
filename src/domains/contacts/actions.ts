@@ -2,7 +2,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
-import type { ActivityType } from '@/types/database'
+import type { ActivityType, Contact } from '@/types/database'
 
 const ContactSchema = z.object({
   first_name: z.string().min(1, 'Nombre requerido'),
@@ -39,6 +39,7 @@ export async function createContact(data: ContactFormData) {
     email: parsed.data.email || null,
     linkedin_url: parsed.data.linkedin_url || null,
     company_id: parsed.data.company_id || null,
+    next_action_date: parsed.data.next_action_date || null,
     assigned_to: parsed.data.assigned_to || user.id,
     created_by: user.id,
   }
@@ -63,11 +64,19 @@ export async function updateContact(id: string, data: Partial<ContactFormData>) 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'No autenticado' }
 
+  const parsed = ContactSchema.partial().safeParse(data)
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+
+  const clean: Record<string, unknown> = { ...parsed.data, updated_by: user.id }
+  for (const key of ['email', 'linkedin_url', 'company_id', 'next_action_date', 'assigned_to'] as const) {
+    if (key in clean && clean[key] === '') clean[key] = null
+  }
+
   const { data: old } = await supabase.from('contacts').select().eq('id', id).single()
 
   const { data: contact, error } = await supabase
     .from('contacts')
-    .update({ ...data, updated_by: user.id })
+    .update(clean as Partial<Contact>)
     .eq('id', id)
     .select()
     .single()
@@ -109,31 +118,53 @@ export async function deleteContact(id: string) {
   return { success: true }
 }
 
-export async function addActivity(data: {
-  contact_id?: string
-  opportunity_id?: string
-  company_id?: string
-  type: string
-  title: string
-  description?: string
-  outcome?: string
-  scheduled_at?: string
-}) {
+const ActivitySchema = z.object({
+  contact_id: z.string().uuid().optional(),
+  opportunity_id: z.string().uuid().optional(),
+  company_id: z.string().uuid().optional(),
+  type: z.enum(['llamada', 'reunion', 'mensaje', 'email', 'nota', 'tarea', 'whatsapp', 'linkedin']),
+  title: z.string().min(1, 'Título requerido'),
+  description: z.string().optional(),
+  outcome: z.string().optional(),
+  scheduled_at: z.string().optional(),
+  is_completed: z.boolean().optional(),
+})
+
+export type ActivityFormData = z.infer<typeof ActivitySchema>
+
+export async function addActivity(data: ActivityFormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'No autenticado' }
 
+  const parsed = ActivitySchema.safeParse(data)
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+
+  const now = new Date().toISOString()
   const { data: activity, error } = await supabase
     .from('activities')
-    .insert({ ...data, type: data.type as ActivityType, created_by: user.id })
+    .insert({
+      ...parsed.data,
+      type: parsed.data.type as ActivityType,
+      scheduled_at: parsed.data.scheduled_at || null,
+      is_completed: parsed.data.is_completed ?? true,
+      created_by: user.id,
+    })
     .select()
     .single()
 
   if (error) return { error: error.message }
 
-  if (data.contact_id) {
-    await supabase.from('contacts').update({ last_interaction_at: new Date().toISOString() }).eq('id', data.contact_id)
-    revalidatePath(`/app/contactos/${data.contact_id}`)
+  if (parsed.data.contact_id) {
+    await supabase.from('contacts').update({ last_interaction_at: now }).eq('id', parsed.data.contact_id)
+    revalidatePath(`/app/contactos/${parsed.data.contact_id}`)
+  }
+  if (parsed.data.opportunity_id) {
+    await supabase.from('opportunities').update({ last_activity_at: now }).eq('id', parsed.data.opportunity_id)
+    revalidatePath(`/app/oportunidades/${parsed.data.opportunity_id}`)
+  }
+  if (parsed.data.company_id) {
+    revalidatePath(`/app/empresas/${parsed.data.company_id}`)
   }
 
   revalidatePath('/app/contactos')

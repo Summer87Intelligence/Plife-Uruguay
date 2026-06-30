@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
-import { createOpportunity } from '@/domains/opportunities/actions'
+import { createOpportunity, updateOpportunity, type OpportunityFormData } from '@/domains/opportunities/actions'
 import { OPPORTUNITY_STAGE_LABELS } from '@/lib/constants'
 
 const typeOptions = [
@@ -21,22 +21,32 @@ const riskOptions = [
   { value: 'critico', label: 'Crítico' },
 ]
 
-interface OpportunityFormProps { onSuccess?: () => void }
+interface OpportunityFormProps {
+  onSuccess?: () => void
+  contactId?: string
+  companyId?: string
+  campaignId?: string
+  defaultType?: 'b2c' | 'b2b' | 'reclutamiento'
+  mode?: 'create' | 'edit'
+  opportunityId?: string
+  initial?: Partial<OpportunityFormData>
+}
 
-export function OpportunityForm({ onSuccess }: OpportunityFormProps) {
+export function OpportunityForm({ onSuccess, contactId, companyId, campaignId, defaultType = 'b2c', mode = 'create', opportunityId, initial }: OpportunityFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [form, setForm] = useState({
-    title: '',
-    type: 'b2c' as const,
-    stage: 'nueva' as const,
-    detected_need: '',
-    suggested_product: '',
-    commercial_risk: 'bajo' as const,
-    next_action: '',
-    next_action_date: '',
-    notes: '',
+    title: initial?.title ?? '',
+    type: initial?.type ?? defaultType,
+    stage: initial?.stage ?? 'nueva',
+    estimated_value: initial?.estimated_value != null ? String(initial.estimated_value) : '',
+    detected_need: initial?.detected_need ?? '',
+    suggested_product: initial?.suggested_product ?? '',
+    commercial_risk: initial?.commercial_risk ?? 'bajo',
+    next_action: initial?.next_action ?? '',
+    next_action_date: initial?.next_action_date ?? '',
+    notes: initial?.notes ?? '',
   })
 
   function set(field: string, value: unknown) {
@@ -47,7 +57,18 @@ export function OpportunityForm({ onSuccess }: OpportunityFormProps) {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const result = await createOpportunity(form)
+    const payload = {
+      ...form,
+      estimated_value: form.estimated_value !== '' ? Number(form.estimated_value) : undefined,
+    }
+    const result = mode === 'edit' && opportunityId
+      ? await updateOpportunity(opportunityId, payload as Partial<OpportunityFormData>)
+      : await createOpportunity({
+          ...payload,
+          contact_id: contactId,
+          company_id: companyId,
+          campaign_id: campaignId,
+        } as OpportunityFormData)
     if (result.error) {
       setError(result.error)
       setLoading(false)
@@ -65,7 +86,10 @@ export function OpportunityForm({ onSuccess }: OpportunityFormProps) {
         <Select label="Etapa inicial" value={form.stage} onValueChange={v => set('stage', v)} options={stageOptions} />
       </div>
       <Input label="Necesidad detectada" value={form.detected_need} onChange={e => set('detected_need', e.target.value)} />
-      <Input label="Producto sugerido (conceptual)" value={form.suggested_product} onChange={e => set('suggested_product', e.target.value)} placeholder="Seguro de vida, colectivo..." />
+      <div className="grid grid-cols-2 gap-4">
+        <Input label="Producto sugerido (conceptual)" value={form.suggested_product} onChange={e => set('suggested_product', e.target.value)} placeholder="Seguro de vida, colectivo..." />
+        <Input label="Valor estimado (USD)" type="number" value={form.estimated_value} onChange={e => set('estimated_value', e.target.value)} />
+      </div>
       <div className="grid grid-cols-2 gap-4">
         <Select label="Riesgo comercial" value={form.commercial_risk} onValueChange={v => set('commercial_risk', v)} options={riskOptions} />
         <Input label="Fecha próxima acción" type="date" value={form.next_action_date} onChange={e => set('next_action_date', e.target.value)} />
@@ -74,7 +98,7 @@ export function OpportunityForm({ onSuccess }: OpportunityFormProps) {
       <Textarea label="Notas" value={form.notes} onChange={e => set('notes', e.target.value)} rows={2} />
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex justify-end pt-2">
-        <Button type="submit" loading={loading}>Crear oportunidad</Button>
+        <Button type="submit" loading={loading}>{mode === 'edit' ? 'Guardar cambios' : 'Crear oportunidad'}</Button>
       </div>
     </form>
   )

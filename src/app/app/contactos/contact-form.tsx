@@ -5,9 +5,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
-import { createContact } from '@/domains/contacts/actions'
+import { createContact, updateContact, type ContactFormData } from '@/domains/contacts/actions'
 import { CONTACT_STATUS_LABELS } from '@/lib/constants'
-import type { ContactStatus } from '@/types/database'
 
 const statusOptions = Object.entries(CONTACT_STATUS_LABELS).map(([value, label]) => ({ value, label }))
 const interestOptions = [
@@ -19,26 +18,32 @@ const interestOptions = [
 
 interface ContactFormProps {
   onSuccess?: () => void
+  mode?: 'create' | 'edit'
+  contactId?: string
+  initial?: Partial<ContactFormData>
+  companies?: { id: string; name: string }[]
 }
 
-export function ContactForm({ onSuccess }: ContactFormProps) {
+export function ContactForm({ onSuccess, mode = 'create', contactId, initial, companies = [] }: ContactFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [form, setForm] = useState({
-    first_name: '',
-    last_name: '',
-    email: '',
-    phone: '',
-    position: '',
-    source: '',
-    status: 'nuevo' as ContactStatus,
-    interest_level: 'medio' as const,
-    detected_need: '',
-    next_action: '',
-    notes: '',
-    data_consent: false,
-    data_origin: 'manual',
+    first_name: initial?.first_name ?? '',
+    last_name: initial?.last_name ?? '',
+    email: initial?.email ?? '',
+    phone: initial?.phone ?? '',
+    position: initial?.position ?? '',
+    source: initial?.source ?? '',
+    status: initial?.status ?? 'nuevo',
+    interest_level: initial?.interest_level ?? 'medio',
+    detected_need: initial?.detected_need ?? '',
+    next_action: initial?.next_action ?? '',
+    next_action_date: initial?.next_action_date ?? '',
+    notes: initial?.notes ?? '',
+    data_consent: initial?.data_consent ?? false,
+    data_origin: initial?.data_origin ?? 'manual',
+    company_id: initial?.company_id ?? '',
   })
 
   function set(field: string, value: unknown) {
@@ -49,7 +54,9 @@ export function ContactForm({ onSuccess }: ContactFormProps) {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const result = await createContact(form)
+    const result = mode === 'edit' && contactId
+      ? await updateContact(contactId, form as Partial<ContactFormData>)
+      : await createContact(form as ContactFormData)
     if (result.error) {
       setError(result.error)
       setLoading(false)
@@ -58,6 +65,8 @@ export function ContactForm({ onSuccess }: ContactFormProps) {
       onSuccess?.()
     }
   }
+
+  const companyOptions = [{ value: '', label: 'Sin empresa' }, ...companies.map(c => ({ value: c.id, label: c.name }))]
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -73,12 +82,18 @@ export function ContactForm({ onSuccess }: ContactFormProps) {
         <Input label="Cargo" value={form.position} onChange={e => set('position', e.target.value)} />
         <Input label="Fuente" value={form.source} onChange={e => set('source', e.target.value)} placeholder="Referido, LinkedIn..." />
       </div>
+      {companies.length > 0 && (
+        <Select label="Empresa vinculada" value={form.company_id} onValueChange={v => set('company_id', v)} options={companyOptions} placeholder="Sin empresa" />
+      )}
       <div className="grid grid-cols-2 gap-4">
         <Select label="Estado" value={form.status} onValueChange={v => set('status', v)} options={statusOptions} />
         <Select label="Nivel de interés" value={form.interest_level} onValueChange={v => set('interest_level', v)} options={interestOptions} />
       </div>
       <Input label="Necesidad detectada" value={form.detected_need} onChange={e => set('detected_need', e.target.value)} placeholder="Qué problema o necesidad tiene..." />
-      <Input label="Próxima acción" value={form.next_action} onChange={e => set('next_action', e.target.value)} />
+      <div className="grid grid-cols-2 gap-4">
+        <Input label="Próxima acción" value={form.next_action} onChange={e => set('next_action', e.target.value)} />
+        <Input label="Fecha próxima acción" type="date" value={form.next_action_date} onChange={e => set('next_action_date', e.target.value)} />
+      </div>
       <Textarea label="Notas" value={form.notes} onChange={e => set('notes', e.target.value)} rows={3} />
 
       <div className="flex items-center gap-2">
@@ -89,7 +104,7 @@ export function ContactForm({ onSuccess }: ContactFormProps) {
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       <div className="flex justify-end gap-3 pt-2">
-        <Button type="submit" loading={loading}>Crear contacto</Button>
+        <Button type="submit" loading={loading}>{mode === 'edit' ? 'Guardar cambios' : 'Crear contacto'}</Button>
       </div>
     </form>
   )

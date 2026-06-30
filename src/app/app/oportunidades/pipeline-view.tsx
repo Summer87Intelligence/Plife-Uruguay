@@ -53,6 +53,20 @@ export function PipelineView({ opportunities, profile }: PipelineViewProps) {
         </div>
       </div>
 
+      {/* Resumen visual por etapa */}
+      <div className="flex flex-wrap gap-2">
+        {PIPELINE_STAGES.map(stage => {
+          const count = byStage[stage]?.length ?? 0
+          if (count === 0) return null
+          return (
+            <span key={stage} className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${OPPORTUNITY_STAGE_COLORS[stage]}`}>
+              {OPPORTUNITY_STAGE_LABELS[stage]}
+              <span className="font-bold">{count}</span>
+            </span>
+          )
+        })}
+      </div>
+
       {view === 'pipeline' ? (
         <div className="overflow-x-auto -mx-6 px-6 pb-4">
           <div className="flex gap-4" style={{ minWidth: `${PIPELINE_STAGES.length * 220}px` }}>

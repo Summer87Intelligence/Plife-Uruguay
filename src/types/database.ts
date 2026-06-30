@@ -386,7 +386,10 @@ export interface Database {
       profiles: TableDef<Profile>
       teams: TableDef<Team, [Rel<'teams_leader_id_fkey', 'leader_id', 'profiles'>]>
       team_members: TableDef<TeamMember>
-      contacts: TableDef<Contact, [Rel<'contacts_company_id_fkey', 'company_id', 'companies'>]>
+      contacts: TableDef<Contact, [
+        Rel<'contacts_company_id_fkey', 'company_id', 'companies'>,
+        Rel<'contacts_assigned_to_fkey', 'assigned_to', 'profiles'>,
+      ]>
       companies: TableDef<Company>
       opportunities: TableDef<Opportunity, [
         Rel<'opportunities_contact_id_fkey', 'contact_id', 'contacts'>,
