@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+@theme {
+  --color-plife-blue: #1B3A6B;
+  --color-plife-blue-light: #2A5298;
+  --color-plife-gold: #C9A84C;
+  --color-plife-gold-light: #E8C56D;
+  --color-plife-green: #16A34A;
+  --color-plife-red: #DC2626;
+  --color-plife-orange: #EA580C;
+  --color-border: #E5E7EB;
+  --color-background: #FFFFFF;
+  --color-foreground: #0F172A;
+  --font-sans: "Inter", system-ui, sans-serif;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
