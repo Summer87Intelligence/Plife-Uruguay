@@ -1,7 +1,12 @@
 import { defineConfig, devices } from '@playwright/test'
+import { config } from 'dotenv'
+import { resolve } from 'path'
+
+// Load .env.test if present (never committed — see .gitignore)
+config({ path: resolve(__dirname, '.env.test') })
 
 // E2E_BASE_URL lets you point at a running staging server.
-// Default: localhost:3000. If your dev server is on 3001, set E2E_BASE_URL=http://localhost:3001.
+// If your dev server is on 3001 (Next.js fallback), set E2E_BASE_URL=http://localhost:3001 in .env.test
 const baseURL = process.env.E2E_BASE_URL ?? 'http://localhost:3000'
 
 export default defineConfig({

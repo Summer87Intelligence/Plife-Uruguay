@@ -13,14 +13,8 @@ export async function login(page: Page) {
 }
 
 export async function logout(page: Page) {
-  // Try sidebar logout button or user menu
-  const logoutBtn = page.getByRole('button', { name: /cerrar sesión/i })
-  if (await logoutBtn.isVisible()) {
-    await logoutBtn.click()
-  } else {
-    // Navigate directly and sign out via Supabase client — fallback
-    await page.goto('/login')
-  }
+  // App header has an icon-only logout button with aria-label="Cerrar sesión"
+  await page.getByRole('button', { name: /cerrar sesión/i }).click()
   await page.waitForURL('**/login', { timeout: 10_000 })
 }
 

@@ -19,11 +19,13 @@ test.describe('Radar B2B', () => {
   })
 
   test('muestra ranking de empresas o estado vacío', async ({ page }) => {
-    const empresaRows = page.locator('table tbody tr, [role="row"], ul li').first()
-    const emptyMsg = page.getByText(/sin empresas|no hay empresas|sin resultados/i)
-    const hasRows = await empresaRows.isVisible().catch(() => false)
-    const hasEmpty = await emptyMsg.isVisible().catch(() => false)
-    expect(hasRows || hasEmpty, 'Ni filas de empresa ni mensaje de vacío visible').toBe(true)
+    // With companies: shows "{n} empresa(s)" count text
+    // Without companies: EmptyState with title "El radar está vacío" or "Sin resultados"
+    const countText = page.getByText(/\d+ empresas?/i).first()
+    const emptyMsg = page.getByText(/el radar está vacío|sin resultados/i).first()
+    const hasCount = await countText.isVisible({ timeout: 8_000 }).catch(() => false)
+    const hasEmpty = await emptyMsg.isVisible({ timeout: 2_000 }).catch(() => false)
+    expect(hasCount || hasEmpty, 'Ni contador de empresas ni estado vacío visible').toBe(true)
   })
 
   test('filtro de búsqueda no rompe la página', async ({ page }) => {
