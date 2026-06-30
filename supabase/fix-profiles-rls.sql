@@ -49,11 +49,20 @@ END
 $$;
 
 -- ----------------------------------------------------------------------------
--- 2) RECOMENDADO (schema-wide) -- REVISAR ANTES DE EJECUTAR
---    El diagnostico mostro que NINGUNA tabla de public tenia GRANT DML para
---    `authenticated`. Esto rompe tambien /app/hoy, /app/contactos, etc.
---    Todas las tablas tienen RLS habilitado con policies, por lo que estos
---    GRANT son seguros: RLS sigue filtrando por usuario/rol.
+-- 2) FIX MINIMO PARA /app/hoy (dashboard demo)
+--    Sin GRANT de SELECT, las queries del dashboard fallan con 42501 antes de RLS.
+--    RLS sigue filtrando: admin ve todo via is_admin_or_direccion(), asesor solo lo suyo.
+-- ----------------------------------------------------------------------------
+GRANT SELECT ON public.contacts TO authenticated;
+GRANT SELECT ON public.companies TO authenticated;
+GRANT SELECT ON public.opportunities TO authenticated;
+GRANT SELECT ON public.campaigns TO authenticated;
+GRANT SELECT ON public.activities TO authenticated;
+
+-- ----------------------------------------------------------------------------
+-- 3) OPCIONAL (schema-wide) -- REVISAR ANTES DE EJECUTAR
+--    Aplicar solo si aparecen permission denied en otras tablas (ej. notes, teams).
+--    Todas las tablas tienen RLS habilitado con policies.
 --
 --    Descomentar para aplicar a todo el esquema:
 -- ----------------------------------------------------------------------------
@@ -67,7 +76,7 @@ $$;
 --   GRANT USAGE, SELECT ON SEQUENCES TO authenticated;
 
 -- ----------------------------------------------------------------------------
--- 3) VALIDACION
+-- 4) VALIDACION
 --    Simular el SELECT como el usuario admin autenticado.
 --    Debe devolver exactamente 1 fila.
 -- ----------------------------------------------------------------------------
