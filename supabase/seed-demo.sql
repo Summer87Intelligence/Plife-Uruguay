@@ -1,24 +1,40 @@
 -- =============================================================================
 -- PLIFE Growth OS — SEED DEMO COMERCIAL (FASE 4)
 -- =============================================================================
+-- ⚠ NO EJECUTAR EN PRODUCCIÓN REAL. Solo para entornos demo/staging.
+--
 -- Carga datos demo realistas para presentar el sistema a PLIFE.
+--
+-- IDEMPOTENCIA:
+--   Usa UUIDs fijos + ON CONFLICT DO UPDATE.
+--   Podés ejecutarlo múltiples veces sin duplicar datos.
+--   Si ya existen los registros, los actualiza al estado original del seed.
+--
+-- MARCADORES DE DATOS DEMO (usados por clear-demo.sql para limpiar):
+--   Campañas      → IDs con prefijo c0000000-0000-0000-0000-
+--   Empresas      → IDs con prefijo b0000000-  +  source = 'Demo PLIFE'
+--   Contactos     → IDs con prefijo a0000000-  +  email @demo.plife
+--   Oportunidades → IDs con prefijo d0000000-0000-0000-0000-
+--   Actividades   → IDs con prefijo e0000000-0000-0000-0000-
+--   Documentos    → IDs con prefijo f0000000-  +  tag 'demo' en tags[]
 --
 -- CÓMO USARLO:
 --   1. Abrí el proyecto en Supabase → SQL Editor.
 --   2. Asegurate de tener al menos 1 usuario creado (Authentication → Users) y
 --      su perfil en la tabla `profiles`. El seed asigna los datos demo al primer
 --      perfil existente (el "presentador" de la demo).
---   3. Pegá este archivo completo y ejecutá. Es idempotente: podés correrlo las
---      veces que quieras (usa UUIDs fijos + ON CONFLICT).
+--   3. Pegá este archivo completo y ejecutá.
+--
+-- PARA LIMPIAR LOS DATOS DEMO: ejecutar supabase/clear-demo.sql
 --
 -- USUARIOS DEMO (paso manual, requerido por seguridad — no usamos service role):
 --   Creá estos usuarios desde Authentication → Add user, y luego ajustá su rol
 --   en `profiles` (UPDATE profiles SET role = '...', full_name = '...').
---     - direccion@plife.demo        → role 'direccion'   → "Dirección PLIFE"
---     - lider@plife.demo            → role 'lider_comercial' → "Líder Comercial"
---     - asesor.senior@plife.demo    → role 'asesor'      → "Asesor Senior"
---     - asesor.nuevo@plife.demo     → role 'asesor'      → "Asesor Nuevo"
---     - compliance@plife.demo       → role 'compliance'  → "Compliance PLIFE"
+--     - direccion@plife.demo        → role 'direccion'        → "Dirección PLIFE"
+--     - lider@plife.demo            → role 'lider_comercial'  → "Líder Comercial"
+--     - asesor.senior@plife.demo    → role 'asesor'           → "Asesor Senior"
+--     - asesor.nuevo@plife.demo     → role 'asesor'           → "Asesor Nuevo"
+--     - compliance@plife.demo       → role 'compliance'       → "Compliance PLIFE"
 --   (Snippet sugerido al final de este archivo.)
 --
 -- NOTA: Todos los datos son ficticios. No representan condiciones reales de

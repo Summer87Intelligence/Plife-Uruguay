@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
-import { Settings, Users, Bot, Shield, Sparkles } from 'lucide-react'
+import Link from 'next/link'
+import { Settings, Users, Bot, Shield, Sparkles, Database } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Avatar } from '@/components/ui/avatar'
 import { ROLE_LABELS } from '@/lib/constants'
@@ -38,6 +39,15 @@ export function AdminView({ users, teams, prompts }: AdminViewProps) {
           </p>
         </div>
       )}
+
+      {/* Link a estado del sistema */}
+      <Link
+        href="/app/admin/system"
+        className="inline-flex items-center gap-2 text-sm text-[#1B3A6B] hover:underline"
+      >
+        <Database className="h-4 w-4" />
+        Ver estado del sistema →
+      </Link>
 
       {/* Tabs */}
       <div className="flex rounded-lg border border-gray-200 bg-white overflow-hidden w-fit">

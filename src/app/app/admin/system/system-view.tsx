@@ -1,0 +1,274 @@
+'use client'
+import { format } from 'date-fns'
+import {
+  Activity,
+  Bot,
+  Building2,
+  CheckCircle2,
+  Database,
+  FileText,
+  Megaphone,
+  Shield,
+  Users,
+  XCircle,
+  Zap,
+} from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  COMPLIANCE_ACTION_COLORS,
+  COMPLIANCE_ACTION_LABELS,
+  RISK_LEVEL_COLORS,
+  RISK_LEVEL_LABELS,
+  ROLE_LABELS,
+} from '@/lib/constants'
+import type { ComplianceAction, Profile, RiskLevel } from '@/types/database'
+
+interface AIInteractionSummary {
+  id: string
+  agent_name: string
+  risk_level: RiskLevel | null
+  created_at: string
+}
+
+interface ComplianceReviewSummary {
+  id: string
+  content_reviewed: string
+  risk_level: RiskLevel
+  action: ComplianceAction
+  created_at: string
+}
+
+interface SystemViewProps {
+  profile: Profile
+  isAIConfigured: boolean
+  isDemoModeActive: boolean
+  counts: {
+    contacts: number
+    companies: number
+    opportunities: number
+    campaigns: number
+    activities: number
+    knowledgeDocuments: number
+  }
+  recentAIInteractions: AIInteractionSummary[]
+  recentComplianceReviews: ComplianceReviewSummary[]
+}
+
+const COUNTS_CONFIG = [
+  { key: 'contacts' as const,           label: 'Contactos',    Icon: Users },
+  { key: 'companies' as const,          label: 'Empresas',     Icon: Building2 },
+  { key: 'opportunities' as const,      label: 'Oportunidades',Icon: Activity },
+  { key: 'campaigns' as const,          label: 'Campañas',     Icon: Megaphone },
+  { key: 'activities' as const,         label: 'Actividades',  Icon: Shield },
+  { key: 'knowledgeDocuments' as const, label: 'Documentos activos', Icon: FileText },
+]
+
+export function SystemView({
+  profile,
+  isAIConfigured,
+  isDemoModeActive,
+  counts,
+  recentAIInteractions,
+  recentComplianceReviews,
+}: SystemViewProps) {
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-xl bg-[#1B3A6B] flex items-center justify-center">
+          <Database className="h-5 w-5 text-white" />
+        </div>
+        <div>
+          <p className="text-xs text-gray-400 uppercase tracking-wide">Admin</p>
+          <h1 className="text-xl font-bold text-gray-900">Estado del Sistema</h1>
+        </div>
+      </div>
+
+      {/* Sesión actual */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Sesión actual</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <dl className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm sm:grid-cols-3">
+            <div>
+              <dt className="text-xs text-gray-400 mb-0.5">Nombre</dt>
+              <dd className="font-medium text-gray-900">{profile.full_name}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-gray-400 mb-0.5">Email</dt>
+              <dd className="font-medium text-gray-900 break-all">{profile.email}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-gray-400 mb-0.5">Rol</dt>
+              <dd className="font-medium text-gray-900">{ROLE_LABELS[profile.role]}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-gray-400 mb-0.5">Perfil</dt>
+              <dd>
+                {profile.is_active ? (
+                  <span className="inline-flex items-center gap-1 text-green-700 text-sm font-medium">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Activo
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-red-600 text-sm font-medium">
+                    <XCircle className="h-3.5 w-3.5" />
+                    Inactivo
+                  </span>
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-gray-400 mb-0.5">Onboarding</dt>
+              <dd>
+                {profile.onboarding_completed ? (
+                  <span className="inline-flex items-center gap-1 text-green-700 text-sm font-medium">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Completado
+                  </span>
+                ) : (
+                  <span className="text-sm text-amber-600 font-medium">Pendiente</span>
+                )}
+              </dd>
+            </div>
+          </dl>
+        </CardContent>
+      </Card>
+
+      {/* Configuración del sistema */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Configuración del sistema</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap items-center gap-6">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Modo demo</span>
+              {isDemoModeActive ? (
+                <span className="inline-flex items-center rounded-full bg-amber-100 text-amber-800 px-2.5 py-0.5 text-xs font-medium">
+                  Activo
+                </span>
+              ) : (
+                <span className="inline-flex items-center rounded-full bg-gray-100 text-gray-600 px-2.5 py-0.5 text-xs font-medium">
+                  Inactivo
+                </span>
+              )}
+            </div>
+            <div className="h-4 w-px bg-gray-200" />
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-gray-400" />
+              <span className="text-sm text-gray-600">IA (OpenAI)</span>
+              {isAIConfigured ? (
+                <span className="inline-flex items-center rounded-full bg-green-100 text-green-800 px-2.5 py-0.5 text-xs font-medium">
+                  Configurada
+                </span>
+              ) : (
+                <span className="inline-flex items-center rounded-full bg-red-100 text-red-700 px-2.5 py-0.5 text-xs font-medium">
+                  Sin configurar
+                </span>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Conteos */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+        {COUNTS_CONFIG.map(({ key, label, Icon }) => (
+          <div
+            key={key}
+            className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <Icon className="h-4 w-4 text-[#1B3A6B]/50" />
+              <span className="text-xs text-gray-500">{label}</span>
+            </div>
+            <p className="text-2xl font-bold text-gray-900">{counts[key]}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Últimas interacciones IA */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bot className="h-4 w-4 text-[#1B3A6B]" />
+            Últimas 5 interacciones IA
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {recentAIInteractions.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-6">Sin interacciones registradas</p>
+          ) : (
+            <ul className="divide-y divide-gray-50">
+              {recentAIInteractions.map(item => (
+                <li key={item.id} className="flex items-center justify-between py-3 gap-4">
+                  <span className="text-sm text-gray-700 capitalize truncate">
+                    {item.agent_name.replace(/_/g, ' ')}
+                  </span>
+                  <div className="flex items-center gap-3 shrink-0">
+                    {item.risk_level && (
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${RISK_LEVEL_COLORS[item.risk_level]}`}
+                      >
+                        {RISK_LEVEL_LABELS[item.risk_level]}
+                      </span>
+                    )}
+                    <span className="text-xs text-gray-400 tabular-nums">
+                      {format(new Date(item.created_at), 'dd/MM/yy HH:mm')}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Últimas revisiones compliance */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-4 w-4 text-[#1B3A6B]" />
+            Últimas 5 revisiones compliance
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {recentComplianceReviews.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-6">Sin revisiones registradas</p>
+          ) : (
+            <ul className="divide-y divide-gray-50">
+              {recentComplianceReviews.map(item => (
+                <li key={item.id} className="py-3 space-y-1.5">
+                  <div className="flex items-start justify-between gap-4">
+                    <p className="text-sm text-gray-700 leading-snug line-clamp-2">
+                      {item.content_reviewed.length > 100
+                        ? `${item.content_reviewed.slice(0, 100)}…`
+                        : item.content_reviewed}
+                    </p>
+                    <span className="text-xs text-gray-400 shrink-0 tabular-nums">
+                      {format(new Date(item.created_at), 'dd/MM/yy HH:mm')}
+                    </span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${RISK_LEVEL_COLORS[item.risk_level]}`}
+                    >
+                      {RISK_LEVEL_LABELS[item.risk_level]}
+                    </span>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${COMPLIANCE_ACTION_COLORS[item.action]}`}
+                    >
+                      {COMPLIANCE_ACTION_LABELS[item.action]}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
