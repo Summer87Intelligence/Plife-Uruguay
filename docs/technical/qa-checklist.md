@@ -160,6 +160,41 @@
 
 ---
 
+## PLAYWRIGHT — TESTS AUTOMATIZADOS (FASE 9)
+
+### Prerrequisitos
+- [ ] `.env.test` creado con `E2E_USER_EMAIL` y `E2E_USER_PASSWORD`
+- [ ] Seed demo cargado (`supabase/seed-demo.sql`)
+- [ ] `fix-app-grants.sql` aplicado
+- [ ] `npm run dev` corriendo en paralelo (o `E2E_BASE_URL` apunta a staging)
+
+### Ejecución
+- [ ] `npm run type-check` → sin errores
+- [ ] `npm run build` → sin errores
+- [ ] `npm run test:e2e` → todos los tests pasan
+
+### Specs y cobertura
+- [ ] `auth.spec.ts` — sin sesión redirige a /login, login OK, logout OK, F5 sin loop
+- [ ] `smoke-routes.spec.ts` — 13 rutas cargan sin 500 ni Internal Server Error
+- [ ] `dashboard.spec.ts` — métricas demo visibles y > 0
+- [ ] `radar-b2b.spec.ts` — ranking B2B, filtros, análisis expandido
+- [ ] `commercial-flow.spec.ts` — empresas, oportunidades, campañas navegan OK
+- [ ] `compliance.spec.ts` — término prohibido → riesgo crítico (sin OpenAI)
+- [ ] `copilot.spec.ts` — estado sin API key correcto; con key formulario disponible
+- [ ] `knowledge.spec.ts` — docs cargan, estado embeddings visible, búsqueda no rompe
+- [ ] `admin-system.spec.ts` — sesión, contadores, sin secrets expuestos
+
+### Criterios de aceptación FASE 9
+- [ ] type-check OK
+- [ ] build OK (21 páginas)
+- [ ] `npm run test:e2e` sin fallos bloqueantes
+- [ ] `dev` script sin `--turbopack` (problema F5 resuelto)
+- [ ] `dev:turbo` disponible como opción opcional
+- [ ] `.env.test` en `.gitignore`
+- [ ] Documentación `docs/technical/playwright-e2e.md` creada
+
+---
+
 ## NOTAS DE SEGUIMIENTO
 
 | Fecha | Ítem | Resultado | Responsable |
