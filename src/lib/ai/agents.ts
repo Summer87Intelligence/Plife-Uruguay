@@ -16,6 +16,7 @@ export interface AgentInput {
   /** Extra validated knowledge passed to the model as grounding context. */
   knowledge?: string
   documentsUsed?: string[]
+  documentNames?: string[]
   contactId?: string
   companyId?: string
   opportunityId?: string
@@ -27,6 +28,7 @@ export interface AgentOutput {
   riskLevel: RiskLevel
   riskFlags: string[]
   documentsUsed: string[]
+  documentNames: string[]
   tokensUsed: number
   interactionId?: string
   knowledgeUsed: boolean
@@ -82,6 +84,7 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
     riskLevel: compliance.riskLevel,
     riskFlags: compliance.triggeredRules,
     documentsUsed: input.documentsUsed ?? [],
+    documentNames: input.documentNames ?? [],
     tokensUsed: tokensUsed ?? 0,
     interactionId: interactionId ?? undefined,
     knowledgeUsed: hasKnowledge,

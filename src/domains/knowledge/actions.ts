@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database, DocumentStatus } from '@/types/database'
+import { indexDocumentChunks, reindexDocumentChunks } from '@/lib/ai/embeddings'
 
 const DocSchema = z.object({
   name: z.string().min(1, 'Nombre requerido'),
@@ -39,7 +40,7 @@ export async function createKnowledgeDocument(data: KnowledgeDocFormData) {
 
   if (error) return { error: error.message }
 
-  // Store manual text content as a single knowledge chunk (no schema change).
+  // Store manual text content as a single chunk.
   if (parsed.data.content && parsed.data.content.trim()) {
     await supabase.from('knowledge_chunks').insert({
       document_id: doc.id,
@@ -69,12 +70,60 @@ export async function setKnowledgeStatus(id: string, status: DocumentStatus) {
   return { success: true }
 }
 
-// Loads validated (active) knowledge as a single text block for AI grounding.
+// TAREA 2 — index all unembedded chunks for a document.
+export async function indexKnowledgeDocument(documentId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'No autenticado' }
+
+  const result = await indexDocumentChunks(supabase, documentId)
+  if (!result.success) return { error: result.error ?? 'Error al indexar' }
+
+  revalidatePath('/app/conocimiento')
+  return {
+    success: true,
+    chunksIndexed: result.chunksIndexed,
+    chunksSkipped: result.chunksSkipped,
+    fallback: result.fallback,
+  }
+}
+
+// TAREA 3 — semantic search (or text fallback). Callable from client components.
+export async function searchKnowledgeDocuments(query: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'No autenticado' }
+  if (!query.trim()) return { data: { chunks: [], usedSemantic: false } }
+  const { searchKnowledgeSemantic } = await import('@/lib/ai/embeddings')
+  const result = await searchKnowledgeSemantic(supabase, query.trim(), { matchCount: 6 })
+  return { data: result }
+}
+
+// TAREA 2 — force reindex: clears embeddings then regenerates.
+export async function reindexKnowledgeDocument(documentId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'No autenticado' }
+
+  const result = await reindexDocumentChunks(supabase, documentId)
+  if (!result.success) return { error: result.error ?? 'Error al reindexar' }
+
+  revalidatePath('/app/conocimiento')
+  return {
+    success: true,
+    chunksIndexed: result.chunksIndexed,
+    chunksSkipped: result.chunksSkipped,
+    fallback: result.fallback,
+  }
+}
+
+// Loads validated (active) knowledge as a text block for AI grounding.
 // Returns empty string if there is no validated base yet.
+// documentNames is included so callers can surface source attribution in UI.
 export async function getActiveKnowledgeContext(
   supabase: SupabaseClient<Database>,
   limit = 8
-): Promise<{ text: string; documentIds: string[] }> {
+): Promise<{ text: string; documentIds: string[]; documentNames: string[] }> {
   const { data: docs } = await supabase
     .from('knowledge_documents')
     .select('id, name, description, category')
@@ -82,9 +131,11 @@ export async function getActiveKnowledgeContext(
     .is('deleted_at', null)
     .limit(limit)
 
-  if (!docs || docs.length === 0) return { text: '', documentIds: [] }
+  if (!docs || docs.length === 0) return { text: '', documentIds: [], documentNames: [] }
 
   const ids = docs.map(d => d.id)
+  const names = docs.map(d => d.name)
+
   const { data: chunks } = await supabase
     .from('knowledge_chunks')
     .select('document_id, content, chunk_index')
@@ -103,5 +154,5 @@ export async function getActiveKnowledgeContext(
     return `# ${d.name}${d.category ? ` (${d.category})` : ''}\n${body}`.trim()
   }).filter(b => b.length > 0)
 
-  return { text: blocks.join('\n\n'), documentIds: ids }
+  return { text: blocks.join('\n\n'), documentIds: ids, documentNames: names }
 }

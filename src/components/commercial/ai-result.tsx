@@ -86,6 +86,19 @@ export function AIResultPanel({ result, loading, error, loadingLabel = 'El copil
         </span>
       </div>
 
+      {result.knowledgeUsed && result.documentNames && result.documentNames.length > 0 && (
+        <div className="rounded-lg bg-blue-50 border border-blue-100 px-3 py-2">
+          <p className="text-xs font-medium text-blue-800 mb-1 flex items-center gap-1">
+            <BookOpen className="h-3 w-3" /> Fuentes utilizadas
+          </p>
+          <ul className="flex flex-wrap gap-1.5">
+            {result.documentNames.map((name, i) => (
+              <li key={i} className="inline-flex items-center rounded-full bg-blue-100 text-blue-800 px-2 py-0.5 text-xs">{name}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {!result.knowledgeUsed && (
         <div className="rounded-lg bg-amber-50 border border-amber-100 px-3 py-2">
           <p className="text-xs text-amber-800">

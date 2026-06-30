@@ -3,8 +3,10 @@ import { format } from 'date-fns'
 import {
   Activity,
   Bot,
+  BookOpen,
   Building2,
   CheckCircle2,
+  Cpu,
   Database,
   FileText,
   Megaphone,
@@ -28,6 +30,7 @@ interface AIInteractionSummary {
   agent_name: string
   risk_level: RiskLevel | null
   created_at: string
+  documents_used: string[] | null
 }
 
 interface ComplianceReviewSummary {
@@ -50,6 +53,11 @@ interface SystemViewProps {
     activities: number
     knowledgeDocuments: number
   }
+  knowledgeStats: {
+    totalChunks: number
+    embeddedChunks: number
+    embeddingsReady: boolean
+  }
   recentAIInteractions: AIInteractionSummary[]
   recentComplianceReviews: ComplianceReviewSummary[]
 }
@@ -68,6 +76,7 @@ export function SystemView({
   isAIConfigured,
   isDemoModeActive,
   counts,
+  knowledgeStats,
   recentAIInteractions,
   recentComplianceReviews,
 }: SystemViewProps) {
@@ -170,6 +179,55 @@ export function SystemView({
               )}
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Knowledge base status */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BookOpen className="h-4 w-4 text-[#1B3A6B]" />
+            Base de Conocimiento (FASE 8)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div>
+              <p className="text-xs text-gray-400 mb-0.5">Docs activos</p>
+              <p className="text-xl font-bold text-gray-900">{counts.knowledgeDocuments}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 mb-0.5">Total chunks</p>
+              <p className="text-xl font-bold text-gray-900">{knowledgeStats.totalChunks}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 mb-0.5">Chunks indexados</p>
+              <p className={`text-xl font-bold ${knowledgeStats.embeddingsReady ? 'text-blue-700' : 'text-gray-400'}`}>
+                {knowledgeStats.embeddingsReady ? `${knowledgeStats.embeddedChunks}` : '—'}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 mb-0.5">Búsqueda semántica</p>
+              <div className="flex items-center gap-1.5 mt-1">
+                {knowledgeStats.embeddingsReady && knowledgeStats.embeddedChunks > 0 ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 text-blue-800 px-2 py-0.5 text-xs font-medium">
+                    <Cpu className="h-3 w-3" /> Activa
+                  </span>
+                ) : knowledgeStats.embeddingsReady ? (
+                  <span className="inline-flex items-center rounded-full bg-yellow-100 text-yellow-800 px-2 py-0.5 text-xs font-medium">
+                    Pendiente indexar
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center rounded-full bg-gray-100 text-gray-600 px-2 py-0.5 text-xs font-medium">
+                    SQL pendiente
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          {!knowledgeStats.embeddingsReady && (
+            <p className="text-xs text-gray-400 mt-3">Aplicá <code className="text-xs bg-gray-100 px-1 rounded">supabase/knowledge-embeddings.sql</code> para activar embeddings y búsqueda semántica.</p>
+          )}
         </CardContent>
       </Card>
 

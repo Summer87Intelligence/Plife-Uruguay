@@ -9,6 +9,8 @@ export interface AIResult {
   compliance: ComplianceResult
   knowledgeUsed: boolean
   interactionId?: string
+  documentsUsed?: string[]
+  documentNames?: string[]
 }
 
 export const HELP_TYPES = {

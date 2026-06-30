@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { canAccessAll, getProfile } from '@/lib/auth'
 import { isDemoMode } from '@/lib/demo'
+import { isAIConfigured } from '@/lib/ai/provider'
 import { redirect } from 'next/navigation'
 import { SystemView } from './system-view'
 
@@ -18,6 +19,7 @@ export default async function SystemPage() {
     campaignsResult,
     activitiesResult,
     knowledgeResult,
+    chunksResult,
     aiResult,
     complianceResult,
   ] = await Promise.all([
@@ -31,9 +33,10 @@ export default async function SystemPage() {
       .select('*', { count: 'exact', head: true })
       .eq('status', 'activo')
       .is('deleted_at', null),
+    supabase.from('knowledge_chunks').select('*', { count: 'exact', head: true }),
     supabase
       .from('ai_interactions')
-      .select('*')
+      .select('id, agent_name, risk_level, created_at, documents_used')
       .order('created_at', { ascending: false })
       .limit(5),
     supabase
@@ -43,8 +46,18 @@ export default async function SystemPage() {
       .limit(5),
   ])
 
+  // Try to count embedded chunks (requires knowledge-embeddings.sql)
+  let embeddedChunks = 0
+  const { count: embCount, error: embErr } = await supabase
+    .from('knowledge_chunks')
+    .select('*', { count: 'exact', head: true })
+    .not('embedding', 'is', null)
+  if (!embErr) embeddedChunks = embCount ?? 0
+
   const recentAIInteractions = (aiResult.data ?? []).map(
-    ({ id, agent_name, risk_level, created_at }) => ({ id, agent_name, risk_level, created_at })
+    ({ id, agent_name, risk_level, created_at, documents_used }) => ({
+      id, agent_name, risk_level, created_at, documents_used,
+    })
   )
 
   const recentComplianceReviews = (complianceResult.data ?? []).map(
@@ -60,7 +73,7 @@ export default async function SystemPage() {
   return (
     <SystemView
       profile={profile}
-      isAIConfigured={!!process.env.OPENAI_API_KEY}
+      isAIConfigured={isAIConfigured()}
       isDemoModeActive={isDemoMode()}
       counts={{
         contacts: contactsResult.count ?? 0,
@@ -69,6 +82,11 @@ export default async function SystemPage() {
         campaigns: campaignsResult.count ?? 0,
         activities: activitiesResult.count ?? 0,
         knowledgeDocuments: knowledgeResult.count ?? 0,
+      }}
+      knowledgeStats={{
+        totalChunks: chunksResult.count ?? 0,
+        embeddedChunks,
+        embeddingsReady: !embErr,
       }}
       recentAIInteractions={recentAIInteractions}
       recentComplianceReviews={recentComplianceReviews}

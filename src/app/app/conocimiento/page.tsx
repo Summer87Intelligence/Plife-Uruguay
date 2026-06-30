@@ -14,19 +14,48 @@ export default async function ConocimientoPage() {
     .is('deleted_at', null)
     .order('created_at', { ascending: false })
 
-  // Manual text content is stored as chunks; build a per-document content map.
   const ids = (documents ?? []).map(d => d.id)
   const contentMap: Record<string, string> = {}
+  const chunkCount: Record<string, number> = {}
+  const embeddedCount: Record<string, number> = {}
+  let embeddingsReady = false
+
   if (ids.length > 0) {
+    // Always load chunk content
     const { data: chunks } = await supabase
       .from('knowledge_chunks')
       .select('document_id, content, chunk_index')
       .in('document_id', ids)
       .order('chunk_index')
+
     for (const ch of chunks ?? []) {
       contentMap[ch.document_id] = (contentMap[ch.document_id] ? contentMap[ch.document_id] + '\n' : '') + ch.content
+      chunkCount[ch.document_id] = (chunkCount[ch.document_id] ?? 0) + 1
+    }
+
+    // Try to count embedded chunks (requires knowledge-embeddings.sql to be applied)
+    const { data: embedded, error: embErr } = await supabase
+      .from('knowledge_chunks')
+      .select('document_id')
+      .in('document_id', ids)
+      .not('embedding', 'is', null)
+
+    if (!embErr && embedded) {
+      embeddingsReady = true
+      for (const ch of embedded) {
+        embeddedCount[ch.document_id] = (embeddedCount[ch.document_id] ?? 0) + 1
+      }
     }
   }
 
-  return <KnowledgeView documents={documents ?? []} contentMap={contentMap} profile={profile} />
+  return (
+    <KnowledgeView
+      documents={documents ?? []}
+      contentMap={contentMap}
+      chunkCount={chunkCount}
+      embeddedCount={embeddedCount}
+      embeddingsReady={embeddingsReady}
+      profile={profile}
+    />
+  )
 }

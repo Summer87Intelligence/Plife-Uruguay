@@ -219,6 +219,7 @@ export interface KnowledgeChunk {
   content: string
   chunk_index: number
   metadata: Json | null
+  embedding?: number[] | null
   created_at: string
 }
 

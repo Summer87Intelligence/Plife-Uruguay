@@ -96,6 +96,7 @@ export async function runCopilot(input: CopilotInput): Promise<{ data?: AIResult
       userId: user.id,
       knowledge: knowledge.text,
       documentsUsed: knowledge.documentIds,
+      documentNames: knowledge.documentNames,
       contactId: input.contactId,
       companyId: input.companyId,
       opportunityId: input.opportunityId,
@@ -110,7 +111,7 @@ export async function runCopilot(input: CopilotInput): Promise<{ data?: AIResult
       aiInteractionId: result.interactionId ?? null,
     })
 
-    return { data: { response: result.response, riskLevel: result.riskLevel, compliance, knowledgeUsed: result.knowledgeUsed, interactionId: result.interactionId } }
+    return { data: { response: result.response, riskLevel: result.riskLevel, compliance, knowledgeUsed: result.knowledgeUsed, interactionId: result.interactionId, documentsUsed: result.documentsUsed, documentNames: result.documentNames } }
   } catch (error) {
     return { error: error instanceof Error ? error.message : 'Error del copiloto IA' }
   }
@@ -150,6 +151,7 @@ export async function analyzeCompanyB2B(companyId: string): Promise<{ data?: AIR
       userId: user.id,
       knowledge: knowledge.text,
       documentsUsed: knowledge.documentIds,
+      documentNames: knowledge.documentNames,
       companyId,
     })
 
@@ -161,7 +163,7 @@ export async function analyzeCompanyB2B(companyId: string): Promise<{ data?: AIR
       aiInteractionId: result.interactionId ?? null,
     })
 
-    return { data: { response: result.response, riskLevel: result.riskLevel, compliance, knowledgeUsed: result.knowledgeUsed, interactionId: result.interactionId } }
+    return { data: { response: result.response, riskLevel: result.riskLevel, compliance, knowledgeUsed: result.knowledgeUsed, interactionId: result.interactionId, documentsUsed: result.documentsUsed, documentNames: result.documentNames } }
   } catch (error) {
     return { error: error instanceof Error ? error.message : 'Error del análisis IA' }
   }
@@ -201,6 +203,7 @@ export async function runCampaignAI(campaignId: string, task: CampaignAITask): P
       userId: user.id,
       knowledge: knowledge.text,
       documentsUsed: knowledge.documentIds,
+      documentNames: knowledge.documentNames,
       campaignId,
     })
 
@@ -212,7 +215,7 @@ export async function runCampaignAI(campaignId: string, task: CampaignAITask): P
       aiInteractionId: result.interactionId ?? null,
     })
 
-    return { data: { response: result.response, riskLevel: result.riskLevel, compliance, knowledgeUsed: result.knowledgeUsed, interactionId: result.interactionId } }
+    return { data: { response: result.response, riskLevel: result.riskLevel, compliance, knowledgeUsed: result.knowledgeUsed, interactionId: result.interactionId, documentsUsed: result.documentsUsed, documentNames: result.documentNames } }
   } catch (error) {
     return { error: error instanceof Error ? error.message : 'Error del agente de campañas' }
   }
