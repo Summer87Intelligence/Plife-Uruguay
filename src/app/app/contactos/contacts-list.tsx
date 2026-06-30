@@ -66,8 +66,9 @@ export function ContactsList({ contacts, profile }: ContactsListProps) {
       {filtered.length === 0 ? (
         <EmptyState
           icon={Search}
-          title={search ? 'Sin resultados' : 'No hay contactos'}
-          description={search ? 'Probá con otro término de búsqueda' : 'Agregá tu primer contacto para empezar'}
+          title={search ? 'Sin resultados' : 'Todavía no cargaste contactos'}
+          description={search ? 'Probá con otro término de búsqueda' : 'Centralizá acá a las personas con las que trabaja tu equipo comercial: prospectos, referidos y clientes.'}
+          example={!search ? 'Cargá a “Juan Pérez”, gerente de una pyme que pidió información sobre un seguro de vida, y registrá su próximo seguimiento.' : undefined}
           action={!search ? (
             <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Nuevo contacto</Button>
           ) : undefined}

@@ -81,7 +81,14 @@ export function PipelineView({ opportunities, profile }: PipelineViewProps) {
       ) : (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
           {opportunities.length === 0 ? (
-            <EmptyState icon={TrendingUp} title="Sin oportunidades" description="Creá tu primera oportunidad" action={<Button onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Nueva oportunidad</Button>} className="py-12" />
+            <EmptyState
+              icon={TrendingUp}
+              title="Todavía no hay oportunidades"
+              description="Convertí el interés de un contacto o empresa en una oportunidad y seguí su avance por el pipeline comercial."
+              example="“Seguro de vida – Familia González”: detectaste la necesidad en una reunión y la movés de etapa hasta el cierre."
+              action={<Button onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Nueva oportunidad</Button>}
+              className="py-12"
+            />
           ) : (
             <ul className="divide-y divide-gray-50">
               {opportunities.map(opp => (

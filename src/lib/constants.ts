@@ -1,4 +1,4 @@
-import type { ContactStatus, CompanyB2BStatus, OpportunityStage, RiskLevel, ActivityType, CampaignStatus, UserRole } from '@/types/database'
+import type { ContactStatus, CompanyB2BStatus, OpportunityStage, RiskLevel, ActivityType, CampaignStatus, CampaignType, UserRole } from '@/types/database'
 
 export const CONTACT_STATUS_LABELS: Record<ContactStatus, string> = {
   nuevo: 'Nuevo',
@@ -109,6 +109,29 @@ export const CAMPAIGN_STATUS_LABELS: Record<CampaignStatus, string> = {
   pausada: 'Pausada',
   finalizada: 'Finalizada',
   archivada: 'Archivada',
+}
+
+export const CAMPAIGN_STATUS_COLORS: Record<CampaignStatus, string> = {
+  borrador: 'bg-gray-100 text-gray-700',
+  activa: 'bg-green-100 text-green-800',
+  pausada: 'bg-yellow-100 text-yellow-800',
+  finalizada: 'bg-blue-100 text-blue-800',
+  archivada: 'bg-gray-100 text-gray-500',
+}
+
+export const CAMPAIGN_TYPE_LABELS: Record<CampaignType, string> = {
+  duenos_pymes: 'Dueños de Pymes',
+  empresas_familiares: 'Empresas familiares',
+  estudios_contables: 'Estudios contables',
+  estudios_juridicos: 'Estudios jurídicos',
+  clinicas: 'Clínicas / Salud',
+  empresas_tech: 'Empresas tech',
+  constructoras: 'Constructoras',
+  clubes_asociaciones: 'Clubes y asociaciones',
+  profesionales_independientes: 'Profesionales independientes',
+  ejecutivos: 'Ejecutivos',
+  reclutamiento_asesores: 'Reclutamiento de asesores',
+  general: 'General',
 }
 
 export const ROLE_LABELS: Record<UserRole, string> = {

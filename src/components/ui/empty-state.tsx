@@ -5,11 +5,12 @@ interface EmptyStateProps {
   icon: LucideIcon
   title: string
   description?: string
+  example?: string
   action?: React.ReactNode
   className?: string
 }
 
-export function EmptyState({ icon: Icon, title, description, action, className }: EmptyStateProps) {
+export function EmptyState({ icon: Icon, title, description, example, action, className }: EmptyStateProps) {
   return (
     <div className={cn('flex flex-col items-center justify-center py-16 text-center', className)}>
       <div className="rounded-2xl bg-gray-50 p-5 mb-4">
@@ -18,6 +19,11 @@ export function EmptyState({ icon: Icon, title, description, action, className }
       <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
       {description && <p className="mt-1 text-sm text-gray-500 max-w-xs">{description}</p>}
       {action && <div className="mt-4">{action}</div>}
+      {example && (
+        <p className="mt-5 text-xs text-gray-400 max-w-sm border-t border-gray-100 pt-4">
+          <span className="font-medium text-gray-500">Ejemplo: </span>{example}
+        </p>
+      )}
     </div>
   )
 }

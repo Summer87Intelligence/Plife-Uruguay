@@ -53,8 +53,9 @@ export function CampaignsList({ campaigns, profile }: CampaignsListProps) {
       {campaigns.length === 0 ? (
         <EmptyState
           icon={Megaphone}
-          title="Sin campañas"
-          description="Creá una campaña para organizar tus acciones comerciales por segmento"
+          title="Todavía no hay campañas"
+          description="Organizá tus acciones comerciales por segmento, con mensaje, guion y objetivos claros para todo el equipo."
+          example="Campaña “Dueños de pymes”: definís el mensaje de apertura, el guion de llamada y la meta de reuniones del trimestre."
           action={canManage ? <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Nueva campaña</Button> : undefined}
         />
       ) : (

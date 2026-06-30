@@ -85,9 +85,10 @@ export function RadarB2BView({ companies, profile }: RadarB2BViewProps) {
       {filtered.length === 0 ? (
         <EmptyState
           icon={Radar}
-          title="No hay empresas en el radar"
-          description="Cargá empresas manualmente o usá el Copiloto IA para analizar oportunidades B2B"
-          action={<Button onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Cargar empresa</Button>}
+          title={search ? 'Sin resultados' : 'El radar está vacío'}
+          description={search ? 'Probá con otro término o rubro' : 'Detectá y priorizá empresas con potencial comercial para enfocar el esfuerzo del equipo donde hay más oportunidad.'}
+          example={!search ? 'Cargás una constructora en crecimiento y el radar te ayuda a priorizarla según su score B2B antes de contactarla.' : undefined}
+          action={!search ? <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Cargar empresa</Button> : undefined}
         />
       ) : (
         <div className="space-y-3">

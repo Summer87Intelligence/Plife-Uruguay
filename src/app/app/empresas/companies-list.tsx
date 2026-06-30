@@ -54,8 +54,9 @@ export function CompaniesList({ companies, profile }: CompaniesListProps) {
       {filtered.length === 0 ? (
         <EmptyState
           icon={Building2}
-          title={search ? 'Sin resultados' : 'No hay empresas'}
-          description={search ? 'Probá con otro término' : 'Cargá empresas manualmente o usá el Radar B2B'}
+          title={search ? 'Sin resultados' : 'Todavía no cargaste empresas'}
+          description={search ? 'Probá con otro término' : 'Registrá las empresas que querés trabajar en B2B para ordenar tu prospección y detectar oportunidades.'}
+          example={!search ? 'Cargá un estudio contable de 25 empleados y vinculá a su socio fundador como contacto clave.' : undefined}
           action={!search ? <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Nueva empresa</Button> : undefined}
         />
       ) : (
