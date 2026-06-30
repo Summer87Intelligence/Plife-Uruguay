@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import { CampaignForm } from '../campaign-form'
+import { CampaignAIDialog } from './campaign-ai'
 import { updateCampaignStatus } from '@/domains/campaigns/actions'
 import { CAMPAIGN_STATUS_LABELS } from '@/lib/constants'
 import type { Campaign } from '@/types/database'
@@ -26,6 +27,7 @@ export function CampaignActions({ campaign }: { campaign: Campaign }) {
       <div className="w-40">
         <Select value={campaign.status} onValueChange={handleStatusChange} options={statusOptions} />
       </div>
+      <CampaignAIDialog campaignId={campaign.id} />
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogTrigger asChild>
           <Button variant="outline" size="sm"><Pencil className="h-4 w-4" />Editar</Button>

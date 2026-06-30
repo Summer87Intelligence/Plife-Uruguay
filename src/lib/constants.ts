@@ -1,4 +1,4 @@
-import type { ContactStatus, CompanyB2BStatus, OpportunityStage, RiskLevel, ActivityType, CampaignStatus, CampaignType, UserRole } from '@/types/database'
+import type { ContactStatus, CompanyB2BStatus, OpportunityStage, RiskLevel, ActivityType, CampaignStatus, CampaignType, UserRole, ComplianceAction } from '@/types/database'
 
 export const CONTACT_STATUS_LABELS: Record<ContactStatus, string> = {
   nuevo: 'Nuevo',
@@ -90,6 +90,20 @@ export const RISK_LEVEL_COLORS: Record<RiskLevel, string> = {
   medio: 'bg-yellow-100 text-yellow-800',
   alto: 'bg-orange-100 text-orange-800',
   critico: 'bg-red-100 text-red-800',
+}
+
+export const COMPLIANCE_ACTION_LABELS: Record<ComplianceAction, string> = {
+  aprobado: 'Aprobado',
+  modificado: 'Requiere ajustes',
+  revision_requerida: 'Revisión requerida',
+  bloqueado: 'Bloqueado',
+}
+
+export const COMPLIANCE_ACTION_COLORS: Record<ComplianceAction, string> = {
+  aprobado: 'bg-green-100 text-green-800',
+  modificado: 'bg-yellow-100 text-yellow-800',
+  revision_requerida: 'bg-orange-100 text-orange-800',
+  bloqueado: 'bg-red-100 text-red-800',
 }
 
 export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {

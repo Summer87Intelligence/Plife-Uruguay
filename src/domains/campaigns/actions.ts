@@ -78,6 +78,33 @@ export async function updateCampaign(id: string, data: Partial<CampaignFormData>
   return { data: campaign }
 }
 
+// Saves AI-generated material into the campaign, only when the user confirms.
+export async function saveCampaignAIField(
+  id: string,
+  task: 'mensaje_inicial' | 'guion_llamada' | 'objeciones' | 'secuencia_seguimiento',
+  content: string
+) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'No autenticado' }
+
+  const update: Record<string, unknown> = {}
+  if (task === 'mensaje_inicial') update.initial_message = content
+  else if (task === 'guion_llamada') update.call_script = content
+  else if (task === 'objeciones') update.expected_objections = content.split('\n').map(l => l.trim()).filter(Boolean)
+  else if (task === 'secuencia_seguimiento') update.follow_up_sequence = { text: content }
+
+  const { error } = await supabase
+    .from('campaigns')
+    .update(update as Partial<Campaign>)
+    .eq('id', id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath(`/app/campanas/${id}`)
+  return { success: true }
+}
+
 export async function updateCampaignStatus(id: string, status: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

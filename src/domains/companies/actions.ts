@@ -108,6 +108,38 @@ export async function updateCompany(id: string, data: Partial<CompanyFormData>) 
   return { data: company }
 }
 
+// Persists B2B suggestions reviewed by the advisor (human-in-the-loop).
+export async function saveCompanyB2BSuggestions(id: string, fields: {
+  b2b_score?: number | null
+  commercial_angle?: string | null
+  ideal_contact?: string | null
+  risk_notes?: string | null
+  opportunity_detected?: string | null
+}) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'No autenticado' }
+
+  const update: Record<string, unknown> = { updated_by: user.id }
+  if (fields.b2b_score !== undefined) update.b2b_score = fields.b2b_score
+  if (fields.commercial_angle !== undefined) update.commercial_angle = fields.commercial_angle || null
+  if (fields.ideal_contact !== undefined) update.ideal_contact = fields.ideal_contact || null
+  if (fields.risk_notes !== undefined) update.risk_notes = fields.risk_notes || null
+  if (fields.opportunity_detected !== undefined) update.opportunity_detected = fields.opportunity_detected || null
+
+  const { error } = await supabase
+    .from('companies')
+    .update(update as Partial<Company>)
+    .eq('id', id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/app/empresas')
+  revalidatePath('/app/radar-b2b')
+  revalidatePath(`/app/empresas/${id}`)
+  return { success: true }
+}
+
 export async function associateCompanyToCampaign(id: string, campaign_id: string | null) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import { Timeline } from '@/components/commercial/timeline'
 import type { TimelineActivity } from '@/components/commercial/timeline'
 import { ActivityForm } from '@/components/commercial/activity-form'
+import { AIAssistantDialog } from '@/components/commercial/ai-assistant-dialog'
+import { runCopilot, saveAIAsActivity } from '@/domains/ai/actions'
 import { ContactForm } from '../contact-form'
 import { OpportunityForm } from '../../oportunidades/opportunity-form'
 import {
@@ -82,6 +84,18 @@ export function ContactDetail({ contact, activities, opportunities, companies }:
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <AIAssistantDialog
+            triggerLabel="Preparar con IA"
+            title="Copiloto — contacto"
+            description={`${contact.first_name} ${contact.last_name}`}
+            actions={[
+              { id: 'preparar', label: 'Preparar contacto', run: () => runCopilot({ helpType: 'preparar_contacto', contactId: contact.id }) },
+              { id: 'seguimiento', label: 'Mensaje de seguimiento', run: () => runCopilot({ helpType: 'seguimiento', contactId: contact.id }) },
+              { id: 'resumir', label: 'Resumir notas', run: () => runCopilot({ helpType: 'resumir_notas', contactId: contact.id }) },
+              { id: 'proximo', label: 'Próximo paso', run: () => runCopilot({ helpType: 'proximo_paso', contactId: contact.id }) },
+            ]}
+            onSaveActivity={async (content) => { await saveAIAsActivity({ title: 'Copiloto IA', content, contactId: contact.id }); router.refresh() }}
+          />
           <Dialog open={editOpen} onOpenChange={setEditOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm"><Pencil className="h-4 w-4" />Editar</Button>

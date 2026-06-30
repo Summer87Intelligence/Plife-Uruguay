@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import { Timeline } from '@/components/commercial/timeline'
 import type { TimelineActivity } from '@/components/commercial/timeline'
 import { ActivityForm } from '@/components/commercial/activity-form'
+import { AIAssistantDialog } from '@/components/commercial/ai-assistant-dialog'
+import { runCopilot, saveAIAsActivity } from '@/domains/ai/actions'
 import { OpportunityForm } from '../opportunity-form'
 import { OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS, RISK_LEVEL_LABELS, RISK_LEVEL_COLORS, PIPELINE_STAGES, CLOSED_STAGES } from '@/lib/constants'
 import { formatDate } from '@/lib/utils'
@@ -127,6 +129,18 @@ export function OpportunityDetail({ opportunity, activities, advisors, campaign 
           </div>
         </div>
         <div className="flex gap-2">
+          <AIAssistantDialog
+            triggerLabel="Asistir con IA"
+            title="Copiloto — oportunidad"
+            description={opportunity.title}
+            actions={[
+              { id: 'proximo', label: 'Sugerir próximo paso', run: () => runCopilot({ helpType: 'proximo_paso', opportunityId: opportunity.id }) },
+              { id: 'reunion', label: 'Preparar reunión', run: () => runCopilot({ helpType: 'preparar_reunion', opportunityId: opportunity.id }) },
+              { id: 'seguimiento', label: 'Generar seguimiento', run: () => runCopilot({ helpType: 'seguimiento', opportunityId: opportunity.id }) },
+              { id: 'objecion', label: 'Responder objeción', run: () => runCopilot({ helpType: 'objecion', opportunityId: opportunity.id }) },
+            ]}
+            onSaveActivity={async (content) => { await saveAIAsActivity({ title: 'Copiloto IA', content, opportunityId: opportunity.id }); router.refresh() }}
+          />
           <Dialog open={editOpen} onOpenChange={setEditOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm"><Pencil className="h-4 w-4" />Editar</Button>

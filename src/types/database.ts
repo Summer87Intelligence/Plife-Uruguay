@@ -401,7 +401,7 @@ export interface Database {
       campaigns: TableDef<Campaign>
       knowledge_documents: TableDef<KnowledgeDocument>
       knowledge_chunks: TableDef<KnowledgeChunk>
-      ai_interactions: TableDef<AIInteraction>
+      ai_interactions: TableDef<AIInteraction, [Rel<'ai_interactions_user_id_fkey', 'user_id', 'profiles'>]>
       ai_prompt_versions: TableDef<AIPromptVersion>
       compliance_rules: TableDef<ComplianceRule>
       compliance_reviews: TableDef<ComplianceReview>

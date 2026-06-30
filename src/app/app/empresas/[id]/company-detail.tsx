@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import { Timeline } from '@/components/commercial/timeline'
 import type { TimelineActivity } from '@/components/commercial/timeline'
 import { ActivityForm } from '@/components/commercial/activity-form'
+import { CompanyAIDialog } from './company-ai'
 import { CompanyForm } from '../company-form'
 import { OpportunityForm } from '../../oportunidades/opportunity-form'
 import { B2B_STATUS_LABELS, B2B_STATUS_COLORS, CONTACT_STATUS_LABELS, CONTACT_STATUS_COLORS, OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS } from '@/lib/constants'
@@ -72,6 +73,7 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
           </div>
         </div>
         <div className="flex gap-2">
+          <CompanyAIDialog company={company} />
           <Dialog open={editOpen} onOpenChange={setEditOpen}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm"><Pencil className="h-4 w-4" />Editar</Button>

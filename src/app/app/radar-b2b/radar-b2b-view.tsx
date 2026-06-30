@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import { B2B_STATUS_LABELS, B2B_STATUS_COLORS } from '@/lib/constants'
 import { CompanyForm } from '../empresas/company-form'
+import { CompanyAIDialog } from '../empresas/[id]/company-ai'
 import type { Profile, Company } from '@/types/database'
 
 interface RadarB2BViewProps {
@@ -42,8 +43,8 @@ export function RadarB2BView({ companies, profile }: RadarB2BViewProps) {
           <p className="text-sm text-gray-500">Empresas detectadas con potencial comercial</p>
         </div>
         <div className="flex gap-2">
-          <Link href="/app/copiloto?mode=b2b">
-            <Button variant="outline"><Bot className="h-4 w-4" /> Analizar con IA</Button>
+          <Link href="/app/copiloto">
+            <Button variant="outline"><Bot className="h-4 w-4" /> Copiloto IA</Button>
           </Link>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
@@ -93,25 +94,28 @@ export function RadarB2BView({ companies, profile }: RadarB2BViewProps) {
       ) : (
         <div className="space-y-3">
           {filtered.map(co => (
-            <Link key={co.id} href={`/app/empresas/${co.id}`} className="flex items-center gap-4 rounded-xl border border-gray-100 bg-white p-4 hover:shadow-md transition-shadow">
-              <div className="h-10 w-10 rounded-lg bg-[#1B3A6B]/5 flex items-center justify-center shrink-0">
-                <Building2 className="h-5 w-5 text-[#1B3A6B]" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-semibold text-gray-900">{co.name}</p>
-                  <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${B2B_STATUS_COLORS[co.b2b_status]}`}>
-                    {B2B_STATUS_LABELS[co.b2b_status]}
-                  </span>
+            <div key={co.id} className="flex items-center gap-4 rounded-xl border border-gray-100 bg-white p-4 hover:shadow-md transition-shadow">
+              <Link href={`/app/empresas/${co.id}`} className="flex items-center gap-4 flex-1 min-w-0">
+                <div className="h-10 w-10 rounded-lg bg-[#1B3A6B]/5 flex items-center justify-center shrink-0">
+                  <Building2 className="h-5 w-5 text-[#1B3A6B]" />
                 </div>
-                <div className="flex items-center gap-3 mt-0.5">
-                  {co.industry && <span className="text-xs text-gray-500">{co.industry}</span>}
-                  {co.estimated_employees && <span className="text-xs text-gray-400">{co.estimated_employees} emp.</span>}
-                  {co.opportunity_detected && (
-                    <span className="text-xs text-[#1B3A6B] font-medium truncate">{co.opportunity_detected}</span>
-                  )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold text-gray-900">{co.name}</p>
+                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${B2B_STATUS_COLORS[co.b2b_status]}`}>
+                      {B2B_STATUS_LABELS[co.b2b_status]}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 mt-0.5">
+                    {co.industry && <span className="text-xs text-gray-500">{co.industry}</span>}
+                    {co.estimated_employees && <span className="text-xs text-gray-400">{co.estimated_employees} emp.</span>}
+                    {co.opportunity_detected && (
+                      <span className="text-xs text-[#1B3A6B] font-medium truncate">{co.opportunity_detected}</span>
+                    )}
+                  </div>
                 </div>
-              </div>
+              </Link>
+              <CompanyAIDialog company={co} />
               <div className="shrink-0 text-right">
                 {co.b2b_score != null ? (
                   <div>
@@ -128,7 +132,7 @@ export function RadarB2BView({ companies, profile }: RadarB2BViewProps) {
                   <span className="text-xs text-gray-300">Sin score</span>
                 )}
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       )}
