@@ -1,9 +1,11 @@
 import Link from 'next/link'
+import type { Route } from 'next'
 import { StatCard } from '@/components/ui/stat-card'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Users, Building2, TrendingUp, Megaphone, AlertCircle, Clock } from 'lucide-react'
+import { Users, Building2, TrendingUp, Megaphone, AlertCircle, Clock, Route as RouteIcon, ArrowRight } from 'lucide-react'
 import { OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS, PIPELINE_STAGES } from '@/lib/constants'
 import { formatRelativeDate } from '@/lib/utils'
+import { isDemoMode } from '@/lib/demo'
 import type { Profile, Opportunity, OpportunityStage, Contact } from '@/types/database'
 
 interface DirectionDashboardProps {
@@ -26,9 +28,22 @@ export function DirectionDashboard({ metrics, recentOpps, stageCounts, globalOve
       <div>
         <h1 className="text-xl font-bold text-gray-900">Vista de Dirección</h1>
         <p className="text-sm text-gray-500 mt-0.5">
-          {new Date().toLocaleDateString('es-UY', { weekday: 'long', day: 'numeric', month: 'long' })}
+          Estado comercial del equipo en tiempo real · {new Date().toLocaleDateString('es-UY', { weekday: 'long', day: 'numeric', month: 'long' })}
         </p>
       </div>
+
+      {isDemoMode() && (
+        <Link href={'/app/demo' as Route} className="block">
+          <div className="flex items-center gap-3 rounded-xl border border-[#1B3A6B]/15 bg-[#1B3A6B]/5 px-4 py-3 hover:bg-[#1B3A6B]/10 transition-colors">
+            <RouteIcon className="h-5 w-5 text-[#1B3A6B] shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-[#1B3A6B]">Recorrido sugerido para la demo</p>
+              <p className="text-xs text-[#1B3A6B]/70">Ocho pasos para mostrar el valor del sistema de punta a punta.</p>
+            </div>
+            <ArrowRight className="h-4 w-4 text-[#1B3A6B] shrink-0" />
+          </div>
+        </Link>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Oportunidades activas" value={metrics.totalOpps} icon={TrendingUp} color="blue" />
@@ -41,7 +56,10 @@ export function DirectionDashboard({ metrics, recentOpps, stageCounts, globalOve
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Pipeline por etapa</CardTitle>
+            <div>
+              <CardTitle>Pipeline por etapa</CardTitle>
+              <p className="text-xs text-gray-400 mt-0.5">Dónde están hoy las oportunidades en el proceso comercial.</p>
+            </div>
             <Link href="/app/oportunidades" className="text-xs text-[#1B3A6B] hover:underline">Ver pipeline completo</Link>
           </div>
         </CardHeader>

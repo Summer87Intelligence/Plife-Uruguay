@@ -122,7 +122,14 @@ export function ComplianceView({ rules, recentReviews, interactions }: Complianc
                     <ShieldCheck className="h-4 w-4" /> Revisar mensaje
                   </Button>
                 </form>
-                <p className="text-xs text-gray-400 mt-3">La revisión determinística funciona sin IA configurada.</p>
+                <button
+                  type="button"
+                  onClick={() => setMessage('Te aprueban seguro y no tiene riesgo, te cubre todo y es mejor que cualquier inversión.')}
+                  className="mt-3 text-xs text-[#1B3A6B] hover:underline"
+                >
+                  Probar con un mensaje riesgoso de ejemplo
+                </button>
+                <p className="text-xs text-gray-400 mt-2">La revisión funciona aunque la IA no esté configurada.</p>
               </CardContent>
             </Card>
 

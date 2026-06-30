@@ -22,6 +22,13 @@ interface CopilotoViewProps {
 
 const helpOptions = (Object.keys(HELP_TYPES) as HelpType[]).map(k => ({ value: k, label: HELP_TYPES[k] }))
 
+const PROMPT_EXAMPLES = [
+  'Preparame una reunión con este dueño de empresa.',
+  'Generá un mensaje consultivo para pedir una reunión.',
+  'Respondé esta objeción: ya tengo seguro.',
+  'Sugerí el próximo paso para esta oportunidad.',
+]
+
 export function CopilotoView({ aiConfigured, contacts, companies, opportunities, campaigns }: CopilotoViewProps) {
   const [helpType, setHelpType] = useState<HelpType>('preparar_contacto')
   const [freeText, setFreeText] = useState('')
@@ -111,8 +118,24 @@ export function CopilotoView({ aiConfigured, contacts, companies, opportunities,
             value={freeText}
             onChange={e => setFreeText(e.target.value)}
             rows={4}
-            placeholder="Ej: el cliente mostró interés en seguro de vida pero dudó por el precio. Quiero un seguimiento que retome la conversación..."
+            placeholder="Ej: el cliente mostró interés pero dudó por el precio. Quiero un seguimiento que retome la conversación..."
           />
+
+          <div>
+            <p className="text-xs font-medium text-gray-500 mb-1.5">Ejemplos para empezar</p>
+            <div className="flex flex-wrap gap-1.5">
+              {PROMPT_EXAMPLES.map(ex => (
+                <button
+                  key={ex}
+                  type="button"
+                  onClick={() => setFreeText(ex)}
+                  className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs text-gray-600 hover:border-[#1B3A6B] hover:text-[#1B3A6B] transition-colors"
+                >
+                  {ex}
+                </button>
+              ))}
+            </div>
+          </div>
 
           <Button type="submit" loading={loading} disabled={!aiConfigured} className="w-full">
             <Sparkles className="h-4 w-4" />

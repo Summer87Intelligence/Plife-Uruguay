@@ -14,7 +14,11 @@ export class AINotConfiguredError extends Error {
 }
 
 export function isAIConfigured(): boolean {
-  return Boolean(process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.trim())
+  const key = process.env.OPENAI_API_KEY?.trim()
+  // Treat empty values and the .env.local placeholder as "not configured" so the
+  // UI shows a clean "IA no configurada" state instead of a provider auth error.
+  if (!key || key === 'your-openai-key-here') return false
+  return key.startsWith('sk-')
 }
 
 export interface ChatRequest {

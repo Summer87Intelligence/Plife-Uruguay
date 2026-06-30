@@ -39,6 +39,14 @@ export default async function CampanaDetailPage({ params }: { params: Promise<{ 
   const linkedCompanies = companies ?? []
   const linkedOpportunities = opportunities ?? []
 
+  const followUpText = (() => {
+    const f = campaign.follow_up_sequence
+    if (f == null) return null
+    if (typeof f === 'string') return f
+    if (typeof f === 'object' && 'text' in f && typeof f.text === 'string') return f.text
+    return null
+  })()
+
   const metrics = [
     { label: 'Objetivos', value: campaign.total_targets },
     { label: 'Contactados', value: campaign.total_contacted },
@@ -154,15 +162,11 @@ export default async function CampanaDetailPage({ params }: { params: Promise<{ 
             </CardContent>
           </Card>
 
-          {campaign.follow_up_sequence != null && (
+          {followUpText && (
             <Card>
               <CardHeader><CardTitle className="flex items-center gap-2"><Clock className="h-4 w-4 text-[#1B3A6B]" />Secuencia de seguimiento</CardTitle></CardHeader>
               <CardContent>
-                <p className="text-sm text-gray-700 whitespace-pre-wrap rounded-lg bg-gray-50 p-4">
-                  {typeof campaign.follow_up_sequence === 'string'
-                    ? campaign.follow_up_sequence
-                    : JSON.stringify(campaign.follow_up_sequence, null, 2)}
-                </p>
+                <p className="text-sm text-gray-700 whitespace-pre-wrap rounded-lg bg-gray-50 p-4">{followUpText}</p>
               </CardContent>
             </Card>
           )}
@@ -172,7 +176,10 @@ export default async function CampanaDetailPage({ params }: { params: Promise<{ 
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><Building2 className="h-4 w-4 text-[#1B3A6B]" />Empresas asociadas ({linkedCompanies.length})</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2"><Building2 className="h-4 w-4 text-[#1B3A6B]" />Empresas asociadas ({linkedCompanies.length})</CardTitle>
+                <Link href="/app/radar-b2b" className="text-xs text-[#1B3A6B] hover:underline">Radar B2B</Link>
+              </div>
             </CardHeader>
             <CardContent>
               {linkedCompanies.length === 0 ? (
@@ -199,7 +206,10 @@ export default async function CampanaDetailPage({ params }: { params: Promise<{ 
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2"><TrendingUp className="h-4 w-4 text-[#1B3A6B]" />Oportunidades ({linkedOpportunities.length})</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2"><TrendingUp className="h-4 w-4 text-[#1B3A6B]" />Oportunidades ({linkedOpportunities.length})</CardTitle>
+                <Link href="/app/oportunidades" className="text-xs text-[#1B3A6B] hover:underline">Ver pipeline</Link>
+              </div>
             </CardHeader>
             <CardContent>
               {linkedOpportunities.length === 0 ? (

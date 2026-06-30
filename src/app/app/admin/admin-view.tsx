@@ -1,9 +1,10 @@
 'use client'
 import { useState } from 'react'
-import { Settings, Users, Bot, Shield } from 'lucide-react'
+import { Settings, Users, Bot, Shield, Sparkles } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Avatar } from '@/components/ui/avatar'
 import { ROLE_LABELS } from '@/lib/constants'
+import { isDemoMode } from '@/lib/demo'
 import type { Profile, Team, AIPromptVersion } from '@/types/database'
 
 interface AdminViewProps {
@@ -28,6 +29,15 @@ export function AdminView({ users, teams, prompts }: AdminViewProps) {
           <p className="text-sm text-gray-500">Gestión de usuarios, equipos y configuración del sistema</p>
         </div>
       </div>
+
+      {isDemoMode() && (
+        <div className="flex items-start gap-3 rounded-xl border border-[#1B3A6B]/15 bg-[#1B3A6B]/5 px-4 py-3">
+          <Sparkles className="h-4 w-4 text-[#1B3A6B] shrink-0 mt-0.5" />
+          <p className="text-sm text-[#1B3A6B]">
+            <strong>Modo demo activo.</strong> Los datos visibles son de demostración. Para ocultar este modo, poné <code className="text-xs">NEXT_PUBLIC_DEMO_MODE=false</code> y reiniciá la app.
+          </p>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex rounded-lg border border-gray-200 bg-white overflow-hidden w-fit">

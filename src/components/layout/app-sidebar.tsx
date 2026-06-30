@@ -1,15 +1,17 @@
 'use client'
 import Link from 'next/link'
+import type { Route } from 'next'
 import { usePathname } from 'next/navigation'
 import {
   Home, Users, Building2, TrendingUp, Radar, Megaphone,
-  Bot, BookOpen, ShieldCheck, GraduationCap, BarChart3, Settings
+  Bot, BookOpen, ShieldCheck, GraduationCap, BarChart3, Settings, Route as RouteIcon
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Avatar } from '@/components/ui/avatar'
+import { isDemoMode } from '@/lib/demo'
 import type { Profile } from '@/types/database'
 
-const icons = { Home, Users, Building2, TrendingUp, Radar, Megaphone, Bot, BookOpen, ShieldCheck, GraduationCap, BarChart3, Settings }
+const icons = { Home, Users, Building2, TrendingUp, Radar, Megaphone, Bot, BookOpen, ShieldCheck, GraduationCap, BarChart3, Settings, RouteIcon }
 
 const navItems = [
   { href: '/app/hoy', label: 'PLIFE Hoy', icon: 'Home' },
@@ -38,11 +40,15 @@ export function AppSidebar({ profile }: AppSidebarProps) {
   const isAdmin = profile.role === 'admin'
   const canSeeDirection = ['admin', 'direccion'].includes(profile.role)
 
-  const visibleItems = navItems.filter(item => {
+  const baseItems = navItems.filter(item => {
     if (ADMIN_ONLY.includes(item.href)) return isAdmin
     if (DIRECTION_ONLY.includes(item.href)) return canSeeDirection
     return true
   })
+
+  const visibleItems = isDemoMode()
+    ? [{ href: '/app/demo', label: 'Recorrido demo', icon: 'RouteIcon' } as const, ...baseItems]
+    : baseItems
 
   return (
     <aside className="flex h-full w-56 flex-col border-r border-gray-100 bg-white">
@@ -67,7 +73,7 @@ export function AppSidebar({ profile }: AppSidebarProps) {
           return (
             <Link
               key={item.href}
-              href={item.href}
+              href={item.href as Route}
               className={cn(
                 'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors mb-0.5',
                 isActive

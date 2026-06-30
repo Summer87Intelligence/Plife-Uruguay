@@ -40,7 +40,7 @@ export function RadarB2BView({ companies, profile }: RadarB2BViewProps) {
             <Radar className="h-5 w-5 text-[#1B3A6B]" />
             Radar B2B
           </h1>
-          <p className="text-sm text-gray-500">Empresas detectadas con potencial comercial</p>
+          <p className="text-sm text-gray-500">Empresas priorizadas por potencial B2B: enfocá el esfuerzo donde hay más oportunidad</p>
         </div>
         <div className="flex gap-2">
           <Link href="/app/copiloto">
@@ -108,11 +108,14 @@ export function RadarB2BView({ companies, profile }: RadarB2BViewProps) {
                   </div>
                   <div className="flex items-center gap-3 mt-0.5">
                     {co.industry && <span className="text-xs text-gray-500">{co.industry}</span>}
-                    {co.estimated_employees && <span className="text-xs text-gray-400">{co.estimated_employees} emp.</span>}
+                    {co.estimated_employees ? <span className="text-xs text-gray-400">{co.estimated_employees} empleados</span> : null}
                     {co.opportunity_detected && (
                       <span className="text-xs text-[#1B3A6B] font-medium truncate">{co.opportunity_detected}</span>
                     )}
                   </div>
+                  {co.commercial_angle && (
+                    <p className="text-xs text-gray-400 mt-0.5 truncate">Ángulo: {co.commercial_angle}</p>
+                  )}
                 </div>
               </Link>
               <CompanyAIDialog company={co} />

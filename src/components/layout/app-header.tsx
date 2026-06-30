@@ -1,9 +1,10 @@
 'use client'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { LogOut, Bell } from 'lucide-react'
+import { LogOut, Bell, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar } from '@/components/ui/avatar'
+import { isDemoMode } from '@/lib/demo'
 import type { Profile } from '@/types/database'
 
 interface AppHeaderProps {
@@ -29,6 +30,11 @@ export function AppHeader({ profile }: AppHeaderProps) {
         </div>
       </div>
       <div className="flex items-center gap-2">
+        {isDemoMode() && (
+          <span className="inline-flex items-center gap-1 rounded-full border border-[#1B3A6B]/15 bg-[#1B3A6B]/5 px-2.5 py-1 text-xs font-medium text-[#1B3A6B]">
+            <Sparkles className="h-3 w-3" /> Demo PLIFE
+          </span>
+        )}
         <Button variant="ghost" size="icon" className="text-gray-500">
           <Bell className="h-4 w-4" />
         </Button>
