@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { devAuthLog, isValidProfile, resolveSessionAndProfile } from '@/lib/auth'
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -21,18 +22,39 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const session = await resolveSessionAndProfile(supabase)
+  const pathname = request.nextUrl.pathname
+  const isAuthPage = pathname.startsWith('/login')
+  const isAppPage = pathname.startsWith('/app')
 
-  const isAuthPage = request.nextUrl.pathname.startsWith('/login')
-  const isAppPage = request.nextUrl.pathname.startsWith('/app')
-
-  if (!user && isAppPage) {
+  if (!session.user && isAppPage) {
+    devAuthLog('middleware redirect', { from: pathname, to: '/login', reason: 'no_session' })
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  if (user && isAuthPage) {
+  if (session.user && isAppPage && !isValidProfile(session)) {
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('error', 'missing_profile')
+    devAuthLog('middleware redirect', {
+      from: pathname,
+      to: loginUrl.pathname + loginUrl.search,
+      reason: session.missingProfile ? 'missing_profile' : 'inactive_profile',
+    })
+    return NextResponse.redirect(loginUrl)
+  }
+
+  if (session.user && isAuthPage && isValidProfile(session)) {
+    devAuthLog('middleware redirect', { from: pathname, to: '/app/hoy', reason: 'valid_session' })
     return NextResponse.redirect(new URL('/app/hoy', request.url))
   }
+
+  devAuthLog('middleware pass', {
+    path: pathname,
+    hasUser: !!session.user,
+    hasProfile: !!session.profile,
+    missingProfile: session.missingProfile,
+    inactiveProfile: session.inactiveProfile,
+  })
 
   return supabaseResponse
 }
