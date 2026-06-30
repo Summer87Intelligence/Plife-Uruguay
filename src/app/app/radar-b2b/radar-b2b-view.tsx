@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import { Radar, Plus, Search, Building2, TrendingUp, Bot } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import { B2B_STATUS_LABELS, B2B_STATUS_COLORS } from '@/lib/constants'
 import { CompanyForm } from '../empresas/company-form'
 import { CompanyAIDialog } from '../empresas/[id]/company-ai'
+import { OpportunityForm } from '../oportunidades/opportunity-form'
 import type { Profile, Company } from '@/types/database'
 
 interface RadarB2BViewProps {
@@ -18,18 +19,26 @@ interface RadarB2BViewProps {
 export function RadarB2BView({ companies, profile }: RadarB2BViewProps) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
+  const [oppCompanyId, setOppCompanyId] = useState<string | null>(null)
 
-  const filtered = companies.filter(c => {
+  const sorted = useMemo(() =>
+    [...companies].sort((a, b) => {
+      if (a.b2b_score == null && b.b2b_score == null) return 0
+      if (a.b2b_score == null) return 1
+      if (b.b2b_score == null) return -1
+      return b.b2b_score - a.b2b_score
+    }), [companies])
+
+  const filtered = useMemo(() => sorted.filter(c => {
     if (!search) return true
     const q = search.toLowerCase()
-    return c.name.toLowerCase().includes(q) || c.industry?.toLowerCase().includes(q)
-  })
+    return c.name.toLowerCase().includes(q) || (c.industry?.toLowerCase().includes(q) ?? false)
+  }), [sorted, search])
 
   const byScore = {
-    alto: filtered.filter(c => (c.b2b_score ?? 0) >= 70),
-    medio: filtered.filter(c => (c.b2b_score ?? 0) >= 40 && (c.b2b_score ?? 0) < 70),
-    bajo: filtered.filter(c => (c.b2b_score ?? 0) < 40),
-    sinScore: filtered.filter(c => c.b2b_score == null),
+    alto: companies.filter(c => (c.b2b_score ?? 0) >= 70),
+    medio: companies.filter(c => (c.b2b_score ?? 0) >= 40 && (c.b2b_score ?? 0) < 70),
+    bajo: companies.filter(c => c.b2b_score == null || (c.b2b_score < 40)),
   }
 
   return (
@@ -40,7 +49,7 @@ export function RadarB2BView({ companies, profile }: RadarB2BViewProps) {
             <Radar className="h-5 w-5 text-[#1B3A6B]" />
             Radar B2B
           </h1>
-          <p className="text-sm text-gray-500">Empresas priorizadas por potencial B2B: enfocá el esfuerzo donde hay más oportunidad</p>
+          <p className="text-sm text-gray-500">Empresas ordenadas por potencial: priorizá donde hay más oportunidad</p>
         </div>
         <div className="flex gap-2">
           <Link href="/app/copiloto">
@@ -62,16 +71,28 @@ export function RadarB2BView({ companies, profile }: RadarB2BViewProps) {
         <div className="rounded-xl border border-green-100 bg-green-50 p-4">
           <p className="text-xs font-medium text-green-700">Score alto (70+)</p>
           <p className="text-2xl font-bold text-green-800 mt-1">{byScore.alto.length}</p>
+          <p className="text-[10px] text-green-600 mt-0.5">Prioridad máxima</p>
         </div>
         <div className="rounded-xl border border-yellow-100 bg-yellow-50 p-4">
           <p className="text-xs font-medium text-yellow-700">Score medio (40-69)</p>
           <p className="text-2xl font-bold text-yellow-800 mt-1">{byScore.medio.length}</p>
+          <p className="text-[10px] text-yellow-600 mt-0.5">En seguimiento</p>
         </div>
         <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
           <p className="text-xs font-medium text-gray-600">Sin score / bajo</p>
-          <p className="text-2xl font-bold text-gray-800 mt-1">{byScore.bajo.length + byScore.sinScore.length}</p>
+          <p className="text-2xl font-bold text-gray-800 mt-1">{byScore.bajo.length}</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">Pendientes de análisis</p>
         </div>
       </div>
+
+      {/* Microcopy contextual */}
+      {byScore.alto.length > 0 && (
+        <div className="rounded-xl border border-[#1B3A6B]/10 bg-[#1B3A6B]/5 px-4 py-3">
+          <p className="text-xs text-[#1B3A6B]">
+            <strong>{byScore.alto.length} empresa{byScore.alto.length > 1 ? 's' : ''} con score alto</strong> — creá una oportunidad en el pipeline o analizalas con el Copiloto IA para preparar el primer contacto.
+          </p>
+        </div>
+      )}
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -83,12 +104,25 @@ export function RadarB2BView({ companies, profile }: RadarB2BViewProps) {
         />
       </div>
 
+      {/* Dialog crear oportunidad */}
+      <Dialog open={!!oppCompanyId} onOpenChange={v => { if (!v) setOppCompanyId(null) }}>
+        <DialogContent title="Nueva oportunidad" description="Asociada a esta empresa">
+          {oppCompanyId && (
+            <OpportunityForm
+              companyId={oppCompanyId}
+              defaultType="b2b"
+              onSuccess={() => setOppCompanyId(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
       {filtered.length === 0 ? (
         <EmptyState
           icon={Radar}
           title={search ? 'Sin resultados' : 'El radar está vacío'}
-          description={search ? 'Probá con otro término o rubro' : 'Detectá y priorizá empresas con potencial comercial para enfocar el esfuerzo del equipo donde hay más oportunidad.'}
-          example={!search ? 'Cargás una constructora en crecimiento y el radar te ayuda a priorizarla según su score B2B antes de contactarla.' : undefined}
+          description={search ? 'Probá con otro nombre o rubro' : 'Detectá y priorizá empresas con potencial comercial para enfocar el esfuerzo del equipo donde hay más oportunidad.'}
+          example={!search ? 'Cargás una constructora en crecimiento y el radar la prioriza por score B2B antes de que la contactes.' : undefined}
           action={!search ? <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Cargar empresa</Button> : undefined}
         />
       ) : (
@@ -100,26 +134,36 @@ export function RadarB2BView({ companies, profile }: RadarB2BViewProps) {
                   <Building2 className="h-5 w-5 text-[#1B3A6B]" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm font-semibold text-gray-900">{co.name}</p>
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${B2B_STATUS_COLORS[co.b2b_status]}`}>
                       {B2B_STATUS_LABELS[co.b2b_status]}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 mt-0.5">
+                  <div className="flex items-center gap-3 mt-0.5 flex-wrap">
                     {co.industry && <span className="text-xs text-gray-500">{co.industry}</span>}
                     {co.estimated_employees ? <span className="text-xs text-gray-400">{co.estimated_employees} empleados</span> : null}
-                    {co.opportunity_detected && (
-                      <span className="text-xs text-[#1B3A6B] font-medium truncate">{co.opportunity_detected}</span>
-                    )}
+                    {co.ideal_contact && <span className="text-xs text-gray-400">Contacto clave: {co.ideal_contact}</span>}
                   </div>
+                  {co.opportunity_detected && (
+                    <p className="text-xs text-[#1B3A6B] font-medium mt-0.5 truncate">{co.opportunity_detected}</p>
+                  )}
                   {co.commercial_angle && (
-                    <p className="text-xs text-gray-400 mt-0.5 truncate">Ángulo: {co.commercial_angle}</p>
+                    <p className="text-xs text-gray-400 mt-0.5 truncate">{co.commercial_angle}</p>
                   )}
                 </div>
               </Link>
-              <CompanyAIDialog company={co} />
-              <div className="shrink-0 text-right">
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => setOppCompanyId(co.id)}
+                  className="inline-flex items-center gap-1 rounded-lg border border-[#1B3A6B]/20 bg-[#1B3A6B]/5 px-2.5 py-1.5 text-xs font-medium text-[#1B3A6B] hover:bg-[#1B3A6B]/10 transition-colors"
+                >
+                  <TrendingUp className="h-3 w-3" />
+                  Oportunidad
+                </button>
+                <CompanyAIDialog company={co} />
+              </div>
+              <div className="shrink-0 text-right ml-1">
                 {co.b2b_score != null ? (
                   <div>
                     <div className={`inline-flex items-center justify-center h-10 w-10 rounded-full font-bold text-sm ${

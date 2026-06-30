@@ -12,14 +12,14 @@ const DEMO_COMPANY = '/app/empresas/b0000000-0000-0000-0000-000000000002'
 const DEMO_OPPORTUNITY = '/app/oportunidades/d0000000-0000-0000-0000-000000000004'
 
 const steps = [
-  { n: 1, icon: Radar, title: 'Ver empresas B2B priorizadas', desc: 'El Radar ordena las empresas por potencial comercial para enfocar el esfuerzo donde más rinde.', href: '/app/radar-b2b', cta: 'Abrir Radar B2B' },
-  { n: 2, icon: Building2, title: 'Abrir una empresa', desc: 'Entrá a una empresa priorizada y revisá su inteligencia comercial: ángulo, contacto ideal y riesgo.', href: DEMO_COMPANY, cta: 'Abrir empresa demo' },
-  { n: 3, icon: Sparkles, title: 'Analizar con IA', desc: 'El copiloto sugiere potencial, ángulo y próximo paso usando solo los datos cargados. Si la IA no está configurada, se muestra un estado claro.', href: DEMO_COMPANY, cta: 'Analizar empresa' },
-  { n: 4, icon: TrendingUp, title: 'Crear una oportunidad', desc: 'Convertí el interés en una oportunidad concreta dentro del pipeline.', href: DEMO_OPPORTUNITY, cta: 'Ver oportunidad demo' },
-  { n: 5, icon: CalendarClock, title: 'Preparar la reunión', desc: 'El copiloto arma objetivo, enfoque, preguntas y un mensaje sugerido para la reunión.', href: DEMO_OPPORTUNITY, cta: 'Preparar con IA' },
-  { n: 6, icon: ShieldCheck, title: 'Revisar compliance', desc: 'Probá un mensaje riesgoso y mirá cómo el sistema lo bloquea y sugiere una versión segura.', href: '/app/compliance', cta: 'Abrir Compliance' },
-  { n: 7, icon: ClipboardList, title: 'Registrar la actividad', desc: 'Cada interacción queda documentada en el timeline de la oportunidad y el contacto.', href: DEMO_OPPORTUNITY, cta: 'Ver timeline' },
-  { n: 8, icon: BarChart3, title: 'Ver el impacto en Dirección', desc: 'El tablero de Dirección refleja pipeline, campañas, seguimientos vencidos y alertas comerciales.', href: '/app/hoy', cta: 'Ver tablero' },
+  { n: 1, icon: BarChart3, title: 'PLIFE Hoy — el pulso del equipo', desc: 'El tablero muestra lo que importa hoy: seguimientos vencidos, reuniones pendientes y alertas del pipeline. El asesor empieza acá para priorizar su jornada.', href: '/app/hoy', cta: 'Ver PLIFE Hoy', value: 'Visibilidad inmediata del pipeline activo' },
+  { n: 2, icon: Radar, title: 'Radar B2B — dónde enfocar el esfuerzo', desc: 'Las empresas aparecen ordenadas por score B2B. Con un vistazo sabés dónde hay más oportunidad comercial sin revisar empresa por empresa.', href: '/app/radar-b2b', cta: 'Abrir Radar B2B', value: 'Priorización automática por potencial' },
+  { n: 3, icon: Building2, title: 'Empresa priorizada — inteligencia comercial', desc: 'Revisá el ángulo de apertura, el contacto clave y la oportunidad detectada. Todo lo que necesitás para entrar preparado al primer contacto.', href: DEMO_COMPANY, cta: 'Abrir empresa demo', value: 'Contexto para preparar el primer contacto' },
+  { n: 4, icon: TrendingUp, title: 'Pipeline — la oportunidad en movimiento', desc: 'Desde la empresa se crea una oportunidad en el pipeline. Cada etapa tiene valor estimado, riesgo y próxima acción documentada.', href: DEMO_OPPORTUNITY, cta: 'Ver oportunidad demo', value: 'Gestión visual del ciclo de venta' },
+  { n: 5, icon: CalendarClock, title: 'Copiloto IA — preparar la reunión', desc: 'Antes de la reunión, el copiloto sugiere objetivo, enfoque, preguntas clave y un mensaje de apertura. Todo basado en los datos reales de la oportunidad.', href: DEMO_OPPORTUNITY, cta: 'Preparar con IA', value: 'Menos preparación manual, más calidad' },
+  { n: 6, icon: ShieldCheck, title: 'Compliance — mensajes dentro del marco', desc: 'Probá enviar un mensaje con promesas de rentabilidad o comparaciones prohibidas. El sistema lo intercepta, lo califica y sugiere una versión segura.', href: '/app/compliance', cta: 'Abrir Compliance', value: 'Protección regulatoria automática' },
+  { n: 7, icon: ClipboardList, title: 'Campañas B2B — acción coordinada del equipo', desc: 'Las campañas organizan la prospección masiva por segmento. Todos los asesores usan el mismo guion, mensaje y métricas de conversión.', href: '/app/campanas', cta: 'Ver Campañas', value: 'Coordinación y medición del equipo' },
+  { n: 8, icon: Sparkles, title: 'Dirección — resultados en tiempo real', desc: 'El módulo de Dirección consolida pipeline total, campañas activas, score promedio y seguimientos vencidos. El líder toma decisiones con datos actualizados.', href: '/app/direccion', cta: 'Ver Dirección', value: 'Gobernanza comercial sin reportes manuales' },
 ]
 
 export default async function DemoPage() {
@@ -56,6 +56,7 @@ export default async function DemoPage() {
                   <step.icon className="h-4 w-4 text-[#1B3A6B]" /> {step.title}
                 </p>
                 <p className="text-sm text-gray-500 mt-0.5">{step.desc}</p>
+                <p className="text-xs font-medium text-[#1B3A6B] mt-1.5">{step.value}</p>
               </div>
               <Link
                 href={step.href as Route}

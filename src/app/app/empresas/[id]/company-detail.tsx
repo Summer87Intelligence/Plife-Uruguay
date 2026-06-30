@@ -21,7 +21,7 @@ interface CompanyDetailProps {
   company: Company
   contacts: Pick<Contact, 'id' | 'first_name' | 'last_name' | 'position' | 'status'>[]
   activities: (TimelineActivity & Partial<Activity>)[]
-  opportunities: Pick<Opportunity, 'id' | 'title' | 'stage' | 'type'>[]
+  opportunities: Pick<Opportunity, 'id' | 'title' | 'stage' | 'type' | 'next_action' | 'next_action_date'>[]
   campaigns: { id: string; name: string }[]
   profile: Profile
 }
@@ -124,6 +124,30 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
           </Dialog>
         </div>
       </div>
+
+      {/* Por qué importa — strip de inteligencia */}
+      {(company.opportunity_detected || company.commercial_angle || company.ideal_contact) && (
+        <div className="rounded-xl border border-[#1B3A6B]/15 bg-[#1B3A6B]/5 px-5 py-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {company.opportunity_detected && (
+            <div>
+              <p className="text-[10px] font-semibold text-[#1B3A6B] uppercase tracking-wider mb-1">Oportunidad detectada</p>
+              <p className="text-sm text-gray-800">{company.opportunity_detected}</p>
+            </div>
+          )}
+          {company.commercial_angle && (
+            <div>
+              <p className="text-[10px] font-semibold text-[#1B3A6B] uppercase tracking-wider mb-1">Ángulo comercial</p>
+              <p className="text-sm text-gray-800">{company.commercial_angle}</p>
+            </div>
+          )}
+          {company.ideal_contact && (
+            <div>
+              <p className="text-[10px] font-semibold text-[#1B3A6B] uppercase tracking-wider mb-1">Contacto ideal</p>
+              <p className="text-sm text-gray-800">{company.ideal_contact}</p>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="space-y-4">

@@ -1,23 +1,17 @@
 'use client'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import type { Route } from 'next'
-import { Plus, Megaphone, Users, TrendingUp } from 'lucide-react'
+import { Plus, Megaphone, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
-import { CAMPAIGN_STATUS_LABELS } from '@/lib/constants'
+import { CAMPAIGN_STATUS_LABELS, CAMPAIGN_STATUS_COLORS } from '@/lib/constants'
 import { formatDate } from '@/lib/utils'
 import { CampaignForm } from './campaign-form'
 import type { Profile, Campaign } from '@/types/database'
 
-const statusColors: Record<string, string> = {
-  borrador: 'bg-gray-100 text-gray-700',
-  activa: 'bg-green-100 text-green-800',
-  pausada: 'bg-yellow-100 text-yellow-800',
-  finalizada: 'bg-blue-100 text-blue-800',
-  archivada: 'bg-gray-100 text-gray-500',
-}
+const FILTER_SELECT = 'h-8 rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#1B3A6B] cursor-pointer'
 
 interface CampaignsListProps {
   campaigns: Campaign[]
@@ -26,17 +20,34 @@ interface CampaignsListProps {
 
 export function CampaignsList({ campaigns, profile }: CampaignsListProps) {
   const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
   const canManage = ['admin', 'direccion', 'lider_comercial'].includes(profile.role)
 
-  const active = campaigns.filter(c => c.status === 'activa')
-  const others = campaigns.filter(c => c.status !== 'activa')
+  const filtered = useMemo(() => campaigns.filter(c => {
+    if (statusFilter && c.status !== statusFilter) return false
+    if (!search) return true
+    const q = search.toLowerCase()
+    return (
+      c.name.toLowerCase().includes(q) ||
+      (c.target_segment?.toLowerCase().includes(q) ?? false)
+    )
+  }), [campaigns, statusFilter, search])
+
+  const hasFilters = !!(search || statusFilter)
+  const countLabel = hasFilters
+    ? `${filtered.length} de ${campaigns.length} campañas`
+    : `${campaigns.filter(c => c.status === 'activa').length} activas · ${campaigns.length} en total`
+
+  const active = filtered.filter(c => c.status === 'activa')
+  const others = filtered.filter(c => c.status !== 'activa')
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Campañas B2B</h1>
-          <p className="text-sm text-gray-500">{campaigns.length} campañas · {active.length} activas</p>
+          <p className="text-sm text-gray-500">{countLabel}</p>
         </div>
         {canManage && (
           <Dialog open={open} onOpenChange={setOpen}>
@@ -50,13 +61,54 @@ export function CampaignsList({ campaigns, profile }: CampaignsListProps) {
         )}
       </div>
 
-      {campaigns.length === 0 ? (
+      {/* Búsqueda */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <input
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Buscar campaña o segmento..."
+          className="w-full h-9 pl-9 pr-4 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B] focus:border-transparent"
+        />
+      </div>
+
+      {/* Filtros */}
+      <div className="flex flex-wrap gap-2">
+        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className={FILTER_SELECT}>
+          <option value="">Todos los estados</option>
+          {Object.entries(CAMPAIGN_STATUS_LABELS).map(([v, l]) => (
+            <option key={v} value={v}>{l}</option>
+          ))}
+        </select>
+        {hasFilters && (
+          <button
+            onClick={() => { setSearch(''); setStatusFilter('') }}
+            className="h-8 px-3 text-xs text-gray-400 hover:text-gray-600 rounded-lg border border-gray-100 bg-white"
+          >
+            Limpiar filtros
+          </button>
+        )}
+      </div>
+
+      {filtered.length === 0 ? (
         <EmptyState
           icon={Megaphone}
-          title="Todavía no hay campañas"
-          description="Organizá tus acciones comerciales por segmento, con mensaje, guion y objetivos claros para todo el equipo."
-          example="Campaña “Dueños de pymes”: definís el mensaje de apertura, el guion de llamada y la meta de reuniones del trimestre."
-          action={canManage ? <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Nueva campaña</Button> : undefined}
+          title={hasFilters ? 'Sin resultados para estos filtros' : 'Todavía no hay campañas'}
+          description={
+            hasFilters
+              ? 'Probá ajustando los filtros o la búsqueda'
+              : 'Organizá tus acciones comerciales por segmento, con mensaje, guion y objetivos claros para todo el equipo.'
+          }
+          example={
+            !hasFilters
+              ? 'Campaña "Dueños de pymes": definís el mensaje de apertura, el guion de llamada y la meta de reuniones del trimestre.'
+              : undefined
+          }
+          action={
+            canManage && !hasFilters
+              ? <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Nueva campaña</Button>
+              : undefined
+          }
         />
       ) : (
         <div className="space-y-4">
@@ -70,7 +122,7 @@ export function CampaignsList({ campaigns, profile }: CampaignsListProps) {
           )}
           {others.length > 0 && (
             <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Otras</p>
+              {active.length > 0 && <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Otras</p>}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {others.map(c => <CampaignCard key={c.id} campaign={c} />)}
               </div>
@@ -96,7 +148,7 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
             <p className="text-xs text-gray-500 mt-0.5">{campaign.target_segment}</p>
           )}
         </div>
-        <span className={`ml-2 shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColors[campaign.status] ?? 'bg-gray-100 text-gray-700'}`}>
+        <span className={`ml-2 shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${CAMPAIGN_STATUS_COLORS[campaign.status] ?? 'bg-gray-100 text-gray-700'}`}>
           {CAMPAIGN_STATUS_LABELS[campaign.status]}
         </span>
       </div>
@@ -117,7 +169,7 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
 
       {campaign.start_date && (
         <p className="text-xs text-gray-400 mt-3">
-          {formatDate(campaign.start_date)} {campaign.end_date ? `→ ${formatDate(campaign.end_date)}` : '(sin fecha fin)'}
+          {formatDate(campaign.start_date)}{campaign.end_date ? ` → ${formatDate(campaign.end_date)}` : ' (sin fecha fin)'}
         </p>
       )}
     </Link>

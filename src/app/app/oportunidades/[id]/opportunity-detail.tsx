@@ -110,6 +110,9 @@ export function OpportunityDetail({ opportunity, activities, advisors, campaign 
             )}
           </div>
           <h1 className="text-xl font-bold text-gray-900">{opportunity.title}</h1>
+          {opportunity.estimated_value != null && (
+            <p className="text-2xl font-bold text-[#1B3A6B] mt-1">${opportunity.estimated_value.toLocaleString('es-UY')} <span className="text-sm font-normal text-gray-400">valor estimado</span></p>
+          )}
           <div className="flex flex-wrap items-center gap-3 mt-1">
             {opportunity.contact && (
               <Link href={`/app/contactos/${opportunity.contact.id}`} className="text-sm text-[#1B3A6B] hover:underline">
@@ -175,6 +178,34 @@ export function OpportunityDetail({ opportunity, activities, advisors, campaign 
           </Dialog>
         </div>
       </div>
+
+      {/* Pipeline progress indicator */}
+      {!isClosed && (
+        <div className="rounded-xl border border-gray-100 bg-white p-4">
+          <div className="flex items-center gap-1 overflow-x-auto">
+            {PIPELINE_STAGES.map((stage, i) => {
+              const stageIndex = PIPELINE_STAGES.indexOf(opportunity.stage)
+              const isActive = stage === opportunity.stage
+              const isPast = i < stageIndex
+              return (
+                <div key={stage} className="flex items-center gap-1 shrink-0">
+                  <div className={`flex flex-col items-center ${isActive ? '' : ''}`}>
+                    <div className={`h-2 w-16 rounded-full ${
+                      isActive ? 'bg-[#1B3A6B]' :
+                      isPast ? 'bg-[#1B3A6B]/30' :
+                      'bg-gray-100'
+                    }`} />
+                    {isActive && (
+                      <span className="text-[9px] font-medium text-[#1B3A6B] mt-1 whitespace-nowrap">{OPPORTUNITY_STAGE_LABELS[stage]}</span>
+                    )}
+                  </div>
+                  {i < PIPELINE_STAGES.length - 1 && <div className="w-1" />}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="space-y-4">
