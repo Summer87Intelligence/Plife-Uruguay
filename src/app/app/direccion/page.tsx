@@ -18,6 +18,7 @@ export default async function DireccionPage() {
     { data: stageStats },
     { data: lossReasons },
     { data: recentActivities },
+    { data: topB2BOpps },
   ] = await Promise.all([
     supabase.from('opportunities').select('*', { count: 'exact', head: true }).is('deleted_at', null),
     supabase.from('contacts').select('*', { count: 'exact', head: true }).is('deleted_at', null),
@@ -26,6 +27,13 @@ export default async function DireccionPage() {
     supabase.from('opportunities').select('stage').is('deleted_at', null),
     supabase.from('opportunities').select('loss_reason').not('loss_reason', 'is', null).is('deleted_at', null).limit(50),
     supabase.from('activities').select('*, created_by_profile:profiles!activities_created_by_fkey(full_name)').order('created_at', { ascending: false }).limit(10),
+    supabase.from('opportunities')
+      .select('id, title, stage, estimated_value, next_action, company:companies(id, name, industry, b2b_score, estimated_employees), assigned_profile:profiles!opportunities_assigned_to_fkey(full_name)')
+      .eq('type', 'b2b')
+      .not('stage', 'in', '("ganada","perdida")')
+      .is('deleted_at', null)
+      .order('estimated_value', { ascending: false, nullsFirst: false })
+      .limit(6),
   ])
 
   // Calcular estadísticas por etapa
@@ -44,6 +52,7 @@ export default async function DireccionPage() {
       }}
       stageCounts={stageCounts}
       recentActivities={recentActivities ?? []}
+      topB2BOpps={topB2BOpps ?? []}
     />
   )
 }

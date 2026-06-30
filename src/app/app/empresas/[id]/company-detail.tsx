@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
-import { useState } from 'react'
-import { ArrowLeft, Globe, Link2 as Linkedin, AtSign as Instagram, MapPin, Users, Plus, TrendingUp, Pencil, Target, UserCheck, AlertTriangle, Megaphone } from 'lucide-react'
+import { useState, useTransition } from 'react'
+import { ArrowLeft, Globe, Link2 as Linkedin, AtSign as Instagram, MapPin, Users, Plus, TrendingUp, Pencil, Target, UserCheck, AlertTriangle, Megaphone, CheckCircle2, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Select } from '@/components/ui/select'
@@ -13,7 +13,9 @@ import { CompanyAIDialog } from './company-ai'
 import { CompanyForm } from '../company-form'
 import { OpportunityForm } from '../../oportunidades/opportunity-form'
 import { B2B_STATUS_LABELS, B2B_STATUS_COLORS, CONTACT_STATUS_LABELS, CONTACT_STATUS_COLORS, OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS } from '@/lib/constants'
-import { updateCompanyStatus, associateCompanyToCampaign } from '@/domains/companies/actions'
+import { updateCompanyStatus, associateCompanyToCampaign, saveCompanyB2BSuggestions } from '@/domains/companies/actions'
+import { calcularScoreB2B, nivelColor, nivelLabel } from '@/lib/b2b/scoring'
+import { ICP_NOMBRES } from '@/lib/b2b/icp'
 import { useRouter } from 'next/navigation'
 import type { Profile, Company, Contact, Activity, Opportunity } from '@/types/database'
 
@@ -30,9 +32,13 @@ const statusOptions = Object.entries(B2B_STATUS_LABELS).map(([v, l]) => ({ value
 
 export function CompanyDetail({ company, contacts, activities, opportunities, campaigns }: CompanyDetailProps) {
   const router = useRouter()
+  const [isPending, startTransition] = useTransition()
   const [editOpen, setEditOpen] = useState(false)
   const [activityOpen, setActivityOpen] = useState(false)
   const [oppOpen, setOppOpen] = useState(false)
+  const [savingScore, setSavingScore] = useState(false)
+
+  const b2bScore = calcularScoreB2B(company)
 
   async function handleStatusChange(newStatus: string) {
     await updateCompanyStatus(company.id, newStatus)
@@ -42,6 +48,13 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
   async function handleCampaignChange(campaignId: string) {
     await associateCompanyToCampaign(company.id, campaignId || null)
     router.refresh()
+  }
+
+  async function handleApplyScore() {
+    setSavingScore(true)
+    await saveCompanyB2BSuggestions(company.id, { b2b_score: b2bScore.score })
+    setSavingScore(false)
+    startTransition(() => router.refresh())
   }
 
   const campaignOptions = [{ value: '', label: 'Sin campaña' }, ...campaigns.map(c => ({ value: c.id, label: c.name }))]
@@ -173,6 +186,70 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
                   <Link href={`/app/campanas/${currentCampaign.id}`} className="text-xs text-[#1B3A6B] hover:underline mt-1 inline-block">Ver campaña</Link>
                 )}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* B2B Intelligence */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="h-4 w-4 text-[#1B3A6B]" />Inteligencia B2B
+                </CardTitle>
+                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold ${nivelColor(b2bScore.nivel)}`}>
+                  {b2bScore.score} — {nivelLabel(b2bScore.nivel)}
+                </span>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div>
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">ICP detectado</p>
+                <p className="text-sm font-medium text-[#1B3A6B]">{ICP_NOMBRES[b2bScore.icpSugerido]}</p>
+              </div>
+              {b2bScore.razonesPositivas.slice(0, 3).length > 0 && (
+                <div>
+                  <p className="text-[10px] font-semibold text-green-700 uppercase tracking-wider mb-1 flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3" />Fortalezas
+                  </p>
+                  <ul className="space-y-0.5">
+                    {b2bScore.razonesPositivas.slice(0, 3).map((r, i) => (
+                      <li key={i} className="text-xs text-gray-700 flex items-start gap-1.5">
+                        <span className="text-green-500 shrink-0">·</span>{r}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {b2bScore.riesgos.slice(0, 2).length > 0 && (
+                <div>
+                  <p className="text-[10px] font-semibold text-orange-600 uppercase tracking-wider mb-1 flex items-center gap-1">
+                    <AlertTriangle className="h-3 w-3" />Riesgos
+                  </p>
+                  <ul className="space-y-0.5">
+                    {b2bScore.riesgos.slice(0, 2).map((r, i) => (
+                      <li key={i} className="text-xs text-gray-700 flex items-start gap-1.5">
+                        <span className="text-orange-400 shrink-0">·</span>{r}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <div className="border-t border-gray-50 pt-2">
+                <p className="text-[10px] font-semibold text-[#1B3A6B] uppercase tracking-wider mb-1 flex items-center gap-1">
+                  <ArrowRight className="h-3 w-3" />Próximo paso
+                </p>
+                <p className="text-xs text-gray-700">{b2bScore.proximoPaso}</p>
+              </div>
+              {(company.b2b_score == null || Math.abs(b2bScore.score - company.b2b_score) >= 3) && (
+                <button
+                  disabled={savingScore}
+                  onClick={handleApplyScore}
+                  className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#1B3A6B] px-3 py-2 text-xs font-medium text-white hover:bg-[#1B3A6B]/90 disabled:opacity-50 transition-colors"
+                >
+                  <CheckCircle2 className="h-3 w-3" />
+                  {savingScore ? 'Guardando…' : `Aplicar score sugerido (${b2bScore.score})`}
+                </button>
+              )}
             </CardContent>
           </Card>
 

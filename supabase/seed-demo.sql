@@ -143,7 +143,15 @@ BEGIN
   ('b0000000-0000-0000-0000-000000000008', 'Asociación de Profesionales Unidos', 'Asociación profesional', 'Montevideo, Cordón', 'Mediana', 0, 'Demo PLIFE', 67, 'analizada',
     'Beneficio colectivo para asociados como valor de pertenencia.', 'Presidente o secretario de la comisión',
     'Decisión por comisión directiva (ciclo largo).', 'Plan de beneficios para asociados.',
-    'Más de 300 asociados activos.', NULL, v_owner, v_owner)
+    'Más de 300 asociados activos.', NULL, v_owner, v_owner),
+  ('b0000000-0000-0000-0000-000000000009', 'Pérez & García Abogados', 'Servicios jurídicos / Estudio legal', 'Montevideo, Pocitos', 'Pequeña', 11, 'Demo PLIFE', 79, 'analizada',
+    'Protección de los socios fundadores y beneficio para el equipo legal.', 'Socio senior',
+    'Ciclo de decisión largo, múltiples socios.', 'Plan de protección para socios del estudio jurídico.',
+    'Estudio con clientela corporativa y especialización en derecho societario.', 'c0000000-0000-0000-0000-000000000002', v_owner, v_owner),
+  ('b0000000-0000-0000-0000-000000000010', 'Supermercado Los Andes', 'Comercio / Supermercado', 'Canelones, Las Piedras', 'Mediana', 32, 'Demo PLIFE', 62, 'detectada',
+    'Protección del dueño y plan de beneficios para empleados como diferencial ante competencia.', 'Dueño o gerente general',
+    'Márgenes ajustados típicos del sector supermercadista.', 'Protección del dueño y beneficio colectivo para empleados.',
+    'Negocio familiar de segunda generación, expandiéndose a un segundo local.', 'c0000000-0000-0000-0000-000000000001', v_owner, v_owner)
   ON CONFLICT (id) DO UPDATE SET
     name = EXCLUDED.name, industry = EXCLUDED.industry, location = EXCLUDED.location,
     estimated_size = EXCLUDED.estimated_size, estimated_employees = EXCLUDED.estimated_employees,

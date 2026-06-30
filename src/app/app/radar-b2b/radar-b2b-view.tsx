@@ -1,44 +1,108 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useTransition } from 'react'
 import Link from 'next/link'
-import { Radar, Plus, Search, Building2, TrendingUp, Bot } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import {
+  Radar, Plus, Search, Building2, TrendingUp, ChevronDown, ChevronUp,
+  CheckCircle2, AlertCircle, ArrowRight, Megaphone, Target,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { B2B_STATUS_LABELS, B2B_STATUS_COLORS } from '@/lib/constants'
 import { CompanyForm } from '../empresas/company-form'
-import { CompanyAIDialog } from '../empresas/[id]/company-ai'
 import { OpportunityForm } from '../oportunidades/opportunity-form'
+import { calcularScoreB2B, nivelColor, nivelLabel } from '@/lib/b2b/scoring'
+import { ICP_NOMBRES } from '@/lib/b2b/icp'
+import { saveCompanyB2BSuggestions, associateCompanyToCampaign } from '@/domains/companies/actions'
 import type { Profile, Company } from '@/types/database'
+import type { ICPKey } from '@/lib/b2b/icp'
+import type { CampaignType } from '@/types/database'
 
 interface RadarB2BViewProps {
   companies: Company[]
+  campaigns: { id: string; name: string; type: string }[]
   profile: Profile
 }
 
-export function RadarB2BView({ companies, profile }: RadarB2BViewProps) {
-  const [open, setOpen] = useState(false)
-  const [search, setSearch] = useState('')
+const ALL = 'all'
+
+export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProps) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+
+  const [newCompanyOpen, setNewCompanyOpen] = useState(false)
   const [oppCompanyId, setOppCompanyId] = useState<string | null>(null)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [savingId, setSavingId] = useState<string | null>(null)
 
-  const sorted = useMemo(() =>
-    [...companies].sort((a, b) => {
-      if (a.b2b_score == null && b.b2b_score == null) return 0
-      if (a.b2b_score == null) return 1
-      if (b.b2b_score == null) return -1
-      return b.b2b_score - a.b2b_score
-    }), [companies])
+  const [search, setSearch] = useState('')
+  const [filterICP, setFilterICP] = useState<string>(ALL)
+  const [filterNivel, setFilterNivel] = useState<string>(ALL)
+  const [filterStatus, setFilterStatus] = useState<string>(ALL)
 
-  const filtered = useMemo(() => sorted.filter(c => {
-    if (!search) return true
-    const q = search.toLowerCase()
-    return c.name.toLowerCase().includes(q) || (c.industry?.toLowerCase().includes(q) ?? false)
-  }), [sorted, search])
+  // Pre-compute scores for all companies
+  const scoredCompanies = useMemo(() =>
+    companies.map(co => ({ co, result: calcularScoreB2B(co) })),
+    [companies]
+  )
 
-  const byScore = {
-    alto: companies.filter(c => (c.b2b_score ?? 0) >= 70),
-    medio: companies.filter(c => (c.b2b_score ?? 0) >= 40 && (c.b2b_score ?? 0) < 70),
-    bajo: companies.filter(c => c.b2b_score == null || (c.b2b_score < 40)),
+  // Unique ICP values present in the list
+  const icpOptions = useMemo(() => {
+    const seen = new Set<string>()
+    scoredCompanies.forEach(({ result }) => seen.add(result.icpSugerido))
+    return Array.from(seen).sort()
+  }, [scoredCompanies])
+
+  const filtered = useMemo(() => {
+    return scoredCompanies
+      .filter(({ co, result }) => {
+        if (filterICP !== ALL && result.icpSugerido !== filterICP) return false
+        if (filterNivel !== ALL && result.nivel !== filterNivel) return false
+        if (filterStatus !== ALL && co.b2b_status !== filterStatus) return false
+        if (search) {
+          const q = search.toLowerCase()
+          if (!co.name.toLowerCase().includes(q) && !(co.industry?.toLowerCase().includes(q) ?? false)) return false
+        }
+        return true
+      })
+      .sort((a, b) => b.result.score - a.result.score)
+  }, [scoredCompanies, filterICP, filterNivel, filterStatus, search])
+
+  const stats = useMemo(() => ({
+    muyAlto: scoredCompanies.filter(({ result }) => result.nivel === 'muy_alto').length,
+    alto: scoredCompanies.filter(({ result }) => result.nivel === 'alto').length,
+    medio: scoredCompanies.filter(({ result }) => result.nivel === 'medio').length,
+    bajo: scoredCompanies.filter(({ result }) => result.nivel === 'bajo').length,
+  }), [scoredCompanies])
+
+  const topPriority = stats.muyAlto + stats.alto
+
+  async function handleApplyScore(co: Company, result: ReturnType<typeof calcularScoreB2B>) {
+    setSavingId(co.id)
+    await saveCompanyB2BSuggestions(co.id, {
+      b2b_score: result.score,
+      commercial_angle: result.razonesPositivas[0] ? co.commercial_angle ?? result.razonesPositivas[0] : co.commercial_angle,
+    })
+    setSavingId(null)
+    startTransition(() => router.refresh())
+  }
+
+  async function handleAssociateCampaign(coId: string, campaignId: string) {
+    setSavingId(coId)
+    await associateCompanyToCampaign(coId, campaignId || null)
+    setSavingId(null)
+    startTransition(() => router.refresh())
+  }
+
+  const uniqueStatuses = useMemo(() => {
+    const seen = new Set(companies.map(c => c.b2b_status))
+    return Array.from(seen)
+  }, [companies])
+
+  // Map CampaignType to campaign id (best match)
+  function findCampaignId(type: CampaignType): string | undefined {
+    return campaigns.find(c => c.type === type)?.id
   }
 
   return (
@@ -49,59 +113,98 @@ export function RadarB2BView({ companies, profile }: RadarB2BViewProps) {
             <Radar className="h-5 w-5 text-[#1B3A6B]" />
             Radar B2B
           </h1>
-          <p className="text-sm text-gray-500">Empresas ordenadas por potencial: priorizá donde hay más oportunidad</p>
+          <p className="text-sm text-gray-500">Empresas rankeadas por potencial calculado — priorizá donde hay más oportunidad</p>
         </div>
-        <div className="flex gap-2">
-          <Link href="/app/copiloto">
-            <Button variant="outline"><Bot className="h-4 w-4" /> Copiloto IA</Button>
-          </Link>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button><Plus className="h-4 w-4" /> Cargar empresa</Button>
-            </DialogTrigger>
-            <DialogContent title="Nueva empresa B2B" description="Cargá una empresa para el Radar">
-              <CompanyForm onSuccess={() => setOpen(false)} />
-            </DialogContent>
-          </Dialog>
+        <Dialog open={newCompanyOpen} onOpenChange={setNewCompanyOpen}>
+          <Button onClick={() => setNewCompanyOpen(true)}><Plus className="h-4 w-4" /> Cargar empresa</Button>
+          <DialogContent title="Nueva empresa B2B" description="Cargá una empresa para el Radar">
+            <CompanyForm onSuccess={() => { setNewCompanyOpen(false); router.refresh() }} />
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-4 gap-3">
+        <div className="rounded-xl border border-green-100 bg-green-50 p-3">
+          <p className="text-[11px] font-medium text-green-700">Muy alto</p>
+          <p className="text-2xl font-bold text-green-800 mt-0.5">{stats.muyAlto}</p>
+          <p className="text-[10px] text-green-600">Score 80+</p>
+        </div>
+        <div className="rounded-xl border border-green-100 bg-green-50/60 p-3">
+          <p className="text-[11px] font-medium text-green-700">Alto</p>
+          <p className="text-2xl font-bold text-green-700 mt-0.5">{stats.alto}</p>
+          <p className="text-[10px] text-green-500">Score 60-79</p>
+        </div>
+        <div className="rounded-xl border border-yellow-100 bg-yellow-50 p-3">
+          <p className="text-[11px] font-medium text-yellow-700">Medio</p>
+          <p className="text-2xl font-bold text-yellow-800 mt-0.5">{stats.medio}</p>
+          <p className="text-[10px] text-yellow-600">Score 40-59</p>
+        </div>
+        <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+          <p className="text-[11px] font-medium text-gray-600">Bajo</p>
+          <p className="text-2xl font-bold text-gray-800 mt-0.5">{stats.bajo}</p>
+          <p className="text-[10px] text-gray-400">Score &lt;40</p>
         </div>
       </div>
 
-      {/* Stats rápidas */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="rounded-xl border border-green-100 bg-green-50 p-4">
-          <p className="text-xs font-medium text-green-700">Score alto (70+)</p>
-          <p className="text-2xl font-bold text-green-800 mt-1">{byScore.alto.length}</p>
-          <p className="text-[10px] text-green-600 mt-0.5">Prioridad máxima</p>
-        </div>
-        <div className="rounded-xl border border-yellow-100 bg-yellow-50 p-4">
-          <p className="text-xs font-medium text-yellow-700">Score medio (40-69)</p>
-          <p className="text-2xl font-bold text-yellow-800 mt-1">{byScore.medio.length}</p>
-          <p className="text-[10px] text-yellow-600 mt-0.5">En seguimiento</p>
-        </div>
-        <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-          <p className="text-xs font-medium text-gray-600">Sin score / bajo</p>
-          <p className="text-2xl font-bold text-gray-800 mt-1">{byScore.bajo.length}</p>
-          <p className="text-[10px] text-gray-400 mt-0.5">Pendientes de análisis</p>
-        </div>
-      </div>
-
-      {/* Microcopy contextual */}
-      {byScore.alto.length > 0 && (
+      {topPriority > 0 && (
         <div className="rounded-xl border border-[#1B3A6B]/10 bg-[#1B3A6B]/5 px-4 py-3">
           <p className="text-xs text-[#1B3A6B]">
-            <strong>{byScore.alto.length} empresa{byScore.alto.length > 1 ? 's' : ''} con score alto</strong> — creá una oportunidad en el pipeline o analizalas con el Copiloto IA para preparar el primer contacto.
+            <strong>{topPriority} empresa{topPriority > 1 ? 's' : ''} con potencial alto o muy alto</strong> — expandí la fila para ver razones, riesgos y el próximo paso sugerido.
           </p>
         </div>
       )}
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-        <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Buscar empresa o rubro..."
-          className="w-full h-9 pl-9 pr-4 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B]"
-        />
+      {/* Filtros */}
+      <div className="flex flex-wrap gap-3">
+        <div className="relative flex-1 min-w-48">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar empresa o rubro..."
+            className="w-full h-9 pl-9 pr-4 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B]"
+          />
+        </div>
+        <select
+          value={filterNivel}
+          onChange={e => setFilterNivel(e.target.value)}
+          className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B]"
+        >
+          <option value={ALL}>Todos los niveles</option>
+          <option value="muy_alto">Muy alto (80+)</option>
+          <option value="alto">Alto (60-79)</option>
+          <option value="medio">Medio (40-59)</option>
+          <option value="bajo">Bajo (&lt;40)</option>
+        </select>
+        <select
+          value={filterICP}
+          onChange={e => setFilterICP(e.target.value)}
+          className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B]"
+        >
+          <option value={ALL}>Todos los ICP</option>
+          {icpOptions.map(icp => (
+            <option key={icp} value={icp}>{ICP_NOMBRES[icp as ICPKey]}</option>
+          ))}
+        </select>
+        <select
+          value={filterStatus}
+          onChange={e => setFilterStatus(e.target.value)}
+          className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B]"
+        >
+          <option value={ALL}>Todos los estados</option>
+          {uniqueStatuses.map(s => (
+            <option key={s} value={s}>{B2B_STATUS_LABELS[s]}</option>
+          ))}
+        </select>
+        {(filterICP !== ALL || filterNivel !== ALL || filterStatus !== ALL || search) && (
+          <button
+            onClick={() => { setFilterICP(ALL); setFilterNivel(ALL); setFilterStatus(ALL); setSearch('') }}
+            className="h-9 px-3 text-sm text-gray-400 hover:text-gray-700 rounded-lg border border-gray-200 bg-white"
+          >
+            Limpiar
+          </button>
+        )}
       </div>
 
       {/* Dialog crear oportunidad */}
@@ -111,7 +214,7 @@ export function RadarB2BView({ companies, profile }: RadarB2BViewProps) {
             <OpportunityForm
               companyId={oppCompanyId}
               defaultType="b2b"
-              onSuccess={() => setOppCompanyId(null)}
+              onSuccess={() => { setOppCompanyId(null); router.refresh() }}
             />
           )}
         </DialogContent>
@@ -120,67 +223,163 @@ export function RadarB2BView({ companies, profile }: RadarB2BViewProps) {
       {filtered.length === 0 ? (
         <EmptyState
           icon={Radar}
-          title={search ? 'Sin resultados' : 'El radar está vacío'}
-          description={search ? 'Probá con otro nombre o rubro' : 'Detectá y priorizá empresas con potencial comercial para enfocar el esfuerzo del equipo donde hay más oportunidad.'}
-          example={!search ? 'Cargás una constructora en crecimiento y el radar la prioriza por score B2B antes de que la contactes.' : undefined}
-          action={!search ? <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Cargar empresa</Button> : undefined}
+          title={search || filterICP !== ALL || filterNivel !== ALL || filterStatus !== ALL ? 'Sin resultados' : 'El radar está vacío'}
+          description={search ? 'Probá con otro nombre o rubro' : 'Detectá y priorizá empresas con potencial comercial.'}
+          action={<Button onClick={() => setNewCompanyOpen(true)}><Plus className="h-4 w-4" />Cargar empresa</Button>}
         />
       ) : (
-        <div className="space-y-3">
-          {filtered.map(co => (
-            <div key={co.id} className="flex items-center gap-4 rounded-xl border border-gray-100 bg-white p-4 hover:shadow-md transition-shadow">
-              <Link href={`/app/empresas/${co.id}`} className="flex items-center gap-4 flex-1 min-w-0">
-                <div className="h-10 w-10 rounded-lg bg-[#1B3A6B]/5 flex items-center justify-center shrink-0">
-                  <Building2 className="h-5 w-5 text-[#1B3A6B]" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-semibold text-gray-900">{co.name}</p>
-                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${B2B_STATUS_COLORS[co.b2b_status]}`}>
-                      {B2B_STATUS_LABELS[co.b2b_status]}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-                    {co.industry && <span className="text-xs text-gray-500">{co.industry}</span>}
-                    {co.estimated_employees ? <span className="text-xs text-gray-400">{co.estimated_employees} empleados</span> : null}
-                    {co.ideal_contact && <span className="text-xs text-gray-400">Contacto clave: {co.ideal_contact}</span>}
-                  </div>
-                  {co.opportunity_detected && (
-                    <p className="text-xs text-[#1B3A6B] font-medium mt-0.5 truncate">{co.opportunity_detected}</p>
-                  )}
-                  {co.commercial_angle && (
-                    <p className="text-xs text-gray-400 mt-0.5 truncate">{co.commercial_angle}</p>
-                  )}
-                </div>
-              </Link>
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  onClick={() => setOppCompanyId(co.id)}
-                  className="inline-flex items-center gap-1 rounded-lg border border-[#1B3A6B]/20 bg-[#1B3A6B]/5 px-2.5 py-1.5 text-xs font-medium text-[#1B3A6B] hover:bg-[#1B3A6B]/10 transition-colors"
-                >
-                  <TrendingUp className="h-3 w-3" />
-                  Oportunidad
-                </button>
-                <CompanyAIDialog company={co} />
-              </div>
-              <div className="shrink-0 text-right ml-1">
-                {co.b2b_score != null ? (
-                  <div>
-                    <div className={`inline-flex items-center justify-center h-10 w-10 rounded-full font-bold text-sm ${
-                      co.b2b_score >= 70 ? 'bg-green-100 text-green-800' :
-                      co.b2b_score >= 40 ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-gray-100 text-gray-600'
-                    }`}>
-                      {co.b2b_score}
+        <div className="space-y-2">
+          <p className="text-xs text-gray-400">{filtered.length} empresa{filtered.length !== 1 ? 's' : ''}{filtered.length < scoredCompanies.length ? ` de ${scoredCompanies.length}` : ''}</p>
+          {filtered.map(({ co, result }, idx) => {
+            const isExpanded = expandedId === co.id
+            const scoreDiff = co.b2b_score != null ? result.score - co.b2b_score : null
+            const suggestedCampaignId = findCampaignId(result.campañaSugerida)
+            const alreadyHasCampaign = !!co.campaign_id
+
+            return (
+              <div key={co.id} className="rounded-xl border border-gray-100 bg-white overflow-hidden shadow-sm">
+                {/* Main row */}
+                <div className="flex items-center gap-4 p-4">
+                  {/* Rank */}
+                  <span className="text-xs font-bold text-gray-300 w-5 shrink-0 text-center">{idx + 1}</span>
+
+                  {/* Score badge */}
+                  <div className="shrink-0 text-center w-12">
+                    <div className={`inline-flex items-center justify-center h-11 w-11 rounded-full font-bold text-sm ${nivelColor(result.nivel)}`}>
+                      {result.score}
                     </div>
-                    <p className="text-[10px] text-gray-400 mt-0.5">Score B2B</p>
+                    <p className="text-[9px] text-gray-400 mt-0.5">{nivelLabel(result.nivel)}</p>
                   </div>
-                ) : (
-                  <span className="text-xs text-gray-300">Sin score</span>
+
+                  {/* Company info */}
+                  <Link href={`/app/empresas/${co.id}`} className="flex-1 min-w-0 group">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-semibold text-gray-900 group-hover:text-[#1B3A6B] transition-colors">{co.name}</p>
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${B2B_STATUS_COLORS[co.b2b_status]}`}>
+                        {B2B_STATUS_LABELS[co.b2b_status]}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 mt-0.5 flex-wrap">
+                      <span className="text-xs text-[#1B3A6B] font-medium flex items-center gap-1">
+                        <Target className="h-3 w-3" />{ICP_NOMBRES[result.icpSugerido]}
+                      </span>
+                      {co.industry && <span className="text-xs text-gray-400">{co.industry}</span>}
+                      {co.estimated_employees && <span className="text-xs text-gray-400">{co.estimated_employees} empl.</span>}
+                    </div>
+                    {co.b2b_score != null && scoreDiff !== null && Math.abs(scoreDiff) >= 5 && (
+                      <p className="text-[10px] mt-0.5 text-gray-400">
+                        Score guardado: {co.b2b_score} · Sugerido: {result.score}
+                        <span className={`ml-1 font-medium ${scoreDiff > 0 ? 'text-green-600' : 'text-orange-500'}`}>
+                          ({scoreDiff > 0 ? '+' : ''}{scoreDiff})
+                        </span>
+                      </p>
+                    )}
+                  </Link>
+
+                  {/* CTAs */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => setOppCompanyId(co.id)}
+                      className="inline-flex items-center gap-1 rounded-lg border border-[#1B3A6B]/20 bg-[#1B3A6B]/5 px-2.5 py-1.5 text-xs font-medium text-[#1B3A6B] hover:bg-[#1B3A6B]/10 transition-colors"
+                    >
+                      <TrendingUp className="h-3 w-3" />
+                      Oportunidad
+                    </button>
+                    <button
+                      onClick={() => setExpandedId(isExpanded ? null : co.id)}
+                      className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs text-gray-600 hover:bg-gray-50 transition-colors"
+                    >
+                      {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                      Análisis
+                    </button>
+                  </div>
+                </div>
+
+                {/* Expanded panel */}
+                {isExpanded && (
+                  <div className="border-t border-gray-50 bg-gray-50/50 px-5 py-4 space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      {/* Positive reasons */}
+                      <div>
+                        <p className="text-[10px] font-semibold text-green-700 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3" />Fortalezas
+                        </p>
+                        <ul className="space-y-1">
+                          {result.razonesPositivas.map((r, i) => (
+                            <li key={i} className="text-xs text-gray-700 flex items-start gap-1.5">
+                              <span className="text-green-500 mt-0.5 shrink-0">·</span>{r}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* Risks */}
+                      <div>
+                        <p className="text-[10px] font-semibold text-orange-600 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />Riesgos
+                        </p>
+                        {result.riesgos.length === 0 ? (
+                          <p className="text-xs text-gray-400 italic">Sin riesgos identificados</p>
+                        ) : (
+                          <ul className="space-y-1">
+                            {result.riesgos.map((r, i) => (
+                              <li key={i} className="text-xs text-gray-700 flex items-start gap-1.5">
+                                <span className="text-orange-400 mt-0.5 shrink-0">·</span>{r}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+
+                      {/* Next step */}
+                      <div>
+                        <p className="text-[10px] font-semibold text-[#1B3A6B] uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                          <ArrowRight className="h-3 w-3" />Próximo paso
+                        </p>
+                        <p className="text-xs text-gray-700">{result.proximoPaso}</p>
+                        {result.campañaSugerida && (
+                          <p className="text-[10px] text-gray-400 mt-2">
+                            Campaña recomendada: <span className="font-medium text-[#1B3A6B]">{result.campañaSugerida.replace(/_/g, ' ')}</span>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
+                      <button
+                        disabled={savingId === co.id}
+                        onClick={() => handleApplyScore(co, result)}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#1B3A6B] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#1B3A6B]/90 disabled:opacity-50 transition-colors"
+                      >
+                        <CheckCircle2 className="h-3 w-3" />
+                        {savingId === co.id ? 'Guardando…' : `Aplicar score sugerido (${result.score})`}
+                      </button>
+
+                      {!alreadyHasCampaign && suggestedCampaignId && (
+                        <button
+                          disabled={savingId === co.id}
+                          onClick={() => handleAssociateCampaign(co.id, suggestedCampaignId)}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-[#1B3A6B]/20 bg-white px-3 py-1.5 text-xs font-medium text-[#1B3A6B] hover:bg-[#1B3A6B]/5 disabled:opacity-50 transition-colors"
+                        >
+                          <Megaphone className="h-3 w-3" />
+                          Asociar a campaña recomendada
+                        </button>
+                      )}
+
+                      <Link
+                        href={`/app/empresas/${co.id}`}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <Building2 className="h-3 w-3" />
+                        Ver empresa
+                      </Link>
+                    </div>
+                  </div>
                 )}
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
