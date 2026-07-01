@@ -40,7 +40,7 @@ test.describe('Ayuda contextual — orientación de uso por sección', () => {
     await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {})
 
     await expect(
-      page.getByText(/esfuerzos comerciales por segmento/i).first()
+      page.getByText(/acciones comerciales por segmento/i).first()
     ).toBeVisible({ timeout: 10_000 })
   })
 

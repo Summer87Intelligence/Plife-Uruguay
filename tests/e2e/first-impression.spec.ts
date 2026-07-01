@@ -32,7 +32,7 @@ test.describe('Primera impresión — claridad de pantallas clave', () => {
     await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {})
 
     await expect(
-      page.getByText(/Tablero diario/i).first()
+      page.getByText(/tablero de hoy|resumen del equipo/i).first()
     ).toBeVisible({ timeout: 10_000 })
   })
 
