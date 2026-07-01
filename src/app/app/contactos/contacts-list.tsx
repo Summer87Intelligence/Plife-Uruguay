@@ -8,6 +8,8 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { SearchNoResults } from '@/components/navigation/search-no-results'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import { CONTACT_STATUS_LABELS, CONTACT_STATUS_COLORS } from '@/lib/constants'
+import { getContactPriority } from '@/lib/commercial-priority'
+import { PriorityBadge } from '@/components/commercial/priority-badge'
 import { ContactForm } from './contact-form'
 import type { Profile, Contact } from '@/types/database'
 
@@ -195,6 +197,7 @@ export function ContactsList({ contacts, companies, profile, autoOpenNew, initia
                     )}
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
+                    {(() => { const p = getContactPriority(contact); return p.label !== 'Baja' ? <PriorityBadge label={p.label} tone={p.tone} reason={p.reason} size="sm" /> : null })()}
                     {contact.phone && (
                       <span className="flex items-center gap-1 text-xs text-gray-400">
                         <Phone className="h-3 w-3" />{contact.phone}

@@ -10,6 +10,8 @@ import { B2B_STATUS_LABELS, B2B_STATUS_COLORS } from '@/lib/constants'
 
 const FILTER_SELECT = 'h-8 rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-[#1B3A6B] cursor-pointer'
 import { industryLabel } from '@/lib/industry-labels'
+import { getCompanyPriority } from '@/lib/commercial-priority'
+import { PriorityBadge } from '@/components/commercial/priority-badge'
 import { CompanyForm } from './company-form'
 import type { Profile, Company } from '@/types/database'
 
@@ -130,6 +132,7 @@ export function CompaniesList({ companies, profile }: CompaniesListProps) {
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
+                    {(() => { const p = getCompanyPriority(co); return p.label !== 'Baja' ? <PriorityBadge label={p.label} tone={p.tone} reason={p.reason} size="sm" /> : null })()}
                     {co.b2b_score != null && (
                       <div className="flex flex-col items-center">
                         <span className="text-lg font-bold text-[#1B3A6B]">{co.b2b_score}</span>

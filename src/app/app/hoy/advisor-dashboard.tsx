@@ -75,6 +75,7 @@ export function AdvisorDashboard({
             <span>Todo al día. Sin seguimientos pendientes ni oportunidades sin actividad.</span>
           </div>
         ) : (
+          <>
           <div className="flex flex-wrap gap-2">
             {overdueActions.length > 0 && (
               <Link href="/app/contactos" className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-200 transition-colors">
@@ -101,6 +102,8 @@ export function AdvisorDashboard({
               </Link>
             )}
           </div>
+          <p className="text-xs text-gray-400 mt-1">Orden sugerido: resolvé los vencidos primero · oportunidades sin actividad · campañas activas</p>
+          </>
         )}
       </div>
 

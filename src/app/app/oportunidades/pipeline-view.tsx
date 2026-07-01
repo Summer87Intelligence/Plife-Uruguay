@@ -11,6 +11,8 @@ import {
   PIPELINE_STAGES, RISK_LEVEL_LABELS, RISK_LEVEL_COLORS,
 } from '@/lib/constants'
 import { formatDate } from '@/lib/utils'
+import { getOpportunityPriority } from '@/lib/commercial-priority'
+import { PriorityBadge } from '@/components/commercial/priority-badge'
 import { OpportunityForm } from './opportunity-form'
 import type { Profile, Opportunity, Contact, Company, RiskLevel } from '@/types/database'
 
@@ -248,9 +250,12 @@ export function PipelineView({ opportunities, profile, autoOpenNew, initialConta
                       )}
                     </div>
                   </div>
-                  <span className={`shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${OPPORTUNITY_STAGE_COLORS[opp.stage]}`}>
-                    {OPPORTUNITY_STAGE_LABELS[opp.stage]}
-                  </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {(() => { const p = getOpportunityPriority(opp); return p.label !== 'Baja' ? <PriorityBadge label={p.label} tone={p.tone} reason={p.reason} size="sm" /> : null })()}
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${OPPORTUNITY_STAGE_COLORS[opp.stage]}`}>
+                      {OPPORTUNITY_STAGE_LABELS[opp.stage]}
+                    </span>
+                  </div>
                 </Link>
               </li>
             ))}
@@ -262,9 +267,13 @@ export function PipelineView({ opportunities, profile, autoOpenNew, initialConta
 }
 
 function OppCard({ opp }: { opp: OppWithRelations }) {
+  const priority = getOpportunityPriority(opp)
   return (
     <Link href={`/app/oportunidades/${opp.id}`} className="block rounded-lg bg-white border border-gray-100 p-3 shadow-sm hover:shadow-md transition-shadow">
-      <p className="text-xs font-semibold text-gray-900 truncate">{opp.title}</p>
+      <div className="flex items-start justify-between gap-1">
+        <p className="text-xs font-semibold text-gray-900 truncate flex-1">{opp.title}</p>
+        {priority.label === 'Alta' && <PriorityBadge label={priority.label} tone={priority.tone} reason={priority.reason} />}
+      </div>
       <p className="text-xs text-gray-400 mt-1 truncate">
         {opp.contact ? `${opp.contact.first_name} ${opp.contact.last_name}` : opp.company?.name ?? '—'}
       </p>
