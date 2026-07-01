@@ -38,6 +38,7 @@ export function CampaignForm({ onSuccess, onCancel, mode = 'create', campaignId,
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [errors, setErrors] = useState<Record<string, string>>({})
   const [created, setCreated] = useState<{ id: string } | null>(null)
   const [form, setForm] = useState({
     name: initial?.name ?? '',
@@ -55,14 +56,28 @@ export function CampaignForm({ onSuccess, onCancel, mode = 'create', campaignId,
 
   function set(field: string, value: string) {
     setForm(prev => ({ ...prev, [field]: value }))
+    setErrors(prev => { const e = { ...prev }; delete e[field]; return e })
+  }
+
+  function validate(): Record<string, string> {
+    const errs: Record<string, string> = {}
+    if (!form.name.trim()) errs.name = 'Ingresá el nombre de la campaña.'
+    if (!form.objective.trim()) errs.objective = 'Escribí un objetivo comercial claro.'
+    if (form.start_date && form.end_date && form.end_date < form.start_date) {
+      errs.end_date = 'La fecha de fin debe ser posterior a la de inicio.'
+    }
+    return errs
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    const fieldErrors = validate()
+    if (Object.keys(fieldErrors).length > 0) { setErrors(fieldErrors); return }
+    setErrors({})
     setLoading(true)
     setError('')
     const payload: CampaignFormData = {
-      name: form.name,
+      name: form.name.trim(),
       type: form.type as CampaignType,
       status: form.status as CampaignFormData['status'],
       objective: form.objective,
@@ -104,9 +119,9 @@ export function CampaignForm({ onSuccess, onCancel, mode = 'create', campaignId,
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
       <p className="text-xs text-gray-500">Los campos con * son obligatorios.</p>
-      <Input label="Nombre de campaña *" value={form.name} onChange={e => set('name', e.target.value)} required placeholder="Ej: Dueños de pymes — Q3" />
+      <Input label="Nombre de campaña *" value={form.name} onChange={e => set('name', e.target.value)} placeholder="Ej: Dueños de pymes — Q3" error={errors.name} />
       <Input label="Segmento" value={form.target_segment} onChange={e => set('target_segment', e.target.value)} placeholder="Ej: Pymes de servicios con 10–50 empleados" />
-      <Input label="Objetivo comercial" value={form.objective} onChange={e => set('objective', e.target.value)} placeholder="Ej: Generar 15 reuniones con dueños de empresa" />
+      <Input label="Objetivo comercial *" value={form.objective} onChange={e => set('objective', e.target.value)} placeholder="Ej: Generar 15 reuniones con dueños de empresa" error={errors.objective} />
       <Textarea label="Mensaje inicial" value={form.initial_message} onChange={e => set('initial_message', e.target.value)} rows={3} placeholder="Mensaje de apertura para el primer contacto..." />
       <div className="grid grid-cols-2 gap-4">
         <Select label="Tipo de campaña" value={form.type} onValueChange={v => set('type', v)} options={typeOptions} />
@@ -120,7 +135,7 @@ export function CampaignForm({ onSuccess, onCancel, mode = 'create', campaignId,
           <Textarea label="Objeciones esperadas (una por línea)" value={form.objections_text} onChange={e => set('objections_text', e.target.value)} rows={3} placeholder={'Ya tengo seguro\nEs caro\nLo voy a pensar'} />
           <div className="grid grid-cols-2 gap-4">
             <Input label="Fecha inicio" type="date" value={form.start_date} onChange={e => set('start_date', e.target.value)} />
-            <Input label="Fecha fin" type="date" value={form.end_date} onChange={e => set('end_date', e.target.value)} />
+            <Input label="Fecha fin" type="date" value={form.end_date} onChange={e => set('end_date', e.target.value)} error={errors.end_date} />
           </div>
         </div>
       </details>

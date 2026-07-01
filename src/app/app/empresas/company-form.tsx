@@ -38,6 +38,7 @@ export function CompanyForm({ onSuccess, onCancel, mode = 'create', companyId, i
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [errors, setErrors] = useState<Record<string, string>>({})
   const [created, setCreated] = useState<{ id: string } | null>(null)
   const [form, setForm] = useState({
     name: initial?.name ?? '',
@@ -61,14 +62,32 @@ export function CompanyForm({ onSuccess, onCancel, mode = 'create', companyId, i
 
   function set(field: string, value: unknown) {
     setForm(prev => ({ ...prev, [field]: value }))
+    setErrors(prev => { const e = { ...prev }; delete e[field]; return e })
+  }
+
+  function validate(): Record<string, string> {
+    const errs: Record<string, string> = {}
+    if (!form.name.trim()) errs.name = 'Ingresá el nombre de la empresa.'
+    if (form.b2b_score !== '' && (isNaN(Number(form.b2b_score)) || Number(form.b2b_score) < 0 || Number(form.b2b_score) > 100)) {
+      errs.b2b_score = 'El potencial debe ser un número entre 0 y 100.'
+    }
+    if (form.estimated_employees !== '' && (isNaN(Number(form.estimated_employees)) || Number(form.estimated_employees) < 1)) {
+      errs.estimated_employees = 'La cantidad de empleados debe ser mayor a 0.'
+    }
+    return errs
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    const fieldErrors = validate()
+    if (Object.keys(fieldErrors).length > 0) { setErrors(fieldErrors); return }
+    setErrors({})
     setLoading(true)
     setError('')
     const payload = {
       ...form,
+      name: form.name.trim(),
+      location: form.location.trim(),
       estimated_employees: form.estimated_employees ? Number(form.estimated_employees) : undefined,
       b2b_score: form.b2b_score !== '' ? Number(form.b2b_score) : undefined,
     } as CompanyFormData
@@ -104,17 +123,17 @@ export function CompanyForm({ onSuccess, onCancel, mode = 'create', companyId, i
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
       <p className="text-xs text-gray-500">Los campos con * son obligatorios.</p>
-      <Input label="Nombre de la empresa *" value={form.name} onChange={e => set('name', e.target.value)} required placeholder="Ej: Estudio Contable García" />
+      <Input label="Nombre de la empresa *" value={form.name} onChange={e => set('name', e.target.value)} placeholder="Ej: Estudio Contable García" error={errors.name} />
       <div className="grid grid-cols-2 gap-4">
         <Select label="Rubro" value={form.industry} onValueChange={v => set('industry', v)} options={industryOptions} placeholder="Seleccioná el rubro..." />
         <Input label="Ciudad" value={form.location} onChange={e => set('location', e.target.value)} placeholder="Ej: Montevideo, Canelones..." />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <Input label="Tamaño aproximado" value={form.estimated_size} onChange={e => set('estimated_size', e.target.value)} placeholder="Pequeña, mediana o grande" />
-        <Input label="Cantidad de empleados (aprox.)" type="number" min={1} value={form.estimated_employees} onChange={e => set('estimated_employees', e.target.value)} placeholder="Ej: 25" />
+        <Input label="Cantidad de empleados (aprox.)" type="number" min={1} value={form.estimated_employees} onChange={e => set('estimated_employees', e.target.value)} placeholder="Ej: 25" error={errors.estimated_employees} />
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <Input label="Potencial comercial (0–100)" type="number" min={0} max={100} value={form.b2b_score} onChange={e => set('b2b_score', e.target.value)} placeholder="Opcional — se puede calcular después" />
+        <Input label="Potencial comercial (0–100)" type="number" min={0} max={100} value={form.b2b_score} onChange={e => set('b2b_score', e.target.value)} placeholder="Opcional — se puede calcular después" error={errors.b2b_score} />
         <Select label="Estado comercial" value={form.b2b_status} onValueChange={v => set('b2b_status', v)} options={statusOptions} />
       </div>
       <Input label="Próximo paso sugerido" value={form.commercial_angle} onChange={e => set('commercial_angle', e.target.value)} placeholder="Ej: Pedir reunión con el dueño para presentar seguro colectivo" />

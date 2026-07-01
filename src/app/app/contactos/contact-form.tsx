@@ -9,6 +9,7 @@ import { CreateSuccessPanel } from '@/components/ui/create-success-panel'
 import { createContact, updateContact, type ContactFormData } from '@/domains/contacts/actions'
 import { CONTACT_STATUS_LABELS } from '@/lib/constants'
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 const statusOptions = Object.entries(CONTACT_STATUS_LABELS).map(([value, label]) => ({ value, label }))
 const interestOptions = [
   { value: 'bajo', label: 'Bajo — poco interés por ahora' },
@@ -30,6 +31,7 @@ export function ContactForm({ onSuccess, onCancel, mode = 'create', contactId, i
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [errors, setErrors] = useState<Record<string, string>>({})
   const [created, setCreated] = useState<{ id: string } | null>(null)
   const [form, setForm] = useState({
     first_name: initial?.first_name ?? '',
@@ -51,15 +53,35 @@ export function ContactForm({ onSuccess, onCancel, mode = 'create', contactId, i
 
   function set(field: string, value: unknown) {
     setForm(prev => ({ ...prev, [field]: value }))
+    setErrors(prev => { const e = { ...prev }; delete e[field]; return e })
+  }
+
+  function validate(): Record<string, string> {
+    const errs: Record<string, string> = {}
+    if (!form.first_name.trim()) errs.first_name = 'Ingresá el nombre del contacto.'
+    if (!form.last_name.trim()) errs.last_name = 'Ingresá el apellido del contacto.'
+    if (form.email.trim() && !EMAIL_RE.test(form.email.trim())) {
+      errs.email = 'Ingresá un email válido o dejá el campo vacío.'
+    }
+    return errs
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    const fieldErrors = validate()
+    if (Object.keys(fieldErrors).length > 0) { setErrors(fieldErrors); return }
+    setErrors({})
     setLoading(true)
     setError('')
+    const payload = {
+      ...form,
+      first_name: form.first_name.trim(),
+      last_name: form.last_name.trim(),
+      email: form.email.trim(),
+    }
     const result = mode === 'edit' && contactId
-      ? await updateContact(contactId, form as Partial<ContactFormData>)
-      : await createContact(form as ContactFormData)
+      ? await updateContact(contactId, payload as Partial<ContactFormData>)
+      : await createContact(payload as ContactFormData)
     if (result.error) {
       setError(result.error)
       setLoading(false)
@@ -90,15 +112,15 @@ export function ContactForm({ onSuccess, onCancel, mode = 'create', contactId, i
     <form onSubmit={handleSubmit} className="space-y-4">
       <p className="text-xs text-gray-500">Los campos con * son obligatorios.</p>
       <div className="grid grid-cols-2 gap-4">
-        <Input label="Nombre *" value={form.first_name} onChange={e => set('first_name', e.target.value)} required placeholder="Ej: Juan" />
-        <Input label="Apellido *" value={form.last_name} onChange={e => set('last_name', e.target.value)} required placeholder="Ej: Pérez" />
+        <Input label="Nombre *" value={form.first_name} onChange={e => set('first_name', e.target.value)} placeholder="Ej: Juan" error={errors.first_name} />
+        <Input label="Apellido *" value={form.last_name} onChange={e => set('last_name', e.target.value)} placeholder="Ej: Pérez" error={errors.last_name} />
       </div>
       <Input label="Cargo" value={form.position} onChange={e => set('position', e.target.value)} placeholder="Ej: Gerente general, Socio fundador..." />
       {companies.length > 0 && (
         <Select label="Empresa asociada" value={form.company_id} onValueChange={v => set('company_id', v)} options={companyOptions} placeholder="Seleccioná una empresa..." />
       )}
       <div className="grid grid-cols-2 gap-4">
-        <Input label="Email" type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="correo@empresa.com" />
+        <Input label="Email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="correo@empresa.com" error={errors.email} />
         <Input label="Teléfono" value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="099 123 456" />
       </div>
       <Select label="Nivel de interés" value={form.interest_level} onValueChange={v => set('interest_level', v)} options={interestOptions} />
