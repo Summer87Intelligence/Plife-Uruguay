@@ -263,14 +263,21 @@ export function ContactDetail({ contact, activities, opportunities, companies }:
           </Card>
 
           <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2"><Calendar className="h-4 w-4 text-[#1B3A6B]" />Próxima acción</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Calendar className="h-4 w-4 text-[#1B3A6B]" />Acción del asesor</CardTitle></CardHeader>
             <CardContent className="space-y-3">
+              {contact.next_action ? (
+                <div className="rounded-lg bg-[#1B3A6B]/5 px-3 py-2.5">
+                  <p className="text-sm font-medium text-gray-900">{contact.next_action}</p>
+                  {contact.next_action_date && (
+                    <p className="text-xs text-gray-500 mt-0.5">{formatDate(contact.next_action_date)}</p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400 italic">Definí una próxima acción para no perder el seguimiento.</p>
+              )}
               <Input label="Próximo paso" value={nextAction} onChange={e => setNextAction(e.target.value)} placeholder="Qué hay que hacer a continuación..." />
               <Input label="Fecha" type="date" value={nextActionDate} onChange={e => setNextActionDate(e.target.value)} />
-              <Button variant="outline" size="sm" className="w-full" loading={savingAction} onClick={handleSaveNextAction}>Guardar próxima acción</Button>
-              {contact.next_action_date && (
-                <p className="text-xs text-gray-400">Agendado: {formatDate(contact.next_action_date)}</p>
-              )}
+              <Button variant="outline" size="sm" className="w-full" loading={savingAction} onClick={handleSaveNextAction}>Guardar acción</Button>
             </CardContent>
           </Card>
 

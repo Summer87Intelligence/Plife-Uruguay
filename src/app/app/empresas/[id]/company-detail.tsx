@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { useState, useTransition } from 'react'
-import { ArrowLeft, Globe, Link2 as Linkedin, AtSign as Instagram, MapPin, Users, Plus, TrendingUp, Pencil, Target, UserCheck, AlertTriangle, Megaphone, CheckCircle2, ArrowRight, UserPlus, ShieldCheck, List } from 'lucide-react'
+import { ArrowLeft, Globe, Link2 as Linkedin, AtSign as Instagram, MapPin, Users, Plus, TrendingUp, Pencil, Target, UserCheck, AlertTriangle, Megaphone, CheckCircle2, ArrowRight, UserPlus, ShieldCheck, List, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Select } from '@/components/ui/select'
@@ -20,6 +20,8 @@ import { DetailBackLink } from '@/components/navigation/detail-back-link'
 import { B2B_STATUS_LABELS, B2B_STATUS_COLORS, CONTACT_STATUS_LABELS, CONTACT_STATUS_COLORS, OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS } from '@/lib/constants'
 import { industryLabel } from '@/lib/industry-labels'
 import { updateCompanyStatus, associateCompanyToCampaign, saveCompanyB2BSuggestions } from '@/domains/companies/actions'
+import { formatDate } from '@/lib/utils'
+import { CLOSED_STAGES } from '@/lib/constants'
 import { calcularScoreB2B, nivelColor, nivelLabel } from '@/lib/b2b/scoring'
 import { ICP_NOMBRES } from '@/lib/b2b/icp'
 import { useRouter } from 'next/navigation'
@@ -184,6 +186,26 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
           />
         </DialogContent>
       </Dialog>
+
+      {/* Próximo paso — oportunidad activa */}
+      {(() => {
+        const oppConPaso = opportunities.find(o => !(CLOSED_STAGES as string[]).includes(o.stage) && o.next_action)
+        if (!oppConPaso) return null
+        return (
+          <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3">
+            <p className="text-[10px] font-semibold text-blue-700 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+              <Calendar className="h-3 w-3" />Próximo paso — oportunidad activa
+            </p>
+            <p className="text-sm font-medium text-gray-800">{oppConPaso.next_action}</p>
+            {oppConPaso.next_action_date && (
+              <p className="text-xs text-gray-500 mt-0.5">Fecha: {formatDate(oppConPaso.next_action_date)}</p>
+            )}
+            <Link href={`/app/oportunidades/${oppConPaso.id}`} className="text-xs text-[#1B3A6B] hover:underline mt-1.5 inline-flex items-center gap-0.5">
+              {oppConPaso.title} <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+        )
+      })()}
 
       {/* Por qué importa — strip de inteligencia */}
       {(company.opportunity_detected || company.commercial_angle || company.ideal_contact) && (

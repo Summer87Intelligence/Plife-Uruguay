@@ -10,6 +10,7 @@ import {
   OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS,
   PIPELINE_STAGES, RISK_LEVEL_LABELS, RISK_LEVEL_COLORS,
 } from '@/lib/constants'
+import { formatDate } from '@/lib/utils'
 import { OpportunityForm } from './opportunity-form'
 import type { Profile, Opportunity, Contact, Company, RiskLevel } from '@/types/database'
 
@@ -242,6 +243,9 @@ export function PipelineView({ opportunities, profile, autoOpenNew, initialConta
                       {opp.next_action && (
                         <span className="text-xs text-[#1B3A6B] truncate">{opp.next_action}</span>
                       )}
+                      {opp.next_action_date && (
+                        <span className="text-xs text-gray-400 shrink-0">{formatDate(opp.next_action_date)}</span>
+                      )}
                     </div>
                   </div>
                   <span className={`shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${OPPORTUNITY_STAGE_COLORS[opp.stage]}`}>
@@ -274,11 +278,16 @@ function OppCard({ opp }: { opp: OppWithRelations }) {
           </span>
         )}
         {opp.human_score != null && (
-          <span className="text-[10px] text-gray-400">Potencial {opp.human_score}</span>
+          <span className="text-[10px] text-gray-400">Potencial comercial {opp.human_score}</span>
         )}
       </div>
       {opp.next_action && (
-        <p className="text-[10px] text-gray-400 mt-1.5 truncate border-t border-gray-50 pt-1.5">{opp.next_action}</p>
+        <div className="border-t border-gray-50 mt-1.5 pt-1.5">
+          <p className="text-[10px] text-gray-400 truncate">{opp.next_action}</p>
+          {opp.next_action_date && (
+            <p className="text-[10px] text-[#1B3A6B]/50 mt-0.5">{formatDate(opp.next_action_date)}</p>
+          )}
+        </div>
       )}
     </Link>
   )

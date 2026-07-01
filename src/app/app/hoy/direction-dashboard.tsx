@@ -58,6 +58,29 @@ export function DirectionDashboard({ metrics, recentOpps, stageCounts, globalOve
         <GettingStartedCard mode={isEmpty ? 'empty' : 'demo'} />
       )}
 
+      {/* Alertas del equipo */}
+      {(globalOverdue.length > 0 || abandonedOpps.length > 0) && (
+        <div className="rounded-xl border border-amber-100 bg-amber-50/60 px-4 py-3">
+          <p className="text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
+            <AlertCircle className="h-3.5 w-3.5 text-amber-500" />Alertas del equipo
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {globalOverdue.length > 0 && (
+              <Link href="/app/contactos" className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-200 transition-colors">
+                <AlertCircle className="h-3 w-3" />
+                {globalOverdue.length} contacto{globalOverdue.length > 1 ? 's' : ''} sin seguimiento al día
+              </Link>
+            )}
+            {abandonedOpps.length > 0 && (
+              <Link href="/app/oportunidades" className="inline-flex items-center gap-1.5 rounded-full bg-orange-100 px-3 py-1.5 text-xs font-medium text-orange-700 hover:bg-orange-200 transition-colors">
+                <Clock className="h-3 w-3" />
+                {abandonedOpps.length} oportunidad{abandonedOpps.length > 1 ? 'es' : ''} sin actividad reciente
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Pipeline por etapa */}
       <Card>
         <CardHeader>

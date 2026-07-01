@@ -320,12 +320,21 @@ export function OpportunityDetail({ opportunity, activities, advisors, campaign 
           </Card>
 
           <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2"><Calendar className="h-4 w-4" />Próxima acción</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Calendar className="h-4 w-4" />Seguimiento</CardTitle></CardHeader>
             <CardContent className="space-y-3">
+              {opportunity.next_action ? (
+                <div className="rounded-lg bg-[#1B3A6B]/5 px-3 py-2.5">
+                  <p className="text-sm font-medium text-gray-900">{opportunity.next_action}</p>
+                  {opportunity.next_action_date && (
+                    <p className="text-xs text-gray-500 mt-0.5">{formatDate(opportunity.next_action_date)}</p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400 italic">Esta oportunidad todavía no tiene próximo paso definido.</p>
+              )}
               <Input label="Próximo paso" value={nextAction} onChange={e => setNextAction(e.target.value)} placeholder="Qué hay que hacer a continuación..." />
               <Input label="Fecha" type="date" value={nextActionDate} onChange={e => setNextActionDate(e.target.value)} />
-              <Button variant="outline" size="sm" className="w-full" loading={busy} onClick={handleSaveNextAction}>Guardar próxima acción</Button>
-              {opportunity.next_action_date && <p className="text-xs text-gray-400">Agendado: {formatDate(opportunity.next_action_date)}</p>}
+              <Button variant="outline" size="sm" className="w-full" loading={busy} onClick={handleSaveNextAction}>Guardar seguimiento</Button>
             </CardContent>
           </Card>
 

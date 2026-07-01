@@ -46,8 +46,62 @@ export function AdvisorDashboard({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Tareas hoy" value={todayActivities.length} icon={Calendar} color="blue" />
         <StatCard title="Seguimientos vencidos" value={overdueActions.length} icon={AlertCircle} color={overdueActions.length > 0 ? 'red' : 'green'} />
-        <StatCard title="Oportunidades en etapa avanzada" value={hotOpps.length} icon={TrendingUp} color="yellow" />
+        <StatCard title="Oportunidades activas" value={hotOpps.length} icon={TrendingUp} color="yellow" />
         <StatCard title="Empresas B2B" value={assignedCompanies.length} icon={Building2} color="purple" />
+      </div>
+
+      {/* Qué atender hoy */}
+      <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3.5">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-[#1B3A6B]" />Qué atender hoy
+          </h2>
+          <div className="flex items-center gap-3">
+            <Link href="/app/oportunidades" className="text-xs text-[#1B3A6B] hover:underline">Ver oportunidades</Link>
+            <span className="text-gray-300">·</span>
+            <Link href="/app/campanas" className="text-xs text-[#1B3A6B] hover:underline">Revisar campañas</Link>
+            <span className="text-gray-300">·</span>
+            <Link href="/app/compliance" className="text-xs text-[#1B3A6B] hover:underline">Revisar Compliance</Link>
+          </div>
+        </div>
+        {isEmpty ? (
+          <p className="text-sm text-gray-500">
+            No hay seguimientos cargados todavía.{' '}
+            <Link href="/app/oportunidades" className="text-[#1B3A6B] hover:underline">Cuando crees oportunidades con próximo paso, aparecerán acá.</Link>
+          </p>
+        ) : overdueActions.length === 0 && staleOpps.length === 0 && upcomingOpps.length === 0 ? (
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+            <span>Todo al día. Sin seguimientos pendientes ni oportunidades sin actividad.</span>
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {overdueActions.length > 0 && (
+              <Link href="/app/contactos" className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-200 transition-colors">
+                <AlertCircle className="h-3 w-3" />
+                {overdueActions.length} seguimiento{overdueActions.length > 1 ? 's' : ''} vencido{overdueActions.length > 1 ? 's' : ''}
+              </Link>
+            )}
+            {staleOpps.length > 0 && (
+              <Link href="/app/oportunidades" className="inline-flex items-center gap-1.5 rounded-full bg-orange-100 px-3 py-1.5 text-xs font-medium text-orange-700 hover:bg-orange-200 transition-colors">
+                <Clock className="h-3 w-3" />
+                {staleOpps.length} oportunidad{staleOpps.length > 1 ? 'es' : ''} sin actividad
+              </Link>
+            )}
+            {upcomingOpps.length > 0 && (
+              <Link href="/app/oportunidades" className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-200 transition-colors">
+                <Calendar className="h-3 w-3" />
+                {upcomingOpps.length} próxima{upcomingOpps.length > 1 ? 's' : ''} acción{upcomingOpps.length > 1 ? 'es' : ''}
+              </Link>
+            )}
+            {activeCampaigns.length > 0 && (
+              <Link href="/app/campanas" className="inline-flex items-center gap-1.5 rounded-full bg-[#1B3A6B]/10 px-3 py-1.5 text-xs font-medium text-[#1B3A6B] hover:bg-[#1B3A6B]/20 transition-colors">
+                <Megaphone className="h-3 w-3" />
+                {activeCampaigns.length} campaña{activeCampaigns.length > 1 ? 's' : ''} activa{activeCampaigns.length > 1 ? 's' : ''}
+              </Link>
+            )}
+          </div>
+        )}
       </div>
 
       {(isEmpty || (!isEmpty && isDemo)) && (
