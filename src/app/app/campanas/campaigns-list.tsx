@@ -5,6 +5,7 @@ import type { Route } from 'next'
 import { Plus, Megaphone, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
+import { SearchNoResults } from '@/components/navigation/search-no-results'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import { CAMPAIGN_STATUS_LABELS, CAMPAIGN_STATUS_COLORS } from '@/lib/constants'
 import { formatDate } from '@/lib/utils'
@@ -30,7 +31,8 @@ export function CampaignsList({ campaigns, profile }: CampaignsListProps) {
     const q = search.toLowerCase()
     return (
       c.name.toLowerCase().includes(q) ||
-      (c.target_segment?.toLowerCase().includes(q) ?? false)
+      (c.target_segment?.toLowerCase().includes(q) ?? false) ||
+      (c.objective?.toLowerCase().includes(q) ?? false)
     )
   }), [campaigns, statusFilter, search])
 
@@ -68,7 +70,7 @@ export function CampaignsList({ campaigns, profile }: CampaignsListProps) {
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Buscar campaña o segmento..."
+          placeholder="Buscar por campaña, segmento u objetivo"
           className="w-full h-9 pl-9 pr-4 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B] focus:border-transparent"
         />
       </div>
@@ -81,6 +83,15 @@ export function CampaignsList({ campaigns, profile }: CampaignsListProps) {
             <option key={v} value={v}>{l}</option>
           ))}
         </select>
+        {search && (
+          <button
+            type="button"
+            onClick={() => setSearch('')}
+            className="h-8 px-3 text-xs text-[#1B3A6B] hover:underline rounded-lg border border-gray-100 bg-white"
+          >
+            Limpiar búsqueda
+          </button>
+        )}
         {hasFilters && (
           <button
             onClick={() => { setSearch(''); setStatusFilter('') }}
@@ -94,10 +105,10 @@ export function CampaignsList({ campaigns, profile }: CampaignsListProps) {
       {filtered.length === 0 ? (
         <EmptyState
           icon={Megaphone}
-          title={hasFilters ? 'Sin resultados para estos filtros' : 'Todavía no hay campañas'}
+          title={hasFilters ? 'No encontramos resultados para esta búsqueda.' : 'Todavía no hay campañas'}
           description={
             hasFilters
-              ? 'Probá ajustando los filtros o la búsqueda'
+              ? undefined
               : canManage
                 ? 'Creá una campaña para ordenar acciones comerciales por segmento.'
                 : 'Las campañas las gestionan líderes comerciales. Consultá con tu equipo para ver las activas.'
@@ -108,7 +119,13 @@ export function CampaignsList({ campaigns, profile }: CampaignsListProps) {
               : undefined
           }
           action={
-            canManage && !hasFilters
+            hasFilters
+              ? <SearchNoResults
+                  onClearSearch={() => setSearch('')}
+                  onClearFilters={() => { setSearch(''); setStatusFilter('') }}
+                  hasFilters={!!statusFilter}
+                />
+              : canManage && !hasFilters
               ? <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Nueva campaña</Button>
               : undefined
           }

@@ -3,8 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { getProfile } from '@/lib/auth'
 import { redirect, notFound } from 'next/navigation'
 import {
-  ArrowLeft, Megaphone, Target, Users, MessageSquare, PhoneCall,
-  ShieldQuestion, Building2, TrendingUp, Clock,
+  Megaphone, Target, Users, MessageSquare, PhoneCall,
+  ShieldQuestion, Building2, TrendingUp, Clock, ShieldCheck, List,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
@@ -15,6 +15,10 @@ import {
 } from '@/lib/constants'
 import { formatDate } from '@/lib/utils'
 import { CampaignActions } from './campaign-actions'
+import { SimpleBreadcrumb } from '@/components/navigation/simple-breadcrumb'
+import { DetailBackLink } from '@/components/navigation/detail-back-link'
+import { QuickActions } from '@/components/navigation/quick-actions'
+import { EntitySummary } from '@/components/navigation/entity-summary'
 
 export default async function CampanaDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -60,11 +64,16 @@ export default async function CampanaDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="space-y-6">
+      <div className="space-y-3">
+        <DetailBackLink href="/app/campanas" label="Volver a campañas" />
+        <SimpleBreadcrumb items={[
+          { label: 'Campañas', href: '/app/campanas' },
+          { label: campaign.name },
+        ]} />
+      </div>
+
       {/* Header */}
       <div className="flex items-start gap-4">
-        <Link href="/app/campanas">
-          <Button variant="ghost" size="icon"><ArrowLeft className="h-4 w-4" /></Button>
-        </Link>
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <div className="h-12 w-12 rounded-xl bg-[#1B3A6B]/10 flex items-center justify-center shrink-0">
@@ -89,6 +98,27 @@ export default async function CampanaDetailPage({ params }: { params: Promise<{ 
         </div>
         {canManage && <CampaignActions campaign={campaign} />}
       </div>
+
+      <EntitySummary
+        items={[
+          { label: 'Segmento', value: campaign.target_segment },
+          { label: 'Objetivo comercial', value: campaign.objective },
+          { label: 'Estado', value: CAMPAIGN_STATUS_LABELS[campaign.status], highlight: true },
+          { label: 'Tipo', value: CAMPAIGN_TYPE_LABELS[campaign.type] },
+          { label: 'Empresas asociadas', value: linkedCompanies.length },
+          { label: 'Oportunidades', value: linkedOpportunities.length },
+        ]}
+      />
+
+      <QuickActions
+        actions={[
+          ...(linkedOpportunities.length > 0
+            ? [{ label: 'Ver oportunidades', href: `/app/oportunidades?q=${encodeURIComponent(campaign.name)}`, icon: List }]
+            : [{ label: 'Ver pipeline', href: '/app/oportunidades', icon: List }]),
+          { label: 'Revisar mensaje', href: '/app/compliance', icon: ShieldCheck },
+          { label: 'Volver a campañas', href: '/app/campanas', icon: Megaphone },
+        ]}
+      />
 
       {/* Métricas */}
       <Card>
@@ -204,7 +234,7 @@ export default async function CampanaDetailPage({ params }: { params: Promise<{ 
             </CardContent>
           </Card>
 
-          <Card>
+          <Card id="oportunidades-relacionadas">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2"><TrendingUp className="h-4 w-4 text-[#1B3A6B]" />Oportunidades ({linkedOpportunities.length})</CardTitle>

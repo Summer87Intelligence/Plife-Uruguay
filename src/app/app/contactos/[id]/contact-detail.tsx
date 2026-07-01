@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Phone, Mail, Link2 as Linkedin, Building2, Plus, Calendar, Pencil, TrendingUp, ShieldCheck, ShieldAlert, CircleUser as UserCircle } from 'lucide-react'
+import { Phone, Mail, Link2 as Linkedin, Building2, Plus, Calendar, Pencil, TrendingUp, ShieldCheck, ShieldAlert, CircleUser as UserCircle, List } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Avatar } from '@/components/ui/avatar'
@@ -15,6 +15,10 @@ import { AIAssistantDialog } from '@/components/commercial/ai-assistant-dialog'
 import { runCopilot, saveAIAsActivity } from '@/domains/ai/actions'
 import { ContactForm } from '../contact-form'
 import { OpportunityForm } from '../../oportunidades/opportunity-form'
+import { SimpleBreadcrumb } from '@/components/navigation/simple-breadcrumb'
+import { QuickActions } from '@/components/navigation/quick-actions'
+import { EntitySummary } from '@/components/navigation/entity-summary'
+import { DetailBackLink } from '@/components/navigation/detail-back-link'
 import {
   CONTACT_STATUS_LABELS,
   OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS,
@@ -62,11 +66,18 @@ export function ContactDetail({ contact, activities, opportunities, companies }:
 
   return (
     <div className="space-y-6">
-      {/* Back + Header */}
+      <div className="space-y-3">
+        <DetailBackLink href="/app/contactos" label="Volver a contactos" />
+        <SimpleBreadcrumb items={[
+          { label: 'Contactos', href: '/app/contactos' },
+          ...(contact.company
+            ? [{ label: contact.company.name, href: `/app/empresas/${contact.company.id}` }]
+            : []),
+          { label: `${contact.first_name} ${contact.last_name}` },
+        ]} />
+      </div>
+
       <div className="flex items-start gap-4">
-        <Link href="/app/contactos">
-          <Button variant="ghost" size="icon"><ArrowLeft className="h-4 w-4" /></Button>
-        </Link>
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <Avatar name={`${contact.first_name} ${contact.last_name}`} size="lg" />
@@ -148,6 +159,35 @@ export function ContactDetail({ contact, activities, opportunities, companies }:
           </Dialog>
         </div>
       </div>
+
+      <EntitySummary
+        items={[
+          { label: 'Cargo', value: contact.position },
+          {
+            label: 'Empresa asociada',
+            value: contact.company
+              ? <Link href={`/app/empresas/${contact.company.id}`} className="text-[#1B3A6B] hover:underline">{contact.company.name}</Link>
+              : null,
+          },
+          { label: 'Nivel de interés', value: contact.interest_level ? INTEREST_LABELS[contact.interest_level] : null },
+          { label: 'Próxima acción', value: contact.next_action },
+          { label: 'Email', value: contact.email },
+          { label: 'Teléfono', value: contact.phone },
+        ]}
+      />
+
+      <QuickActions
+        actions={[
+          { label: 'Crear oportunidad', onClick: () => setOppOpen(true), icon: TrendingUp },
+          ...(contact.company
+            ? [{ label: 'Ver empresa asociada', href: `/app/empresas/${contact.company.id}`, icon: Building2 }]
+            : []),
+          ...(opportunities.length > 0
+            ? [{ label: 'Ver oportunidades', href: `/app/oportunidades?q=${encodeURIComponent(`${contact.first_name} ${contact.last_name}`)}`, icon: List }]
+            : []),
+          { label: 'Revisar mensaje', href: '/app/compliance', icon: ShieldCheck },
+        ]}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Info principal */}

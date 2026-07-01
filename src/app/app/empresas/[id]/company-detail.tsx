@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { useState, useTransition } from 'react'
-import { ArrowLeft, Globe, Link2 as Linkedin, AtSign as Instagram, MapPin, Users, Plus, TrendingUp, Pencil, Target, UserCheck, AlertTriangle, Megaphone, CheckCircle2, ArrowRight } from 'lucide-react'
+import { ArrowLeft, Globe, Link2 as Linkedin, AtSign as Instagram, MapPin, Users, Plus, TrendingUp, Pencil, Target, UserCheck, AlertTriangle, Megaphone, CheckCircle2, ArrowRight, UserPlus, ShieldCheck, List } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Select } from '@/components/ui/select'
@@ -11,8 +11,14 @@ import type { TimelineActivity } from '@/components/commercial/timeline'
 import { ActivityForm } from '@/components/commercial/activity-form'
 import { CompanyAIDialog } from './company-ai'
 import { CompanyForm } from '../company-form'
+import { ContactForm } from '../../contactos/contact-form'
 import { OpportunityForm } from '../../oportunidades/opportunity-form'
+import { SimpleBreadcrumb } from '@/components/navigation/simple-breadcrumb'
+import { QuickActions } from '@/components/navigation/quick-actions'
+import { EntitySummary } from '@/components/navigation/entity-summary'
+import { DetailBackLink } from '@/components/navigation/detail-back-link'
 import { B2B_STATUS_LABELS, B2B_STATUS_COLORS, CONTACT_STATUS_LABELS, CONTACT_STATUS_COLORS, OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS } from '@/lib/constants'
+import { industryLabel } from '@/lib/industry-labels'
 import { updateCompanyStatus, associateCompanyToCampaign, saveCompanyB2BSuggestions } from '@/domains/companies/actions'
 import { calcularScoreB2B, nivelColor, nivelLabel } from '@/lib/b2b/scoring'
 import { ICP_NOMBRES } from '@/lib/b2b/icp'
@@ -36,9 +42,12 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
   const [editOpen, setEditOpen] = useState(false)
   const [activityOpen, setActivityOpen] = useState(false)
   const [oppOpen, setOppOpen] = useState(false)
+  const [contactOpen, setContactOpen] = useState(false)
   const [savingScore, setSavingScore] = useState(false)
 
   const b2bScore = calcularScoreB2B(company)
+  const proximoPaso = company.commercial_angle || b2bScore.proximoPaso
+  const rubroLabel = industryLabel(company.industry)
 
   async function handleStatusChange(newStatus: string) {
     await updateCompanyStatus(company.id, newStatus)
@@ -62,10 +71,15 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
 
   return (
     <div className="space-y-6">
+      <div className="space-y-3">
+        <DetailBackLink href="/app/empresas" label="Volver a empresas" />
+        <SimpleBreadcrumb items={[
+          { label: 'Empresas', href: '/app/empresas' },
+          { label: company.name },
+        ]} />
+      </div>
+
       <div className="flex items-start gap-4">
-        <Link href="/app/empresas">
-          <Button variant="ghost" size="icon"><ArrowLeft className="h-4 w-4" /></Button>
-        </Link>
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <div className="h-12 w-12 rounded-xl bg-[#1B3A6B]/10 flex items-center justify-center shrink-0">
@@ -74,7 +88,7 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
             <div>
               <h1 className="text-xl font-bold text-gray-900">{company.name}</h1>
               <div className="flex flex-wrap items-center gap-3 mt-1">
-                {company.industry && <span className="text-sm text-gray-500">{company.industry}</span>}
+                {rubroLabel && <span className="text-sm text-gray-500">{rubroLabel}</span>}
                 {company.location && (
                   <span className="flex items-center gap-1 text-sm text-gray-400"><MapPin className="h-3 w-3" />{company.location}</span>
                 )}
@@ -138,6 +152,39 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
         </div>
       </div>
 
+      <EntitySummary
+        items={[
+          { label: 'Rubro', value: rubroLabel },
+          { label: 'Ciudad', value: company.location },
+          { label: 'Potencial comercial', value: company.b2b_score != null ? `${company.b2b_score}/100` : null, highlight: true },
+          { label: 'Próximo paso sugerido', value: proximoPaso },
+          { label: 'Contactos', value: contacts.length },
+          { label: 'Oportunidades', value: opportunities.length },
+        ]}
+      />
+
+      <QuickActions
+        actions={[
+          { label: 'Agregar contacto', onClick: () => setContactOpen(true), icon: UserPlus },
+          { label: 'Crear oportunidad', onClick: () => setOppOpen(true), icon: TrendingUp },
+          ...(opportunities.length > 0 || company.name
+            ? [{ label: 'Ver oportunidades', href: `/app/oportunidades?q=${encodeURIComponent(company.name)}`, icon: List }]
+            : []),
+          { label: 'Revisar mensaje', href: '/app/compliance', icon: ShieldCheck },
+        ]}
+      />
+
+      <Dialog open={contactOpen} onOpenChange={setContactOpen}>
+        <DialogContent title="Nuevo contacto" description={`Agregar contacto en ${company.name}`}>
+          <ContactForm
+            companies={[{ id: company.id, name: company.name }]}
+            initial={{ company_id: company.id }}
+            onSuccess={() => setContactOpen(false)}
+            onCancel={() => setContactOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
       {/* Por qué importa — strip de inteligencia */}
       {(company.opportunity_detected || company.commercial_angle || company.ideal_contact) && (
         <div className="rounded-xl border border-[#1B3A6B]/15 bg-[#1B3A6B]/5 px-5 py-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -165,13 +212,13 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="space-y-4">
           <Card>
-            <CardHeader><CardTitle>Estado y prioridad</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Estado comercial</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <Select label="Estado B2B" value={company.b2b_status} onValueChange={handleStatusChange} options={statusOptions} />
+              <Select label="Estado comercial" value={company.b2b_status} onValueChange={handleStatusChange} options={statusOptions} />
               {company.b2b_score != null && (
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <p className="text-xs text-gray-500">Score B2B</p>
+                    <p className="text-xs text-gray-500">Potencial comercial</p>
                     <span className="text-sm font-bold text-[#1B3A6B]">{company.b2b_score}/100</span>
                   </div>
                   <div className="w-full bg-gray-100 rounded-full h-2">
@@ -312,7 +359,7 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
           </Card>
 
           {contacts.length > 0 && (
-            <Card>
+            <Card id="contactos-relacionados">
               <CardHeader><CardTitle>Contactos ({contacts.length})</CardTitle></CardHeader>
               <CardContent>
                 <ul className="space-y-2">
@@ -335,7 +382,7 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
           )}
 
           {opportunities.length > 0 && (
-            <Card>
+            <Card id="oportunidades-relacionadas">
               <CardHeader><CardTitle>Oportunidades ({opportunities.length})</CardTitle></CardHeader>
               <CardContent>
                 <ul className="space-y-2">

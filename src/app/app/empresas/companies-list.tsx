@@ -4,8 +4,10 @@ import Link from 'next/link'
 import { Plus, Search, Building2, Globe } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
+import { SearchNoResults } from '@/components/navigation/search-no-results'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import { B2B_STATUS_LABELS, B2B_STATUS_COLORS } from '@/lib/constants'
+import { industryLabel } from '@/lib/industry-labels'
 import { CompanyForm } from './company-form'
 import type { Profile, Company } from '@/types/database'
 
@@ -48,18 +50,31 @@ export function CompaniesList({ companies, profile }: CompaniesListProps) {
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Buscar empresa, rubro, ubicación..."
-          className="w-full h-9 pl-9 pr-4 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B] focus:border-transparent"
+          placeholder="Buscar por empresa, rubro o ciudad"
+          className="w-full h-9 pl-9 pr-16 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B] focus:border-transparent"
         />
+        {search && (
+          <button
+            type="button"
+            onClick={() => setSearch('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#1B3A6B] hover:underline"
+          >
+            Limpiar
+          </button>
+        )}
       </div>
 
       {filtered.length === 0 ? (
         <EmptyState
           icon={Building2}
-          title={search ? 'Sin resultados' : 'Todavía no cargaste empresas'}
-          description={search ? 'Probá con otro término' : 'Empezá cargando una empresa para construir oportunidades comerciales.'}
+          title={search ? 'No encontramos resultados para esta búsqueda.' : 'Todavía no cargaste empresas'}
+          description={search ? undefined : 'Empezá cargando una empresa para construir oportunidades comerciales.'}
           example={!search ? 'Cargá un estudio contable de 25 empleados y vinculá a su socio fundador como contacto clave.' : undefined}
-          action={!search ? <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Nueva empresa</Button> : undefined}
+          action={
+            search
+              ? <SearchNoResults onClearSearch={() => setSearch('')} />
+              : !search ? <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Nueva empresa</Button> : undefined
+          }
         />
       ) : (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
@@ -78,7 +93,7 @@ export function CompaniesList({ companies, profile }: CompaniesListProps) {
                       </span>
                     </div>
                     <div className="flex items-center gap-3 mt-0.5">
-                      {co.industry && <span className="text-xs text-gray-500">{co.industry}</span>}
+                      {co.industry && <span className="text-xs text-gray-500">{industryLabel(co.industry) ?? co.industry}</span>}
                       {co.location && <span className="text-xs text-gray-400">{co.location}</span>}
                       {co.estimated_employees && <span className="text-xs text-gray-400">{co.estimated_employees} empleados</span>}
                     </div>

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Plus, TrendingUp, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
+import { SearchNoResults } from '@/components/navigation/search-no-results'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import {
   OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS,
@@ -32,12 +33,13 @@ interface PipelineViewProps {
   autoOpenNew?: boolean
   initialContactId?: string
   initialCompanyId?: string
+  initialSearch?: string
 }
 
-export function PipelineView({ opportunities, profile, autoOpenNew, initialContactId, initialCompanyId }: PipelineViewProps) {
+export function PipelineView({ opportunities, profile, autoOpenNew, initialContactId, initialCompanyId, initialSearch }: PipelineViewProps) {
   const [open, setOpen] = useState(false)
   const [view, setView] = useState<'pipeline' | 'list'>('pipeline')
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(initialSearch ?? '')
   const [typeFilter, setTypeFilter] = useState('')
   const [riskFilter, setRiskFilter] = useState('')
 
@@ -53,7 +55,8 @@ export function PipelineView({ opportunities, profile, autoOpenNew, initialConta
     return (
       o.title.toLowerCase().includes(q) ||
       (o.contact ? `${o.contact.first_name} ${o.contact.last_name}`.toLowerCase().includes(q) : false) ||
-      (o.company?.name.toLowerCase().includes(q) ?? false)
+      (o.company?.name.toLowerCase().includes(q) ?? false) ||
+      (o.next_action?.toLowerCase().includes(q) ?? false)
     )
   }), [opportunities, typeFilter, riskFilter, search])
 
@@ -109,7 +112,7 @@ export function PipelineView({ opportunities, profile, autoOpenNew, initialConta
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Buscar por título, contacto o empresa..."
+          placeholder="Buscar por empresa, contacto o próxima acción"
           className="w-full h-9 pl-9 pr-4 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B] focus:border-transparent"
         />
       </div>
@@ -128,6 +131,15 @@ export function PipelineView({ opportunities, profile, autoOpenNew, initialConta
             <option key={v} value={v}>Riesgo {l}</option>
           ))}
         </select>
+        {search && (
+          <button
+            type="button"
+            onClick={() => setSearch('')}
+            className="h-8 px-3 text-xs text-[#1B3A6B] hover:underline rounded-lg border border-gray-100 bg-white"
+          >
+            Limpiar búsqueda
+          </button>
+        )}
         {hasFilters && (
           <button
             onClick={() => { setSearch(''); setTypeFilter(''); setRiskFilter('') }}
@@ -157,10 +169,10 @@ export function PipelineView({ opportunities, profile, autoOpenNew, initialConta
       {filtered.length === 0 ? (
         <EmptyState
           icon={TrendingUp}
-          title={hasFilters ? 'Sin resultados para estos filtros' : 'Todavía no hay oportunidades'}
+          title={hasFilters ? 'No encontramos resultados para esta búsqueda.' : 'Todavía no hay oportunidades'}
           description={
             hasFilters
-              ? 'Probá ajustando los filtros o la búsqueda'
+              ? undefined
               : 'Creá una oportunidad cuando exista una conversación comercial concreta con una empresa o contacto.'
           }
           example={
@@ -169,7 +181,13 @@ export function PipelineView({ opportunities, profile, autoOpenNew, initialConta
               : undefined
           }
           action={
-            !hasFilters
+            hasFilters
+              ? <SearchNoResults
+                  onClearSearch={() => setSearch('')}
+                  onClearFilters={() => { setSearch(''); setTypeFilter(''); setRiskFilter('') }}
+                  hasFilters={!!(typeFilter || riskFilter)}
+                />
+              : !hasFilters
               ? <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Nueva oportunidad</Button>
               : undefined
           }
@@ -256,7 +274,7 @@ function OppCard({ opp }: { opp: OppWithRelations }) {
           </span>
         )}
         {opp.human_score != null && (
-          <span className="text-[10px] text-gray-400">Valoración {opp.human_score}</span>
+          <span className="text-[10px] text-gray-400">Potencial {opp.human_score}</span>
         )}
       </div>
       {opp.next_action && (

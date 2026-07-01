@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { useState } from 'react'
-import { ArrowLeft, Plus, AlertTriangle, Calendar, Pencil, Trophy, CircleX, UserCircle, Megaphone } from 'lucide-react'
+import { Plus, AlertTriangle, Calendar, Pencil, Trophy, CircleX, UserCircle, Megaphone, Building2, ShieldCheck, List } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Select } from '@/components/ui/select'
@@ -13,6 +13,10 @@ import { ActivityForm } from '@/components/commercial/activity-form'
 import { AIAssistantDialog } from '@/components/commercial/ai-assistant-dialog'
 import { runCopilot, saveAIAsActivity } from '@/domains/ai/actions'
 import { OpportunityForm } from '../opportunity-form'
+import { SimpleBreadcrumb } from '@/components/navigation/simple-breadcrumb'
+import { QuickActions } from '@/components/navigation/quick-actions'
+import { EntitySummary } from '@/components/navigation/entity-summary'
+import { DetailBackLink } from '@/components/navigation/detail-back-link'
 import { OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS, RISK_LEVEL_LABELS, RISK_LEVEL_COLORS, PIPELINE_STAGES, CLOSED_STAGES } from '@/lib/constants'
 import { formatDate } from '@/lib/utils'
 import { updateOpportunityStage, updateOpportunity, closeOpportunity } from '@/domains/opportunities/actions'
@@ -93,10 +97,15 @@ export function OpportunityDetail({ opportunity, activities, advisors, campaign 
 
   return (
     <div className="space-y-6">
+      <div className="space-y-3">
+        <DetailBackLink href="/app/oportunidades" label="Volver a oportunidades" />
+        <SimpleBreadcrumb items={[
+          { label: 'Oportunidades', href: '/app/oportunidades' },
+          { label: opportunity.title },
+        ]} />
+      </div>
+
       <div className="flex items-start gap-4">
-        <Link href="/app/oportunidades">
-          <Button variant="ghost" size="icon"><ArrowLeft className="h-4 w-4" /></Button>
-        </Link>
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-medium text-gray-400 uppercase">{typeLabel}</span>
@@ -179,6 +188,54 @@ export function OpportunityDetail({ opportunity, activities, advisors, campaign 
         </div>
       </div>
 
+      <EntitySummary
+        items={[
+          { label: 'Etapa', value: OPPORTUNITY_STAGE_LABELS[opportunity.stage], highlight: true },
+          {
+            label: 'Empresa',
+            value: opportunity.company
+              ? <Link href={`/app/empresas/${opportunity.company.id}`} className="text-[#1B3A6B] hover:underline">{opportunity.company.name}</Link>
+              : null,
+          },
+          {
+            label: 'Contacto',
+            value: opportunity.contact
+              ? <Link href={`/app/contactos/${opportunity.contact.id}`} className="text-[#1B3A6B] hover:underline">{opportunity.contact.first_name} {opportunity.contact.last_name}</Link>
+              : null,
+          },
+          { label: 'Próximo paso', value: opportunity.next_action },
+          {
+            label: 'Valor estimado',
+            value: opportunity.estimated_value != null
+              ? `$${opportunity.estimated_value.toLocaleString('es-UY')}`
+              : null,
+            highlight: true,
+          },
+          ...(campaign
+            ? [{
+                label: 'Campaña',
+                value: <Link href={`/app/campanas/${campaign.id}`} className="text-[#1B3A6B] hover:underline">{campaign.name}</Link>,
+              }]
+            : []),
+        ]}
+      />
+
+      <QuickActions
+        actions={[
+          ...(opportunity.company
+            ? [{ label: 'Ver empresa', href: `/app/empresas/${opportunity.company.id}`, icon: Building2 }]
+            : []),
+          ...(opportunity.contact
+            ? [{ label: 'Ver contacto', href: `/app/contactos/${opportunity.contact.id}`, icon: UserCircle }]
+            : []),
+          ...(campaign
+            ? [{ label: 'Ver campaña', href: `/app/campanas/${campaign.id}`, icon: Megaphone }]
+            : []),
+          { label: 'Revisar mensaje', href: '/app/compliance', icon: ShieldCheck },
+          { label: 'Ir al pipeline', href: '/app/oportunidades', icon: List },
+        ]}
+      />
+
       {/* Pipeline progress indicator */}
       {!isClosed && (
         <div className="rounded-xl border border-gray-100 bg-white p-4">
@@ -212,7 +269,7 @@ export function OpportunityDetail({ opportunity, activities, advisors, campaign 
           <Card>
             <CardHeader><CardTitle>Etapa y cierre</CardTitle></CardHeader>
             <CardContent className="space-y-3">
-              <Select label="Mover etapa" value={opportunity.stage} onValueChange={handleStageChange} options={stageOptions} />
+              <Select label="Etapa" value={opportunity.stage} onValueChange={handleStageChange} options={stageOptions} />
               {!isClosed ? (
                 <div className="grid grid-cols-2 gap-2 pt-1">
                   <Button variant="outline" size="sm" loading={busy} onClick={handleWin} className="text-green-700 border-green-200 hover:bg-green-50">
@@ -242,18 +299,18 @@ export function OpportunityDetail({ opportunity, activities, advisors, campaign 
           </Card>
 
           <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2"><UserCircle className="h-4 w-4 text-[#1B3A6B]" />Asesor asignado</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><UserCircle className="h-4 w-4 text-[#1B3A6B]" />Responsable</CardTitle></CardHeader>
             <CardContent>
               <Select value={opportunity.assigned_to ?? ''} onValueChange={handleAssign} options={advisorOptions} placeholder="Sin asignar" />
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader><CardTitle>Priorización</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Potencial de cierre</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <Input label="Probabilidad de cierre (%)" type="number" min={0} max={100} value={probability} onChange={e => setProbability(e.target.value)} />
-              <Input label="Score humano (0-100)" type="number" min={0} max={100} value={humanScore} onChange={e => setHumanScore(e.target.value)} />
-              <Button variant="outline" size="sm" className="w-full" loading={busy} onClick={handleSaveScores}>Guardar priorización</Button>
+              <Input label="Potencial comercial (0–100)" type="number" min={0} max={100} value={humanScore} onChange={e => setHumanScore(e.target.value)} />
+              <Button variant="outline" size="sm" className="w-full" loading={busy} onClick={handleSaveScores}>Guardar potencial</Button>
               {opportunity.probability != null && (
                 <div className="w-full bg-gray-100 rounded-full h-2">
                   <div className="bg-[#1B3A6B] h-2 rounded-full" style={{ width: `${opportunity.probability}%` }} />

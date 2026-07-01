@@ -5,6 +5,7 @@ import { Plus, Search, Phone, Building2, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar } from '@/components/ui/avatar'
 import { EmptyState } from '@/components/ui/empty-state'
+import { SearchNoResults } from '@/components/navigation/search-no-results'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import { CONTACT_STATUS_LABELS, CONTACT_STATUS_COLORS } from '@/lib/constants'
 import { ContactForm } from './contact-form'
@@ -47,6 +48,7 @@ export function ContactsList({ contacts, companies, profile, autoOpenNew, initia
       c.last_name.toLowerCase().includes(q) ||
       c.email?.toLowerCase().includes(q) ||
       c.phone?.includes(q) ||
+      c.position?.toLowerCase().includes(q) ||
       c.company?.name.toLowerCase().includes(q)
     )
   })
@@ -87,7 +89,7 @@ export function ContactsList({ contacts, companies, profile, autoOpenNew, initia
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Buscar por nombre, email o empresa..."
+          placeholder="Buscar por nombre, empresa, cargo o email"
           className="w-full h-9 pl-9 pr-4 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B] focus:border-transparent"
         />
       </div>
@@ -106,6 +108,15 @@ export function ContactsList({ contacts, companies, profile, autoOpenNew, initia
             <option key={v} value={v}>{l}</option>
           ))}
         </select>
+        {search && (
+          <button
+            type="button"
+            onClick={() => setSearch('')}
+            className="h-8 px-3 text-xs text-[#1B3A6B] hover:underline rounded-lg border border-gray-100 bg-white"
+          >
+            Limpiar búsqueda
+          </button>
+        )}
         {hasFilters && (
           <button
             onClick={() => { setSearch(''); setStatusFilter(''); setInterestFilter('') }}
@@ -120,10 +131,10 @@ export function ContactsList({ contacts, companies, profile, autoOpenNew, initia
       {filtered.length === 0 ? (
         <EmptyState
           icon={hasFilters ? Search : Users}
-          title={hasFilters ? 'Sin resultados para estos filtros' : 'Todavía no cargaste contactos'}
+          title={hasFilters ? 'No encontramos resultados para esta búsqueda.' : 'Todavía no cargaste contactos'}
           description={
             hasFilters
-              ? 'Probá ajustando los filtros o la búsqueda'
+              ? undefined
               : 'Agregá personas asociadas a empresas para iniciar conversaciones comerciales.'
           }
           example={
@@ -132,7 +143,13 @@ export function ContactsList({ contacts, companies, profile, autoOpenNew, initia
               : undefined
           }
           action={
-            !hasFilters ? (
+            hasFilters
+              ? <SearchNoResults
+                  onClearSearch={() => setSearch('')}
+                  onClearFilters={() => { setSearch(''); setStatusFilter(''); setInterestFilter('') }}
+                  hasFilters={!!(statusFilter || interestFilter)}
+                />
+              : !hasFilters ? (
               <Button onClick={() => setOpen(true)}>
                 <Plus className="h-4 w-4" />Nuevo contacto
               </Button>

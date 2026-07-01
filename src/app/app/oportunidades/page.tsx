@@ -6,7 +6,7 @@ import { PipelineView } from './pipeline-view'
 export default async function OportunidadesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ nuevo?: string; contacto?: string; empresa?: string }>
+  searchParams: Promise<{ nuevo?: string; contacto?: string; empresa?: string; q?: string }>
 }) {
   const profile = await getProfile()
   if (!profile) redirect('/login')
@@ -34,6 +34,7 @@ export default async function OportunidadesPage({
       autoOpenNew={params.nuevo === '1'}
       initialContactId={params.contacto}
       initialCompanyId={params.empresa}
+      initialSearch={params.q}
     />
   )
 }

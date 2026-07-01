@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
+import { SearchNoResults } from '@/components/navigation/search-no-results'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { B2B_STATUS_LABELS, B2B_STATUS_COLORS } from '@/lib/constants'
 import { CompanyForm } from '../empresas/company-form'
@@ -62,7 +63,12 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
         if (filterStatus !== ALL && co.b2b_status !== filterStatus) return false
         if (search) {
           const q = search.toLowerCase()
-          if (!co.name.toLowerCase().includes(q) && !(co.industry?.toLowerCase().includes(q) ?? false)) return false
+          if (
+            !co.name.toLowerCase().includes(q) &&
+            !(co.industry?.toLowerCase().includes(q) ?? false) &&
+            !(co.commercial_angle?.toLowerCase().includes(q) ?? false) &&
+            !(co.opportunity_detected?.toLowerCase().includes(q) ?? false)
+          ) return false
         }
         return true
       })
@@ -127,22 +133,22 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
       {/* Stats */}
       <div className="grid grid-cols-4 gap-3">
         <div className="rounded-xl border border-green-100 bg-green-50 p-3">
-          <p className="text-[11px] font-medium text-green-700">Muy alto</p>
+          <p className="text-[11px] font-medium text-green-700">Potencial muy alto</p>
           <p className="text-2xl font-bold text-green-800 mt-0.5">{stats.muyAlto}</p>
           <p className="text-[10px] text-green-600">Potencial 80+</p>
         </div>
         <div className="rounded-xl border border-green-100 bg-green-50/60 p-3">
-          <p className="text-[11px] font-medium text-green-700">Alto</p>
+          <p className="text-[11px] font-medium text-green-700">Potencial alto</p>
           <p className="text-2xl font-bold text-green-700 mt-0.5">{stats.alto}</p>
           <p className="text-[10px] text-green-500">Potencial 60-79</p>
         </div>
         <div className="rounded-xl border border-yellow-100 bg-yellow-50 p-3">
-          <p className="text-[11px] font-medium text-yellow-700">Medio</p>
+          <p className="text-[11px] font-medium text-yellow-700">Potencial medio</p>
           <p className="text-2xl font-bold text-yellow-800 mt-0.5">{stats.medio}</p>
           <p className="text-[10px] text-yellow-600">Potencial 40-59</p>
         </div>
         <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-          <p className="text-[11px] font-medium text-gray-600">Bajo</p>
+          <p className="text-[11px] font-medium text-gray-600">Potencial bajo</p>
           <p className="text-2xl font-bold text-gray-800 mt-0.5">{stats.bajo}</p>
           <p className="text-[10px] text-gray-400">Potencial &lt;40</p>
         </div>
@@ -163,7 +169,7 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar empresa o rubro..."
+            placeholder="Buscar empresa, rubro o señal comercial"
             className="w-full h-9 pl-9 pr-4 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B]"
           />
         </div>
@@ -172,11 +178,11 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
           onChange={e => setFilterNivel(e.target.value)}
           className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B]"
         >
-          <option value={ALL}>Todos los niveles</option>
-          <option value="muy_alto">Muy alto (80+)</option>
-          <option value="alto">Alto (60-79)</option>
-          <option value="medio">Medio (40-59)</option>
-          <option value="bajo">Bajo (&lt;40)</option>
+          <option value={ALL}>Todo el potencial</option>
+          <option value="muy_alto">Potencial muy alto (80+)</option>
+          <option value="alto">Potencial alto (60-79)</option>
+          <option value="medio">Potencial medio (40-59)</option>
+          <option value="bajo">Potencial bajo (&lt;40)</option>
         </select>
         <select
           value={filterICP}
@@ -193,7 +199,7 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
           onChange={e => setFilterStatus(e.target.value)}
           className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B]"
         >
-          <option value={ALL}>Todos los estados</option>
+          <option value={ALL}>Todos los estados comerciales</option>
           {uniqueStatuses.map(s => (
             <option key={s} value={s}>{B2B_STATUS_LABELS[s]}</option>
           ))}
@@ -225,9 +231,17 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
       {filtered.length === 0 ? (
         <EmptyState
           icon={Radar}
-          title={search || filterICP !== ALL || filterNivel !== ALL || filterStatus !== ALL ? 'Sin resultados' : 'El Radar B2B todavía no tiene empresas para priorizar'}
-          description={search || filterICP !== ALL || filterNivel !== ALL || filterStatus !== ALL ? 'Probá con otro nombre o rubro' : 'Cargá empresas para que el sistema pueda ayudarte a detectar potencial comercial.'}
-          action={<Button onClick={() => setNewCompanyOpen(true)}><Plus className="h-4 w-4" />Nueva empresa</Button>}
+          title={search || filterICP !== ALL || filterNivel !== ALL || filterStatus !== ALL ? 'No encontramos resultados para esta búsqueda.' : 'El Radar B2B todavía no tiene empresas para priorizar'}
+          description={search || filterICP !== ALL || filterNivel !== ALL || filterStatus !== ALL ? undefined : 'Cargá empresas para que el sistema pueda ayudarte a detectar potencial comercial.'}
+          action={
+            search || filterICP !== ALL || filterNivel !== ALL || filterStatus !== ALL
+              ? <SearchNoResults
+                  onClearSearch={() => setSearch('')}
+                  onClearFilters={() => { setFilterICP(ALL); setFilterNivel(ALL); setFilterStatus(ALL); setSearch('') }}
+                  hasFilters={filterICP !== ALL || filterNivel !== ALL || filterStatus !== ALL}
+                />
+              : <Button onClick={() => setNewCompanyOpen(true)}><Plus className="h-4 w-4" />Nueva empresa</Button>
+          }
         />
       ) : (
         <div className="space-y-2">
@@ -262,8 +276,8 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
                       </span>
                     </div>
                     <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-                      <span className="text-xs text-[#1B3A6B] font-medium flex items-center gap-1">
-                        <Target className="h-3 w-3" />{ICP_NOMBRES[result.icpSugerido]}
+                        <span className="text-xs text-[#1B3A6B] font-medium flex items-center gap-1">
+                        <Target className="h-3 w-3" />Perfil: {ICP_NOMBRES[result.icpSugerido]}
                       </span>
                       {co.industry && <span className="text-xs text-gray-400">{co.industry}</span>}
                       {co.estimated_employees && <span className="text-xs text-gray-400">{co.estimated_employees} empleados</span>}
