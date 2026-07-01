@@ -26,6 +26,7 @@ import {
 import { formatDate, formatRelativeDate } from '@/lib/utils'
 import { updateContact } from '@/domains/contacts/actions'
 import { useRouter } from 'next/navigation'
+import { ActivitySummaryCard } from '@/components/activity/activity-summary-card'
 import type { Profile, Contact, Note, Opportunity, ContactStatus } from '@/types/database'
 
 interface ContactDetailProps {
@@ -188,6 +189,25 @@ export function ContactDetail({ contact, activities, opportunities, companies }:
           { label: 'Revisar mensaje', href: '/app/compliance', icon: ShieldCheck },
         ]}
       />
+
+      {(contact.next_action || contact.last_interaction_at) && (
+        <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3">
+          <ActivitySummaryCard
+            title="Actividad del contacto"
+            nextAction={contact.next_action}
+            nextActionDate={contact.next_action_date}
+            lastActivityAt={contact.last_interaction_at}
+          />
+          {opportunities.length > 0 && (
+            <Link
+              href={`/app/oportunidades?q=${encodeURIComponent(`${contact.first_name} ${contact.last_name}`)}`}
+              className="text-xs text-[#1B3A6B] hover:underline mt-2 inline-block"
+            >
+              {opportunities.length === 1 ? '1 oportunidad vinculada' : `${opportunities.length} oportunidades vinculadas`}
+            </Link>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Info principal */}

@@ -283,7 +283,16 @@ function OppCard({ opp }: { opp: OppWithRelations }) {
       </div>
       {opp.next_action && (
         <div className="border-t border-gray-50 mt-1.5 pt-1.5">
-          <p className="text-[10px] text-gray-400 truncate">{opp.next_action}</p>
+          <div className="flex items-center justify-between gap-1">
+            <p className="text-[10px] text-gray-400 truncate">{opp.next_action}</p>
+            {opp.next_action_date && (() => {
+              const today = new Date(); today.setHours(0, 0, 0, 0)
+              const due = new Date(opp.next_action_date + 'T00:00:00')
+              return due < today
+                ? <span className="shrink-0 inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold bg-red-100 text-red-700">Vencido</span>
+                : null
+            })()}
+          </div>
           {opp.next_action_date && (
             <p className="text-[10px] text-[#1B3A6B]/50 mt-0.5">{formatDate(opp.next_action_date)}</p>
           )}

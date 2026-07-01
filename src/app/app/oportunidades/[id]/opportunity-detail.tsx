@@ -18,7 +18,7 @@ import { QuickActions } from '@/components/navigation/quick-actions'
 import { EntitySummary } from '@/components/navigation/entity-summary'
 import { DetailBackLink } from '@/components/navigation/detail-back-link'
 import { OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS, RISK_LEVEL_LABELS, RISK_LEVEL_COLORS, PIPELINE_STAGES, CLOSED_STAGES } from '@/lib/constants'
-import { formatDate } from '@/lib/utils'
+import { formatDate, formatRelativeDate } from '@/lib/utils'
 import { updateOpportunityStage, updateOpportunity, closeOpportunity } from '@/domains/opportunities/actions'
 import { useRouter } from 'next/navigation'
 import type { Profile, Opportunity, Note, Contact, Company } from '@/types/database'
@@ -320,7 +320,19 @@ export function OpportunityDetail({ opportunity, activities, advisors, campaign 
           </Card>
 
           <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2"><Calendar className="h-4 w-4" />Seguimiento</CardTitle></CardHeader>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2"><Calendar className="h-4 w-4" />Seguimiento</CardTitle>
+                {(() => {
+                  if (!opportunity.next_action) return <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-gray-100 text-gray-500">Sin próximo paso</span>
+                  if (!opportunity.next_action_date) return <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-blue-100 text-blue-700">Sin fecha</span>
+                  const today = new Date(); today.setHours(0, 0, 0, 0)
+                  const due = new Date(opportunity.next_action_date + 'T00:00:00')
+                  if (due < today) return <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-red-100 text-red-700">Vencido</span>
+                  return <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-yellow-100 text-yellow-700">Pendiente</span>
+                })()}
+              </div>
+            </CardHeader>
             <CardContent className="space-y-3">
               {opportunity.next_action ? (
                 <div className="rounded-lg bg-[#1B3A6B]/5 px-3 py-2.5">
@@ -335,6 +347,11 @@ export function OpportunityDetail({ opportunity, activities, advisors, campaign 
               <Input label="Próximo paso" value={nextAction} onChange={e => setNextAction(e.target.value)} placeholder="Qué hay que hacer a continuación..." />
               <Input label="Fecha" type="date" value={nextActionDate} onChange={e => setNextActionDate(e.target.value)} />
               <Button variant="outline" size="sm" className="w-full" loading={busy} onClick={handleSaveNextAction}>Guardar seguimiento</Button>
+              {opportunity.last_activity_at && (
+                <p className="text-[10px] text-gray-400 border-t border-gray-50 pt-2">
+                  Última actividad: {formatRelativeDate(opportunity.last_activity_at)}
+                </p>
+              )}
             </CardContent>
           </Card>
 

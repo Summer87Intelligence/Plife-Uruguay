@@ -187,22 +187,53 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
         </DialogContent>
       </Dialog>
 
-      {/* Próximo paso — oportunidad activa */}
+      {/* Actividad comercial */}
       {(() => {
-        const oppConPaso = opportunities.find(o => !(CLOSED_STAGES as string[]).includes(o.stage) && o.next_action)
-        if (!oppConPaso) return null
+        const openOpps = opportunities.filter(o => !(CLOSED_STAGES as string[]).includes(o.stage))
+        const oppConPaso = openOpps.find(o => o.next_action)
+        if (openOpps.length === 0) return null
+
+        let statusLabel = 'Sin próximo paso'
+        let statusClasses = 'bg-gray-100 text-gray-500'
+        if (oppConPaso) {
+          if (!oppConPaso.next_action_date) {
+            statusLabel = 'Sin fecha'; statusClasses = 'bg-blue-100 text-blue-700'
+          } else {
+            const today = new Date(); today.setHours(0, 0, 0, 0)
+            const due = new Date(oppConPaso.next_action_date + 'T00:00:00')
+            if (due < today) { statusLabel = 'Vencido'; statusClasses = 'bg-red-100 text-red-700' }
+            else { statusLabel = 'Pendiente'; statusClasses = 'bg-yellow-100 text-yellow-700' }
+          }
+        }
+
         return (
           <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3">
-            <p className="text-[10px] font-semibold text-blue-700 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-              <Calendar className="h-3 w-3" />Próximo paso — oportunidad activa
-            </p>
-            <p className="text-sm font-medium text-gray-800">{oppConPaso.next_action}</p>
-            {oppConPaso.next_action_date && (
-              <p className="text-xs text-gray-500 mt-0.5">Fecha: {formatDate(oppConPaso.next_action_date)}</p>
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-[10px] font-semibold text-blue-700 uppercase tracking-wider flex items-center gap-1">
+                <Calendar className="h-3 w-3" />Actividad comercial
+              </p>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-gray-500">
+                  {openOpps.length} opp. {openOpps.length === 1 ? 'activa' : 'activas'}
+                </span>
+                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusClasses}`}>
+                  {statusLabel}
+                </span>
+              </div>
+            </div>
+            {oppConPaso ? (
+              <>
+                <p className="text-sm font-medium text-gray-800">{oppConPaso.next_action}</p>
+                {oppConPaso.next_action_date && (
+                  <p className="text-xs text-gray-500 mt-0.5">Fecha: {formatDate(oppConPaso.next_action_date)}</p>
+                )}
+                <Link href={`/app/oportunidades/${oppConPaso.id}`} className="text-xs text-[#1B3A6B] hover:underline mt-1.5 inline-flex items-center gap-0.5">
+                  {oppConPaso.title} <ArrowRight className="h-3 w-3" />
+                </Link>
+              </>
+            ) : (
+              <p className="text-xs text-gray-400 italic">Las oportunidades activas no tienen próximo paso definido.</p>
             )}
-            <Link href={`/app/oportunidades/${oppConPaso.id}`} className="text-xs text-[#1B3A6B] hover:underline mt-1.5 inline-flex items-center gap-0.5">
-              {oppConPaso.title} <ArrowRight className="h-3 w-3" />
-            </Link>
           </div>
         )
       })()}
