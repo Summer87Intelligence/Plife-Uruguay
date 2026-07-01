@@ -89,7 +89,7 @@ export function ComplianceView({ rules, recentReviews, interactions }: Complianc
         </div>
         <div>
           <h1 className="text-xl font-bold text-gray-900">Compliance Comercial</h1>
-          <p className="text-sm text-gray-500">Revisión automática de mensajes antes de enviarlos al cliente</p>
+          <p className="text-sm text-gray-500">Revisá mensajes antes de enviarlos para evitar promesas comerciales riesgosas.</p>
         </div>
       </div>
 

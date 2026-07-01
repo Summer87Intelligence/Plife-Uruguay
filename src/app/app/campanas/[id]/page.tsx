@@ -118,7 +118,7 @@ export default async function CampanaDetailPage({ params }: { params: Promise<{ 
             <CardContent className="space-y-4">
               <Field label="Objetivo" value={campaign.objective} placeholder="Sin objetivo definido. Ej: generar 20 reuniones con dueños de pymes en 60 días." />
               <Field label="Segmento objetivo" value={campaign.target_segment} placeholder="Sin segmento definido. Ej: pymes de 10 a 50 empleados en Montevideo." />
-              <Field label="Cliente ideal (ICP)" value={campaign.icp_description} placeholder="Sin ICP definido. Describí quién es el cliente ideal y sus señales de compra." />
+              <Field label="Cliente ideal" value={campaign.icp_description} placeholder="Sin cliente ideal definido. Describí quién es el cliente ideal y sus señales de compra." />
             </CardContent>
           </Card>
 

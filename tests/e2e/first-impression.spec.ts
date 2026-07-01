@@ -27,6 +27,15 @@ test.describe('Primera impresión — claridad de pantallas clave', () => {
     await expect(metric).toBeVisible({ timeout: 8_000 })
   })
 
+  test('/app/hoy: muestra guía "Tablero diario"', async ({ page }) => {
+    await page.goto(ROUTES.hoy)
+    await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {})
+
+    await expect(
+      page.getByText(/Tablero diario/i).first()
+    ).toBeVisible({ timeout: 10_000 })
+  })
+
   test('/app/hoy: recorrido demo visible en modo demo', async ({ page }) => {
     await page.goto(ROUTES.hoy)
     await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {})
@@ -50,17 +59,27 @@ test.describe('Primera impresión — claridad de pantallas clave', () => {
     // Heading visible
     await expect(page.getByText(/Radar B2B/i).first()).toBeVisible({ timeout: 10_000 })
 
-    // Describes purpose (priorización / potencial)
-    const desc = page.getByText(/potencial|oportunidad|priorizá|priorizar|rankeadas/i).first()
-    await expect(desc).toBeVisible({ timeout: 8_000 })
+    // Describes purpose (potencial comercial)
+    await expect(
+      page.getByText(/potencial comercial/i).first()
+    ).toBeVisible({ timeout: 8_000 })
 
     // Shows scoring OR empty state
-    const hasScoring = await page.getByText(/Score|Muy alto|Alto|Medio|Bajo|\d+ empresa/i)
+    const hasScoring = await page.getByText(/Muy alto|Alto|Medio|Bajo|\d+ empresa/i)
       .first().isVisible({ timeout: 5_000 }).catch(() => false)
     const hasEmpty = await page.getByText(/radar está vacío/i)
       .first().isVisible({ timeout: 2_000 }).catch(() => false)
 
-    expect(hasScoring || hasEmpty, 'Debe mostrar scoring de empresas o estado vacío').toBe(true)
+    expect(hasScoring || hasEmpty, 'Debe mostrar potencial de empresas o estado vacío').toBe(true)
+  })
+
+  test('/app/radar-b2b: muestra guía "potencial comercial"', async ({ page }) => {
+    await page.goto(ROUTES.radarB2B)
+    await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {})
+
+    await expect(
+      page.getByText(/potencial comercial/i).first()
+    ).toBeVisible({ timeout: 10_000 })
   })
 
   test('/app/empresas/[id]: muestra Inteligencia B2B y próximo paso', async ({ page }) => {
@@ -96,6 +115,15 @@ test.describe('Primera impresión — claridad de pantallas clave', () => {
     expect(hasCommercialInfo, 'Debe mostrar información comercial de la empresa').toBe(true)
   })
 
+  test('/app/oportunidades: muestra guía "conversación comercial"', async ({ page }) => {
+    await page.goto(ROUTES.oportunidades)
+    await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {})
+
+    await expect(
+      page.getByText(/conversación comercial/i).first()
+    ).toBeVisible({ timeout: 10_000 })
+  })
+
   test('/app/campanas: muestra campañas con segmento y estado', async ({ page }) => {
     await page.goto(ROUTES.campanas)
     await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {})
@@ -112,6 +140,15 @@ test.describe('Primera impresión — claridad de pantallas clave', () => {
     expect(hasCampaigns || hasEmpty, 'Debe mostrar campañas o estado vacío').toBe(true)
   })
 
+  test('/app/campanas: muestra guía "acciones comerciales"', async ({ page }) => {
+    await page.goto(ROUTES.campanas)
+    await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {})
+
+    await expect(
+      page.getByText(/acciones comerciales/i).first()
+    ).toBeVisible({ timeout: 10_000 })
+  })
+
   test('/app/compliance: explica revisión de mensajes y tiene input', async ({ page }) => {
     await page.goto(ROUTES.compliance)
     await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {})
@@ -119,12 +156,31 @@ test.describe('Primera impresión — claridad de pantallas clave', () => {
     // Heading
     await expect(page.getByText(/Compliance Comercial/i).first()).toBeVisible({ timeout: 10_000 })
 
-    // Explains purpose in commercial terms (no technical jargon)
-    const desc = page.getByText(/revisión|mensajes|cliente|automática/i).first()
-    await expect(desc).toBeVisible({ timeout: 8_000 })
+    // Explains purpose in commercial terms
+    await expect(
+      page.getByText(/mensajes antes de enviarlos/i).first()
+    ).toBeVisible({ timeout: 8_000 })
 
     // Input field is present and usable
     const textarea = page.getByRole('textbox').first()
     await expect(textarea).toBeVisible({ timeout: 8_000 })
+  })
+
+  test('/app/compliance: muestra guía "mensajes antes de enviarlos"', async ({ page }) => {
+    await page.goto(ROUTES.compliance)
+    await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {})
+
+    await expect(
+      page.getByText(/mensajes antes de enviarlos/i).first()
+    ).toBeVisible({ timeout: 10_000 })
+  })
+
+  test('/app/direccion: muestra guía "Vista ejecutiva"', async ({ page }) => {
+    await page.goto(ROUTES.direccion)
+    await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {})
+
+    await expect(
+      page.getByText(/Vista ejecutiva/i).first()
+    ).toBeVisible({ timeout: 10_000 })
   })
 })

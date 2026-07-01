@@ -38,7 +38,7 @@ export function AppHeader({ profile }: AppHeaderProps) {
         <Button variant="ghost" size="icon" className="text-gray-500">
           <Bell className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" size="icon" onClick={handleLogout} className="text-gray-500">
+        <Button variant="ghost" size="icon" onClick={handleLogout} className="text-gray-500" aria-label="Cerrar sesión">
           <LogOut className="h-4 w-4" />
         </Button>
       </div>

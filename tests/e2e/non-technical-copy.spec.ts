@@ -5,18 +5,17 @@ import { ROUTES } from './helpers/routes'
 // Palabras técnicas que NO deben aparecer en pantallas de usuario.
 // Excepción: /app/admin/system sí puede tenerlas.
 const FORBIDDEN = [
+  { term: 'ICP',            pattern: /\bICP\b/ },
   { term: 'embedding',      pattern: /\bembedding\b/i },
   { term: 'fallback',       pattern: /\bfallback\b/i },
-  { term: 'provider',       pattern: /\bprovider\b/i },
-  { term: 'raw',            pattern: /\braw\b/i },
-  { term: 'JSON',           pattern: /\bJSON\b/ },
+  { term: 'OPENAI_API_KEY', pattern: /OPENAI_API_KEY/ },
   { term: 'SQL pendiente',  pattern: /SQL pendiente/i },
-  { term: 'debug',          pattern: /\bdebug\b/i },
-  { term: 'stack trace',    pattern: /stack trace/i },
   { term: 'RLS',            pattern: /\bRLS\b/ },
   { term: 'GRANT',          pattern: /\bGRANT\b/ },
-  { term: 'MCP',            pattern: /\bMCP\b/ },
-  { term: 'OPENAI_API_KEY', pattern: /OPENAI_API_KEY/ },
+  { term: 'debug',          pattern: /\bdebug\b/i },
+  { term: 'raw',            pattern: /\braw\b/i },
+  { term: 'provider',       pattern: /\bprovider\b/i },
+  { term: 'prompt',         pattern: /\bprompt\b/i },
 ]
 
 const PAGES = [

@@ -4,32 +4,42 @@ import type { Route } from 'next'
 import { usePathname } from 'next/navigation'
 import {
   Home, Users, Building2, TrendingUp, Radar, Megaphone,
-  Bot, BookOpen, ShieldCheck, GraduationCap, BarChart3, Settings, Route as RouteIcon
+  Bot, BookOpen, ShieldCheck, GraduationCap, BarChart3, Settings,
+  Route as RouteIcon, Database,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Avatar } from '@/components/ui/avatar'
 import { isDemoMode } from '@/lib/demo'
 import type { Profile } from '@/types/database'
 
-const icons = { Home, Users, Building2, TrendingUp, Radar, Megaphone, Bot, BookOpen, ShieldCheck, GraduationCap, BarChart3, Settings, RouteIcon }
+const icons = {
+  Home, Users, Building2, TrendingUp, Radar, Megaphone,
+  Bot, BookOpen, ShieldCheck, GraduationCap, BarChart3, Settings,
+  RouteIcon, Database,
+}
 
 const navItems = [
-  { href: '/app/hoy', label: 'PLIFE Hoy', icon: 'Home' },
-  { href: '/app/contactos', label: 'Contactos', icon: 'Users' },
-  { href: '/app/empresas', label: 'Empresas', icon: 'Building2' },
-  { href: '/app/oportunidades', label: 'Oportunidades', icon: 'TrendingUp' },
-  { href: '/app/radar-b2b', label: 'Radar B2B', icon: 'Radar' },
-  { href: '/app/campanas', label: 'Campañas', icon: 'Megaphone' },
-  { href: '/app/copiloto', label: 'Copiloto IA', icon: 'Bot' },
-  { href: '/app/conocimiento', label: 'Conocimiento', icon: 'BookOpen' },
-  { href: '/app/compliance', label: 'Compliance', icon: 'ShieldCheck' },
-  { href: '/app/academia', label: 'Academia', icon: 'GraduationCap' },
-  { href: '/app/direccion', label: 'Dirección', icon: 'BarChart3' },
-  { href: '/app/admin', label: 'Admin', icon: 'Settings' },
+  { href: '/app/hoy',            label: 'PLIFE Hoy',          icon: 'Home' },
+  { href: '/app/contactos',      label: 'Contactos',          icon: 'Users' },
+  { href: '/app/empresas',       label: 'Empresas',           icon: 'Building2' },
+  { href: '/app/oportunidades',  label: 'Oportunidades',      icon: 'TrendingUp' },
+  { href: '/app/radar-b2b',      label: 'Radar B2B',          icon: 'Radar' },
+  { href: '/app/campanas',       label: 'Campañas',           icon: 'Megaphone' },
+  { href: '/app/copiloto',       label: 'Copiloto IA',        icon: 'Bot' },
+  { href: '/app/conocimiento',   label: 'Conocimiento',       icon: 'BookOpen' },
+  { href: '/app/compliance',     label: 'Compliance',         icon: 'ShieldCheck' },
+  { href: '/app/academia',       label: 'Academia',           icon: 'GraduationCap' },
+  { href: '/app/direccion',      label: 'Dirección',          icon: 'BarChart3' },
+  { href: '/app/admin',          label: 'Admin',              icon: 'Settings' },
+  { href: '/app/admin/system',   label: 'Estado del sistema', icon: 'Database' },
 ] as const
 
-const DIRECTION_ONLY = ['/app/direccion', '/app/admin']
-const ADMIN_ONLY = ['/app/admin']
+// Rutas solo para admin (propietario del sistema)
+const ADMIN_ONLY: string[] = ['/app/admin']
+// Rutas para admin + dirección (diagnóstico y configuración avanzada)
+const DIRECTION_ALLOWED: string[] = ['/app/direccion', '/app/admin/system']
+// Items que se muestran con estilo secundario (diagnóstico/config)
+const SECONDARY_ITEMS: string[] = ['/app/admin/system']
 
 interface AppSidebarProps {
   profile: Profile
@@ -42,7 +52,7 @@ export function AppSidebar({ profile }: AppSidebarProps) {
 
   const baseItems = navItems.filter(item => {
     if (ADMIN_ONLY.includes(item.href)) return isAdmin
-    if (DIRECTION_ONLY.includes(item.href)) return canSeeDirection
+    if (DIRECTION_ALLOWED.includes(item.href)) return canSeeDirection
     return true
   })
 
@@ -51,7 +61,7 @@ export function AppSidebar({ profile }: AppSidebarProps) {
     : baseItems
 
   return (
-    <aside className="flex h-full w-56 flex-col border-r border-gray-100 bg-white">
+    <aside className="hidden md:flex h-full w-56 flex-col border-r border-gray-100 bg-white shrink-0">
       {/* Logo */}
       <div className="flex h-14 items-center px-5 border-b border-gray-100">
         <div className="flex items-center gap-2.5">
@@ -70,20 +80,28 @@ export function AppSidebar({ profile }: AppSidebarProps) {
         {visibleItems.map(item => {
           const Icon = icons[item.icon as keyof typeof icons]
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+          const isSecondary = SECONDARY_ITEMS.includes(item.href)
+          const showDivider = item.href === '/app/admin/system'
+
           return (
-            <Link
-              key={item.href}
-              href={item.href as Route}
-              className={cn(
-                'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors mb-0.5',
-                isActive
-                  ? 'bg-[#1B3A6B] text-white'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-              )}
-            >
-              <Icon className="h-4 w-4 shrink-0" />
-              {item.label}
-            </Link>
+            <div key={item.href}>
+              {showDivider && <div className="mx-1 my-1.5 h-px bg-gray-100" />}
+              <Link
+                href={item.href as Route}
+                className={cn(
+                  'flex items-center gap-2.5 rounded-lg px-3 transition-colors mb-0.5',
+                  isSecondary ? 'py-1.5 text-xs' : 'py-2 text-sm font-medium',
+                  isActive
+                    ? 'bg-[#1B3A6B] text-white'
+                    : isSecondary
+                    ? 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                )}
+              >
+                <Icon className={cn('shrink-0', isSecondary ? 'h-3.5 w-3.5' : 'h-4 w-4')} />
+                {item.label}
+              </Link>
+            </div>
           )
         })}
       </nav>

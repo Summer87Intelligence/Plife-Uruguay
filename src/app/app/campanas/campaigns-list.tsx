@@ -47,7 +47,8 @@ export function CampaignsList({ campaigns, profile }: CampaignsListProps) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Campañas B2B</h1>
-          <p className="text-sm text-gray-500">{countLabel}</p>
+          <p className="text-sm text-gray-500">Organizá acciones comerciales por segmento para que el equipo trabaje con un enfoque común.</p>
+          <p className="text-xs text-gray-400 mt-0.5">{countLabel}</p>
         </div>
         {canManage && (
           <Dialog open={open} onOpenChange={setOpen}>

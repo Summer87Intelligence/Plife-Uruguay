@@ -29,7 +29,8 @@ export function CompaniesList({ companies, profile }: CompaniesListProps) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Empresas B2B</h1>
-          <p className="text-sm text-gray-500">{companies.length} empresas</p>
+          <p className="text-sm text-gray-500">Centralizá empresas, contactos, oportunidades y señales de potencial B2B.</p>
+          <p className="text-xs text-gray-400 mt-0.5">{companies.length} empresas</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -85,7 +86,7 @@ export function CompaniesList({ companies, profile }: CompaniesListProps) {
                     {co.b2b_score != null && (
                       <div className="flex flex-col items-center">
                         <span className="text-lg font-bold text-[#1B3A6B]">{co.b2b_score}</span>
-                        <span className="text-[10px] text-gray-400">Score B2B</span>
+                        <span className="text-[10px] text-gray-400">Potencial B2B</span>
                       </div>
                     )}
                   </div>

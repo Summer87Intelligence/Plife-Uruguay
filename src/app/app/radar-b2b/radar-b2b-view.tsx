@@ -113,7 +113,7 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
             <Radar className="h-5 w-5 text-[#1B3A6B]" />
             Radar B2B
           </h1>
-          <p className="text-sm text-gray-500">Empresas rankeadas por potencial calculado — priorizá donde hay más oportunidad</p>
+          <p className="text-sm text-gray-500">Priorizá empresas con potencial comercial y definí el próximo paso antes de contactar.</p>
         </div>
         <Dialog open={newCompanyOpen} onOpenChange={setNewCompanyOpen}>
           <Button onClick={() => setNewCompanyOpen(true)}><Plus className="h-4 w-4" /> Cargar empresa</Button>
@@ -128,22 +128,22 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
         <div className="rounded-xl border border-green-100 bg-green-50 p-3">
           <p className="text-[11px] font-medium text-green-700">Muy alto</p>
           <p className="text-2xl font-bold text-green-800 mt-0.5">{stats.muyAlto}</p>
-          <p className="text-[10px] text-green-600">Score 80+</p>
+          <p className="text-[10px] text-green-600">Potencial 80+</p>
         </div>
         <div className="rounded-xl border border-green-100 bg-green-50/60 p-3">
           <p className="text-[11px] font-medium text-green-700">Alto</p>
           <p className="text-2xl font-bold text-green-700 mt-0.5">{stats.alto}</p>
-          <p className="text-[10px] text-green-500">Score 60-79</p>
+          <p className="text-[10px] text-green-500">Potencial 60-79</p>
         </div>
         <div className="rounded-xl border border-yellow-100 bg-yellow-50 p-3">
           <p className="text-[11px] font-medium text-yellow-700">Medio</p>
           <p className="text-2xl font-bold text-yellow-800 mt-0.5">{stats.medio}</p>
-          <p className="text-[10px] text-yellow-600">Score 40-59</p>
+          <p className="text-[10px] text-yellow-600">Potencial 40-59</p>
         </div>
         <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
           <p className="text-[11px] font-medium text-gray-600">Bajo</p>
           <p className="text-2xl font-bold text-gray-800 mt-0.5">{stats.bajo}</p>
-          <p className="text-[10px] text-gray-400">Score &lt;40</p>
+          <p className="text-[10px] text-gray-400">Potencial &lt;40</p>
         </div>
       </div>
 
@@ -182,7 +182,7 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
           onChange={e => setFilterICP(e.target.value)}
           className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B]"
         >
-          <option value={ALL}>Todos los ICP</option>
+          <option value={ALL}>Todos los perfiles de cliente</option>
           {icpOptions.map(icp => (
             <option key={icp} value={icp}>{ICP_NOMBRES[icp as ICPKey]}</option>
           ))}
@@ -268,7 +268,7 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
                     </div>
                     {co.b2b_score != null && scoreDiff !== null && Math.abs(scoreDiff) >= 5 && (
                       <p className="text-[10px] mt-0.5 text-gray-400">
-                        Score guardado: {co.b2b_score} · Sugerido: {result.score}
+                        Potencial guardado: {co.b2b_score} · Sugerido: {result.score}
                         <span className={`ml-1 font-medium ${scoreDiff > 0 ? 'text-green-600' : 'text-orange-500'}`}>
                           ({scoreDiff > 0 ? '+' : ''}{scoreDiff})
                         </span>
@@ -353,7 +353,7 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
                         className="inline-flex items-center gap-1.5 rounded-lg bg-[#1B3A6B] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#1B3A6B]/90 disabled:opacity-50 transition-colors"
                       >
                         <CheckCircle2 className="h-3 w-3" />
-                        {savingId === co.id ? 'Guardando…' : `Aplicar score sugerido (${result.score})`}
+                        {savingId === co.id ? 'Guardando…' : `Aplicar potencial sugerido (${result.score})`}
                       </button>
 
                       {!alreadyHasCampaign && suggestedCampaignId && (

@@ -31,9 +31,7 @@ export function AdvisorDashboard({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">{greeting}, {profile.full_name.split(' ')[0]}</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            Esto es lo que conviene atender hoy · {new Date().toLocaleDateString('es-UY', { weekday: 'long', day: 'numeric', month: 'long' })}
-          </p>
+          <p className="text-sm text-gray-500 mt-0.5">Tablero diario para ver oportunidades, campañas y próximos pasos comerciales.</p>
         </div>
         <Link href="/app/copiloto">
           <Button><Bot className="h-4 w-4" />Preparar contacto con IA</Button>

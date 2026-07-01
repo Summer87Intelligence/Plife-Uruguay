@@ -203,7 +203,7 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
-                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">ICP detectado</p>
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Perfil de cliente detectado</p>
                 <p className="text-sm font-medium text-[#1B3A6B]">{ICP_NOMBRES[b2bScore.icpSugerido]}</p>
               </div>
               {b2bScore.razonesPositivas.slice(0, 3).length > 0 && (
@@ -247,7 +247,7 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
                   className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#1B3A6B] px-3 py-2 text-xs font-medium text-white hover:bg-[#1B3A6B]/90 disabled:opacity-50 transition-colors"
                 >
                   <CheckCircle2 className="h-3 w-3" />
-                  {savingScore ? 'Guardando…' : `Aplicar score sugerido (${b2bScore.score})`}
+                  {savingScore ? 'Guardando…' : `Aplicar potencial sugerido (${b2bScore.score})`}
                 </button>
               )}
             </CardContent>

@@ -82,7 +82,7 @@ export function CopilotoView({ aiConfigured, contacts, companies, opportunities,
         </div>
         <div>
           <h1 className="text-xl font-bold text-gray-900">Copiloto del Asesor</h1>
-          <p className="text-sm text-gray-500">Sugerencias seguras y editables. No reemplaza tu juicio comercial.</p>
+          <p className="text-sm text-gray-500">Asistencia comercial preparada para activar IA avanzada cuando PLIFE valide el flujo.</p>
         </div>
       </div>
 

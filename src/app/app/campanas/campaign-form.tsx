@@ -94,7 +94,7 @@ export function CampaignForm({ onSuccess, mode = 'create', campaignId, initial }
       </div>
       <Input label="Objetivo" value={form.objective} onChange={e => set('objective', e.target.value)} placeholder="Generar reuniones con dueños de pymes..." />
       <Input label="Segmento objetivo" value={form.target_segment} onChange={e => set('target_segment', e.target.value)} />
-      <Textarea label="Descripción del ICP (Cliente Ideal)" value={form.icp_description} onChange={e => set('icp_description', e.target.value)} rows={2} placeholder="Quién es el cliente ideal, características, señales de compra..." />
+      <Textarea label="Descripción del cliente ideal" value={form.icp_description} onChange={e => set('icp_description', e.target.value)} rows={2} placeholder="Quién es el cliente ideal, características, señales de compra..." />
       <Textarea label="Mensaje inicial" value={form.initial_message} onChange={e => set('initial_message', e.target.value)} rows={3} placeholder="Mensaje de apertura para el primer contacto..." />
       <Textarea label="Guion de llamada" value={form.call_script} onChange={e => set('call_script', e.target.value)} rows={3} placeholder="Estructura sugerida para la llamada..." />
       <Textarea label="Objeciones esperadas (una por línea)" value={form.objections_text} onChange={e => set('objections_text', e.target.value)} rows={3} placeholder={'Ya tengo seguro\nEs caro\nLo voy a pensar'} />

@@ -249,11 +249,11 @@ export function OpportunityDetail({ opportunity, activities, advisors, campaign 
           </Card>
 
           <Card>
-            <CardHeader><CardTitle>Scoring</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Priorización</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <Input label="Probabilidad de cierre (%)" type="number" min={0} max={100} value={probability} onChange={e => setProbability(e.target.value)} />
               <Input label="Score humano (0-100)" type="number" min={0} max={100} value={humanScore} onChange={e => setHumanScore(e.target.value)} />
-              <Button variant="outline" size="sm" className="w-full" loading={busy} onClick={handleSaveScores}>Guardar scoring</Button>
+              <Button variant="outline" size="sm" className="w-full" loading={busy} onClick={handleSaveScores}>Guardar priorización</Button>
               {opportunity.probability != null && (
                 <div className="w-full bg-gray-100 rounded-full h-2">
                   <div className="bg-[#1B3A6B] h-2 rounded-full" style={{ width: `${opportunity.probability}%` }} />

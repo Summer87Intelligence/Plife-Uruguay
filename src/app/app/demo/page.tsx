@@ -12,13 +12,13 @@ const DEMO_COMPANY = '/app/empresas/b0000000-0000-0000-0000-000000000002'
 
 const steps = [
   { n: 1, icon: BarChart3, title: 'PLIFE Hoy — el pulso del equipo', desc: 'El tablero muestra lo que importa hoy: seguimientos vencidos, reuniones pendientes y alertas del pipeline. El asesor empieza acá para priorizar su jornada.', href: '/app/hoy', cta: 'Ver PLIFE Hoy', value: 'Visibilidad inmediata del pipeline activo' },
-  { n: 2, icon: Radar, title: 'Radar B2B — dónde enfocar el esfuerzo', desc: 'Las empresas aparecen ordenadas por score B2B. Con un vistazo sabés dónde hay más oportunidad comercial sin revisar empresa por empresa.', href: '/app/radar-b2b', cta: 'Abrir Radar B2B', value: 'Priorización automática por potencial' },
+  { n: 2, icon: Radar, title: 'Radar B2B — dónde enfocar el esfuerzo', desc: 'Las empresas aparecen ordenadas por potencial comercial. Con un vistazo sabés dónde hay más oportunidad sin revisar empresa por empresa.', href: '/app/radar-b2b', cta: 'Abrir Radar B2B', value: 'Priorización automática por potencial' },
   { n: 3, icon: Building2, title: 'Empresa priorizada — inteligencia comercial', desc: 'Revisá el ángulo de apertura, el contacto clave y la oportunidad detectada. Todo lo que necesitás para entrar preparado al primer contacto.', href: DEMO_COMPANY, cta: 'Abrir empresa demo', value: 'Contexto para preparar el primer contacto' },
   { n: 4, icon: TrendingUp, title: 'Oportunidades — seguimiento del pipeline', desc: 'El pipeline muestra cada oportunidad con su etapa, valor estimado y próxima acción. El asesor sabe en todo momento dónde está cada negocio y cuál es el paso siguiente.', href: '/app/oportunidades', cta: 'Ver pipeline', value: 'Gestión visual del ciclo de venta' },
   { n: 5, icon: ClipboardList, title: 'Campañas — esfuerzo comercial coordinado', desc: 'Las campañas organizan la prospección por segmento. Todos los asesores trabajan con el mismo mensaje, guion y métricas de conversión para el equipo completo.', href: '/app/campanas', cta: 'Ver Campañas', value: 'Coordinación y medición del equipo' },
   { n: 6, icon: ShieldCheck, title: 'Compliance — mensajes dentro del marco', desc: 'Probá enviar un mensaje con promesas de rentabilidad o comparaciones prohibidas. El sistema lo intercepta, lo califica y sugiere una versión segura.', href: '/app/compliance', cta: 'Abrir Compliance', value: 'Protección regulatoria automática' },
   { n: 7, icon: Bot, title: 'Copiloto IA — asistencia controlada', desc: 'El copiloto sugiere pasos, mensajes y respuestas a objeciones. IA avanzada no configurada en esta demo — el sistema valida flujo comercial y compliance antes de activar IA real.', href: '/app/copiloto', cta: 'Ver Copiloto IA', value: 'IA como apoyo del asesor, no como reemplazo' },
-  { n: 8, icon: Sparkles, title: 'Dirección — resultados en tiempo real', desc: 'El módulo de Dirección consolida pipeline total, campañas activas, score promedio y seguimientos vencidos. El líder toma decisiones con datos actualizados.', href: '/app/direccion', cta: 'Ver Dirección', value: 'Gobernanza comercial sin reportes manuales' },
+  { n: 8, icon: Sparkles, title: 'Dirección — resultados en tiempo real', desc: 'El módulo de Dirección consolida pipeline total, campañas activas, potencial promedio y seguimientos vencidos. El líder toma decisiones con datos actualizados.', href: '/app/direccion', cta: 'Ver Dirección', value: 'Gobernanza comercial sin reportes manuales' },
 ]
 
 export default async function DemoPage() {
@@ -37,9 +37,13 @@ export default async function DemoPage() {
         </div>
       </div>
 
-      <div className="rounded-xl bg-blue-50 border border-blue-100 px-4 py-3">
-        <p className="text-sm text-blue-800">
-          Seguí los pasos en orden. Cada uno te lleva directo a la pantalla correspondiente. Los datos son de demostración.
+      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <p className="text-sm font-semibold text-gray-900 mb-2">Cómo probar esta demo</p>
+        <p className="text-sm text-gray-600">
+          Recorré las pantallas en orden. En cada paso fijate qué problema resuelve, qué decisión ayuda a tomar y qué parte potenciaría a un asesor o a Dirección.
+        </p>
+        <p className="text-xs text-gray-400 mt-2 border-t border-gray-100 pt-2">
+          No hace falta conocer tecnología para probarla. La demo está pensada para validar si el flujo comercial se entiende.
         </p>
       </div>
 

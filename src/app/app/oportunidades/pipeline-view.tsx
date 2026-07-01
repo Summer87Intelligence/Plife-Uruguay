@@ -70,7 +70,8 @@ export function PipelineView({ opportunities, profile }: PipelineViewProps) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Pipeline comercial</h1>
-          <p className="text-sm text-gray-500">{countLabel}{totalValue > 0 ? ` · $${totalValue.toLocaleString('es-UY')} estimado` : ''}</p>
+          <p className="text-sm text-gray-500">Visualizá el avance de cada conversación comercial desde el primer contacto hasta el cierre.</p>
+          <p className="text-xs text-gray-400 mt-0.5">{countLabel}{totalValue > 0 ? ` · $${totalValue.toLocaleString('es-UY')} estimado` : ''}</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex rounded-lg border border-gray-200 bg-white overflow-hidden">
@@ -241,7 +242,7 @@ function OppCard({ opp }: { opp: OppWithRelations }) {
           </span>
         )}
         {opp.human_score != null && (
-          <span className="text-[10px] text-gray-400">Score {opp.human_score}</span>
+          <span className="text-[10px] text-gray-400">Valoración {opp.human_score}</span>
         )}
       </div>
       {opp.next_action && (

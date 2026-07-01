@@ -6,6 +6,19 @@ Verificar que una persona que no conoce el sistema pueda entrar, recorrerlo y en
 
 ---
 
+## Checklist antes de la sesión
+
+Verificar antes de empezar:
+
+- [ ] Usuario creado en Supabase con rol `asesor` o `admin`
+- [ ] Contraseña actualizada y compartida con el evaluador
+- [ ] Demo mode activo (`NEXT_PUBLIC_DEMO_MODE=true` en entorno)
+- [ ] Datos demo cargados (empresas, oportunidades, contactos, campañas)
+- [ ] Rutas principales funcionando: `/app/hoy`, `/app/radar-b2b`, `/app/compliance`, `/app/copiloto`, `/app/direccion`
+- [ ] URL de staging o producción confirmada y accesible desde el dispositivo del evaluador
+
+---
+
 ## URL del sistema
 
 Usar el entorno de staging o producción. Pedir al responsable técnico la URL actualizada antes de comenzar.
@@ -14,11 +27,13 @@ Credenciales de demostración: solicitar al equipo de PLIFE antes de la sesión.
 
 ---
 
-## Antes de empezar
+## Guion para el presentador
 
-**No explicar nada.** Decirle a la persona solamente:
+Decirle al evaluador exactamente esto — sin agregar contexto:
 
-> "Vamos a mirar un sistema que estamos construyendo para PLIFE. Entrá con estas credenciales y explorá libremente. Decime en voz alta lo que pensás mientras lo usás."
+> "Entrá y recorré sin que yo te explique demasiado."
+> "Decime en voz alta qué creés que hace cada pantalla."
+> "Marcame dónde te perdés."
 
 No mencionar:
 - Para qué sirve cada módulo
@@ -49,7 +64,7 @@ Dejar que la persona explore libremente primero (5 minutos). Luego, si no lo hiz
 ## Qué NO explicar antes de que pruebe
 
 - Para qué sirve cada número o contador
-- Qué significa "Score B2B"
+- Qué significa el score o potencial B2B
 - Qué hace el compliance
 - Por qué la IA dice que no está configurada
 - Cuántos datos hay o de dónde vienen
@@ -70,6 +85,23 @@ Hacerlas en orden, con pausa entre cada una para que la persona piense:
 8. ¿El Radar B2B se entiende? ¿Para qué sirve?
 9. ¿El Compliance se entiende? ¿Qué harías con él?
 10. ¿Te queda claro que la IA no reemplaza al asesor?
+
+---
+
+## Tabla de observación
+
+Completar durante la sesión, pantalla por pantalla:
+
+| Pantalla | Entendió | Dudas observadas | Frase textual del usuario | Acción correctiva |
+|----------|----------|------------------|---------------------------|-------------------|
+| PLIFE Hoy | sí / no / parcial | | | |
+| Radar B2B | sí / no / parcial | | | |
+| Empresa demo | sí / no / parcial | | | |
+| Oportunidades | sí / no / parcial | | | |
+| Campañas | sí / no / parcial | | | |
+| Compliance | sí / no / parcial | | | |
+| Copiloto IA | sí / no / parcial | | | |
+| Dirección | sí / no / parcial | | | |
 
 ---
 
@@ -99,6 +131,18 @@ Notas libres:
 
 ---
 
+## Criterios de decisión tras la sesión
+
+| Observación | Acción |
+|-------------|--------|
+| Entiende Radar B2B y puede describirlo sin ayuda | Mantener como está |
+| No entiende Compliance o lo confunde con IA generativa | Reforzar copy: "revisá el mensaje antes de enviarlo" |
+| Copiloto confunde o genera expectativas incorrectas sobre IA | Ocultar o agregar aclaración más prominente hasta activar IA real |
+| Dirección comunica valor para tomar decisiones | Demo lista para mostrar a PLIFE |
+| No puede describir el sistema en 2 frases | Revisar flujo del demo y onboarding |
+
+---
+
 ## Criterios para decidir si la demo está clara
 
 La demo está lista para mostrar si:
@@ -113,10 +157,10 @@ La demo está lista para mostrar si:
 La demo **no está lista** si:
 
 - [ ] La persona no puede describir qué hace el sistema en 2 frases
-- [ ] Pregunta "¿qué es RLS / embedding / fallback?" (texto técnico visible)
 - [ ] Confunde la pantalla de Compliance con un sistema de IA generativa
 - [ ] No entiende para qué sirve el Radar B2B
 - [ ] Cree que la IA ya está generando contenido
+- [ ] Pide explicación antes de poder usar cualquier pantalla
 
 ---
 
@@ -124,7 +168,7 @@ La demo **no está lista** si:
 
 - ¿Los 8 pasos del recorrido demo se pueden seguir sin ayuda?
 - ¿El mensaje "IA avanzada no configurada en esta demo" genera confianza o confusión?
-- ¿El score B2B se entiende como prioridad comercial?
+- ¿El potencial B2B se entiende como prioridad comercial?
 - ¿El pipeline de oportunidades comunica "estado del negocio"?
 - ¿La pantalla de Dirección sirve para tomar decisiones reales?
 
