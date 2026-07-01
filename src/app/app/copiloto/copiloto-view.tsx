@@ -87,10 +87,10 @@ export function CopilotoView({ aiConfigured, contacts, companies, opportunities,
       </div>
 
       {!aiConfigured && (
-        <div className="rounded-xl bg-amber-50 border border-amber-100 px-4 py-3 flex items-start gap-3">
-          <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-          <p className="text-sm text-amber-800">
-            <strong>IA no configurada.</strong> Agregá <code className="text-xs">OPENAI_API_KEY</code> para activar el copiloto. El compliance determinístico funciona igual.
+        <div className="rounded-xl bg-blue-50 border border-blue-100 px-4 py-3 flex items-start gap-3">
+          <AlertTriangle className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
+          <p className="text-sm text-blue-800">
+            <strong>IA avanzada no configurada en esta demo.</strong> El sistema conserva estructura comercial, compliance y base de conocimiento para validar el flujo antes de activar IA real.
           </p>
         </div>
       )}

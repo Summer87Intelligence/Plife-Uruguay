@@ -4,21 +4,20 @@ import { getProfile } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import {
-  Radar, Building2, Sparkles, TrendingUp, CalendarClock,
+  Radar, Building2, Sparkles, TrendingUp, Bot,
   ShieldCheck, ClipboardList, BarChart3, ArrowRight, Route as RouteIcon,
 } from 'lucide-react'
 
 const DEMO_COMPANY = '/app/empresas/b0000000-0000-0000-0000-000000000002'
-const DEMO_OPPORTUNITY = '/app/oportunidades/d0000000-0000-0000-0000-000000000004'
 
 const steps = [
   { n: 1, icon: BarChart3, title: 'PLIFE Hoy — el pulso del equipo', desc: 'El tablero muestra lo que importa hoy: seguimientos vencidos, reuniones pendientes y alertas del pipeline. El asesor empieza acá para priorizar su jornada.', href: '/app/hoy', cta: 'Ver PLIFE Hoy', value: 'Visibilidad inmediata del pipeline activo' },
   { n: 2, icon: Radar, title: 'Radar B2B — dónde enfocar el esfuerzo', desc: 'Las empresas aparecen ordenadas por score B2B. Con un vistazo sabés dónde hay más oportunidad comercial sin revisar empresa por empresa.', href: '/app/radar-b2b', cta: 'Abrir Radar B2B', value: 'Priorización automática por potencial' },
   { n: 3, icon: Building2, title: 'Empresa priorizada — inteligencia comercial', desc: 'Revisá el ángulo de apertura, el contacto clave y la oportunidad detectada. Todo lo que necesitás para entrar preparado al primer contacto.', href: DEMO_COMPANY, cta: 'Abrir empresa demo', value: 'Contexto para preparar el primer contacto' },
-  { n: 4, icon: TrendingUp, title: 'Pipeline — la oportunidad en movimiento', desc: 'Desde la empresa se crea una oportunidad en el pipeline. Cada etapa tiene valor estimado, riesgo y próxima acción documentada.', href: DEMO_OPPORTUNITY, cta: 'Ver oportunidad demo', value: 'Gestión visual del ciclo de venta' },
-  { n: 5, icon: CalendarClock, title: 'Copiloto IA — preparar la reunión', desc: 'Antes de la reunión, el copiloto sugiere objetivo, enfoque, preguntas clave y un mensaje de apertura. Todo basado en los datos reales de la oportunidad.', href: DEMO_OPPORTUNITY, cta: 'Preparar con IA', value: 'Menos preparación manual, más calidad' },
+  { n: 4, icon: TrendingUp, title: 'Oportunidades — seguimiento del pipeline', desc: 'El pipeline muestra cada oportunidad con su etapa, valor estimado y próxima acción. El asesor sabe en todo momento dónde está cada negocio y cuál es el paso siguiente.', href: '/app/oportunidades', cta: 'Ver pipeline', value: 'Gestión visual del ciclo de venta' },
+  { n: 5, icon: ClipboardList, title: 'Campañas — esfuerzo comercial coordinado', desc: 'Las campañas organizan la prospección por segmento. Todos los asesores trabajan con el mismo mensaje, guion y métricas de conversión para el equipo completo.', href: '/app/campanas', cta: 'Ver Campañas', value: 'Coordinación y medición del equipo' },
   { n: 6, icon: ShieldCheck, title: 'Compliance — mensajes dentro del marco', desc: 'Probá enviar un mensaje con promesas de rentabilidad o comparaciones prohibidas. El sistema lo intercepta, lo califica y sugiere una versión segura.', href: '/app/compliance', cta: 'Abrir Compliance', value: 'Protección regulatoria automática' },
-  { n: 7, icon: ClipboardList, title: 'Campañas B2B — acción coordinada del equipo', desc: 'Las campañas organizan la prospección masiva por segmento. Todos los asesores usan el mismo guion, mensaje y métricas de conversión.', href: '/app/campanas', cta: 'Ver Campañas', value: 'Coordinación y medición del equipo' },
+  { n: 7, icon: Bot, title: 'Copiloto IA — asistencia controlada', desc: 'El copiloto sugiere pasos, mensajes y respuestas a objeciones. IA avanzada no configurada en esta demo — el sistema valida flujo comercial y compliance antes de activar IA real.', href: '/app/copiloto', cta: 'Ver Copiloto IA', value: 'IA como apoyo del asesor, no como reemplazo' },
   { n: 8, icon: Sparkles, title: 'Dirección — resultados en tiempo real', desc: 'El módulo de Dirección consolida pipeline total, campañas activas, score promedio y seguimientos vencidos. El líder toma decisiones con datos actualizados.', href: '/app/direccion', cta: 'Ver Dirección', value: 'Gobernanza comercial sin reportes manuales' },
 ]
 

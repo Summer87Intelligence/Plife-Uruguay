@@ -8,6 +8,7 @@ config({ path: resolve(__dirname, '.env.test') })
 // E2E_BASE_URL lets you point at a running staging server.
 // If your dev server is on 3001 (Next.js fallback), set E2E_BASE_URL=http://localhost:3001 in .env.test
 const baseURL = process.env.E2E_BASE_URL ?? 'http://localhost:3000'
+const devPort = new URL(baseURL).port || '3000'
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -29,7 +30,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run dev',
+    command: `npm run dev -- -p ${devPort}`,
     url: baseURL,
     // Reuse whatever is already running locally; in CI always start fresh.
     reuseExistingServer: !process.env.CI,

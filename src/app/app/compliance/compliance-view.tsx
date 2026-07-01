@@ -89,7 +89,7 @@ export function ComplianceView({ rules, recentReviews, interactions }: Complianc
         </div>
         <div>
           <h1 className="text-xl font-bold text-gray-900">Compliance Comercial</h1>
-          <p className="text-sm text-gray-500">Revisión determinística de mensajes y trazabilidad de IA</p>
+          <p className="text-sm text-gray-500">Revisión automática de mensajes antes de enviarlos al cliente</p>
         </div>
       </div>
 
@@ -179,7 +179,7 @@ export function ComplianceView({ rules, recentReviews, interactions }: Complianc
               </CardHeader>
               <CardContent>
                 {criticalRules.length === 0 ? (
-                  <p className="text-sm text-gray-400">Sin reglas críticas configuradas. El motor usa una lista de respaldo.</p>
+                  <p className="text-sm text-gray-400">Sin reglas críticas activas. El sistema aplica criterios de revisión estándar.</p>
                 ) : (
                   <ul className="space-y-2">
                     {criticalRules.map(rule => (
