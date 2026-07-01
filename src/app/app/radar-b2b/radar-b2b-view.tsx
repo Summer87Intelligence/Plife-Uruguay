@@ -209,7 +209,7 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
             onClick={() => { setFilterICP(ALL); setFilterNivel(ALL); setFilterStatus(ALL); setSearch('') }}
             className="h-9 px-3 text-sm text-gray-400 hover:text-gray-700 rounded-lg border border-gray-200 bg-white"
           >
-            Limpiar
+            Limpiar filtros
           </button>
         )}
       </div>

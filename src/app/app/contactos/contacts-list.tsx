@@ -131,7 +131,7 @@ export function ContactsList({ contacts, companies, profile, autoOpenNew, initia
       {filtered.length === 0 ? (
         <EmptyState
           icon={hasFilters ? Search : Users}
-          title={hasFilters ? 'No encontramos resultados para esta búsqueda.' : 'Todavía no cargaste contactos'}
+          title={hasFilters ? 'No encontramos resultados para esta búsqueda.' : 'Todavía no hay contactos cargados.'}
           description={
             hasFilters
               ? undefined
@@ -190,6 +190,9 @@ export function ContactsList({ contacts, companies, profile, autoOpenNew, initia
                         </span>
                       )}
                     </div>
+                    {contact.next_action && (
+                      <p className="text-xs text-[#1B3A6B] truncate mt-0.5">{contact.next_action}</p>
+                    )}
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     {contact.phone && (
