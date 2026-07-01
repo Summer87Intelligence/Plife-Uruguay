@@ -55,7 +55,8 @@ export function ContactsList({ contacts, profile }: ContactsListProps) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Contactos</h1>
-          <p className="text-sm text-gray-500">{countLabel}</p>
+          <p className="text-sm text-gray-500">Usá contactos para registrar a las personas con las que habla el asesor.</p>
+          <p className="text-xs text-gray-400 mt-0.5">{countLabel}</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -110,7 +111,7 @@ export function ContactsList({ contacts, profile }: ContactsListProps) {
           description={
             hasFilters
               ? 'Probá ajustando los filtros o la búsqueda'
-              : 'Centralizá acá a las personas con las que trabaja tu equipo: prospectos, referidos y clientes.'
+              : 'Agregá personas asociadas a empresas para iniciar conversaciones comerciales.'
           }
           example={
             !hasFilters

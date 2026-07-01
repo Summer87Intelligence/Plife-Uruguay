@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { Route } from 'next'
 import { StatCard } from '@/components/ui/stat-card'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { GettingStartedCard } from '@/components/onboarding/getting-started-card'
 import { Users, Building2, TrendingUp, Megaphone, AlertCircle, Clock, Route as RouteIcon, ArrowRight } from 'lucide-react'
 import { OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS, PIPELINE_STAGES } from '@/lib/constants'
 import { formatRelativeDate } from '@/lib/utils'
@@ -23,6 +24,9 @@ interface DirectionDashboardProps {
 }
 
 export function DirectionDashboard({ metrics, recentOpps, stageCounts, globalOverdue, abandonedOpps }: DirectionDashboardProps) {
+  const isEmpty = metrics.totalCompanies === 0 && metrics.totalOpps === 0 && metrics.activeCampaigns === 0
+  const isDemo = isDemoMode()
+
   return (
     <div className="space-y-6">
       <div>
@@ -30,7 +34,7 @@ export function DirectionDashboard({ metrics, recentOpps, stageCounts, globalOve
         <p className="text-sm text-gray-500 mt-0.5">Tablero diario para ver oportunidades, campañas y próximos pasos comerciales.</p>
       </div>
 
-      {isDemoMode() && (
+      {isDemo && (
         <Link href={'/app/demo' as Route} className="block">
           <div className="flex items-center gap-3 rounded-xl border border-[#1B3A6B]/15 bg-[#1B3A6B]/5 px-4 py-3 hover:bg-[#1B3A6B]/10 transition-colors">
             <RouteIcon className="h-5 w-5 text-[#1B3A6B] shrink-0" />
@@ -49,6 +53,10 @@ export function DirectionDashboard({ metrics, recentOpps, stageCounts, globalOve
         <StatCard title="Campañas activas" value={metrics.activeCampaigns} icon={Megaphone} color="yellow" />
         <StatCard title="Asesores activos" value={metrics.activeAdvisors} icon={Users} color="green" />
       </div>
+
+      {(isEmpty || (!isEmpty && isDemo)) && (
+        <GettingStartedCard mode={isEmpty ? 'empty' : 'demo'} />
+      )}
 
       {/* Pipeline por etapa */}
       <Card>

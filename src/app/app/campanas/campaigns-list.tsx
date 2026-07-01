@@ -48,6 +48,7 @@ export function CampaignsList({ campaigns, profile }: CampaignsListProps) {
         <div>
           <h1 className="text-xl font-bold text-gray-900">Campañas B2B</h1>
           <p className="text-sm text-gray-500">Organizá acciones comerciales por segmento para que el equipo trabaje con un enfoque común.</p>
+          <p className="text-xs text-gray-400 mt-0.5">Usá campañas para ordenar esfuerzos comerciales por segmento.</p>
           <p className="text-xs text-gray-400 mt-0.5">{countLabel}</p>
         </div>
         {canManage && (
@@ -98,7 +99,7 @@ export function CampaignsList({ campaigns, profile }: CampaignsListProps) {
           description={
             hasFilters
               ? 'Probá ajustando los filtros o la búsqueda'
-              : 'Organizá tus acciones comerciales por segmento, con mensaje, guion y objetivos claros para todo el equipo.'
+              : 'Creá una campaña para ordenar acciones comerciales por segmento.'
           }
           example={
             !hasFilters

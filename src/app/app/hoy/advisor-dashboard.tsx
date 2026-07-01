@@ -5,6 +5,8 @@ import { OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS, B2B_STATUS_LABELS, 
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StatCard } from '@/components/ui/stat-card'
+import { GettingStartedCard } from '@/components/onboarding/getting-started-card'
+import { isDemoMode } from '@/lib/demo'
 import { AlertCircle, Calendar, TrendingUp, Building2, Bot, CheckCircle2, Megaphone, Clock } from 'lucide-react'
 import type { Profile, Activity, Contact, Opportunity, Company, Campaign } from '@/types/database'
 
@@ -26,6 +28,9 @@ export function AdvisorDashboard({
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Buenos días' : hour < 18 ? 'Buenas tardes' : 'Buenas noches'
 
+  const isEmpty = assignedCompanies.length === 0 && hotOpps.length === 0 && activeCampaigns.length === 0
+  const isDemo = isDemoMode()
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -44,6 +49,10 @@ export function AdvisorDashboard({
         <StatCard title="Oportunidades calientes" value={hotOpps.length} icon={TrendingUp} color="yellow" />
         <StatCard title="Empresas B2B" value={assignedCompanies.length} icon={Building2} color="purple" />
       </div>
+
+      {(isEmpty || (!isEmpty && isDemo)) && (
+        <GettingStartedCard mode={isEmpty ? 'empty' : 'demo'} />
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>

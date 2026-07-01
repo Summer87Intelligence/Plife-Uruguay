@@ -114,6 +114,7 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
             Radar B2B
           </h1>
           <p className="text-sm text-gray-500">Priorizá empresas con potencial comercial y definí el próximo paso antes de contactar.</p>
+          <p className="text-xs text-gray-400 mt-0.5">El radar funciona mejor cuando hay empresas cargadas con rubro, tamaño y señales comerciales.</p>
         </div>
         <Dialog open={newCompanyOpen} onOpenChange={setNewCompanyOpen}>
           <Button onClick={() => setNewCompanyOpen(true)}><Plus className="h-4 w-4" /> Cargar empresa</Button>
@@ -223,8 +224,8 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
       {filtered.length === 0 ? (
         <EmptyState
           icon={Radar}
-          title={search || filterICP !== ALL || filterNivel !== ALL || filterStatus !== ALL ? 'Sin resultados' : 'El radar está vacío'}
-          description={search ? 'Probá con otro nombre o rubro' : 'Detectá y priorizá empresas con potencial comercial.'}
+          title={search || filterICP !== ALL || filterNivel !== ALL || filterStatus !== ALL ? 'Sin resultados' : 'El Radar B2B todavía no tiene empresas para priorizar'}
+          description={search || filterICP !== ALL || filterNivel !== ALL || filterStatus !== ALL ? 'Probá con otro nombre o rubro' : 'Cargá empresas para que el sistema pueda ayudarte a detectar potencial comercial.'}
           action={<Button onClick={() => setNewCompanyOpen(true)}><Plus className="h-4 w-4" />Cargar empresa</Button>}
         />
       ) : (

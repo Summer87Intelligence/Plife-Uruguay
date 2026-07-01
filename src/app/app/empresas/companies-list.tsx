@@ -30,6 +30,7 @@ export function CompaniesList({ companies, profile }: CompaniesListProps) {
         <div>
           <h1 className="text-xl font-bold text-gray-900">Empresas B2B</h1>
           <p className="text-sm text-gray-500">Centralizá empresas, contactos, oportunidades y señales de potencial B2B.</p>
+          <p className="text-xs text-gray-400 mt-0.5">Primero cargá empresas. Después asociá contactos y oportunidades.</p>
           <p className="text-xs text-gray-400 mt-0.5">{companies.length} empresas</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
@@ -56,7 +57,7 @@ export function CompaniesList({ companies, profile }: CompaniesListProps) {
         <EmptyState
           icon={Building2}
           title={search ? 'Sin resultados' : 'Todavía no cargaste empresas'}
-          description={search ? 'Probá con otro término' : 'Registrá las empresas que querés trabajar en B2B para ordenar tu prospección y detectar oportunidades.'}
+          description={search ? 'Probá con otro término' : 'Empezá cargando una empresa para construir oportunidades comerciales.'}
           example={!search ? 'Cargá un estudio contable de 25 empleados y vinculá a su socio fundador como contacto clave.' : undefined}
           action={!search ? <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Nueva empresa</Button> : undefined}
         />

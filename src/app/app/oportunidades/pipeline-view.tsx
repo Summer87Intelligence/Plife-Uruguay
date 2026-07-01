@@ -71,6 +71,7 @@ export function PipelineView({ opportunities, profile }: PipelineViewProps) {
         <div>
           <h1 className="text-xl font-bold text-gray-900">Pipeline comercial</h1>
           <p className="text-sm text-gray-500">Visualizá el avance de cada conversación comercial desde el primer contacto hasta el cierre.</p>
+          <p className="text-xs text-gray-400 mt-0.5">Creá una oportunidad cada vez que exista una conversación comercial concreta.</p>
           <p className="text-xs text-gray-400 mt-0.5">{countLabel}{totalValue > 0 ? ` · $${totalValue.toLocaleString('es-UY')} estimado` : ''}</p>
         </div>
         <div className="flex items-center gap-2">
@@ -147,7 +148,7 @@ export function PipelineView({ opportunities, profile }: PipelineViewProps) {
           description={
             hasFilters
               ? 'Probá ajustando los filtros o la búsqueda'
-              : 'Convertí el interés de un contacto o empresa en una oportunidad y seguí su avance por el pipeline comercial.'
+              : 'Creá una oportunidad cuando exista una conversación comercial concreta con una empresa o contacto.'
           }
           example={
             !hasFilters

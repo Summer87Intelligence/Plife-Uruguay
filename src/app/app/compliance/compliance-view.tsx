@@ -90,6 +90,7 @@ export function ComplianceView({ rules, recentReviews, interactions }: Complianc
         <div>
           <h1 className="text-xl font-bold text-gray-900">Compliance Comercial</h1>
           <p className="text-sm text-gray-500">Revisá mensajes antes de enviarlos para evitar promesas comerciales riesgosas.</p>
+          <p className="text-xs text-gray-400 mt-0.5">Pegá un mensaje comercial antes de enviarlo para revisar si contiene promesas riesgosas.</p>
         </div>
       </div>
 

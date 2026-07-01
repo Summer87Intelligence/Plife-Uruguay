@@ -33,6 +33,7 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
       <div>
         <h1 className="text-xl font-bold text-gray-900">Dirección</h1>
         <p className="text-sm text-gray-500">Vista ejecutiva para decidir dónde enfocar al equipo comercial.</p>
+        <p className="text-xs text-gray-400 mt-0.5">Esta vista toma sentido cuando ya hay oportunidades y campañas cargadas.</p>
       </div>
 
       {/* KPIs principales */}
