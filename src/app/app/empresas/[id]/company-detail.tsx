@@ -121,7 +121,7 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
           </Dialog>
           <Dialog open={oppOpen} onOpenChange={setOppOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm"><TrendingUp className="h-4 w-4" />Crear oportunidad</Button>
+              <Button variant="outline" size="sm"><TrendingUp className="h-4 w-4" />Nueva oportunidad</Button>
             </DialogTrigger>
             <DialogContent title="Nueva oportunidad B2B" description="Generá una oportunidad desde esta empresa">
               <OpportunityForm companyId={company.id} campaignId={company.campaign_id ?? undefined} defaultType="b2b" onSuccess={() => setOppOpen(false)} />

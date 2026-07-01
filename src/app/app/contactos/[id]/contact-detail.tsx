@@ -128,7 +128,7 @@ export function ContactDetail({ contact, activities, opportunities, companies }:
           </Dialog>
           <Dialog open={oppOpen} onOpenChange={setOppOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm"><TrendingUp className="h-4 w-4" />Crear oportunidad</Button>
+              <Button variant="outline" size="sm"><TrendingUp className="h-4 w-4" />Nueva oportunidad</Button>
             </DialogTrigger>
             <DialogContent title="Nueva oportunidad" description="Generá una oportunidad a partir de este contacto">
               <OpportunityForm
@@ -225,7 +225,7 @@ export function ContactDetail({ contact, activities, opportunities, companies }:
           <Card>
             <CardHeader><CardTitle className="flex items-center gap-2"><Calendar className="h-4 w-4 text-[#1B3A6B]" />Próxima acción</CardTitle></CardHeader>
             <CardContent className="space-y-3">
-              <Input label="Acción" value={nextAction} onChange={e => setNextAction(e.target.value)} placeholder="Qué hay que hacer..." />
+              <Input label="Próximo paso" value={nextAction} onChange={e => setNextAction(e.target.value)} placeholder="Qué hay que hacer a continuación..." />
               <Input label="Fecha" type="date" value={nextActionDate} onChange={e => setNextActionDate(e.target.value)} />
               <Button variant="outline" size="sm" className="w-full" loading={savingAction} onClick={handleSaveNextAction}>Guardar próxima acción</Button>
               {contact.next_action_date && (

@@ -117,9 +117,9 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
           <p className="text-xs text-gray-400 mt-0.5">El radar funciona mejor cuando hay empresas cargadas con rubro, tamaño y señales comerciales.</p>
         </div>
         <Dialog open={newCompanyOpen} onOpenChange={setNewCompanyOpen}>
-          <Button onClick={() => setNewCompanyOpen(true)}><Plus className="h-4 w-4" /> Cargar empresa</Button>
-          <DialogContent title="Nueva empresa B2B" description="Cargá una empresa para el Radar">
-            <CompanyForm onSuccess={() => { setNewCompanyOpen(false); router.refresh() }} />
+          <Button onClick={() => setNewCompanyOpen(true)}><Plus className="h-4 w-4" /> Nueva empresa</Button>
+          <DialogContent title="Nueva empresa" description="Registrá una empresa para priorizarla en el radar">
+            <CompanyForm onSuccess={() => { setNewCompanyOpen(false); router.refresh() }} onCancel={() => setNewCompanyOpen(false)} />
           </DialogContent>
         </Dialog>
       </div>
@@ -216,6 +216,7 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
               companyId={oppCompanyId}
               defaultType="b2b"
               onSuccess={() => { setOppCompanyId(null); router.refresh() }}
+              onCancel={() => setOppCompanyId(null)}
             />
           )}
         </DialogContent>
@@ -226,7 +227,7 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
           icon={Radar}
           title={search || filterICP !== ALL || filterNivel !== ALL || filterStatus !== ALL ? 'Sin resultados' : 'El Radar B2B todavía no tiene empresas para priorizar'}
           description={search || filterICP !== ALL || filterNivel !== ALL || filterStatus !== ALL ? 'Probá con otro nombre o rubro' : 'Cargá empresas para que el sistema pueda ayudarte a detectar potencial comercial.'}
-          action={<Button onClick={() => setNewCompanyOpen(true)}><Plus className="h-4 w-4" />Cargar empresa</Button>}
+          action={<Button onClick={() => setNewCompanyOpen(true)}><Plus className="h-4 w-4" />Nueva empresa</Button>}
         />
       ) : (
         <div className="space-y-2">
@@ -265,7 +266,7 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
                         <Target className="h-3 w-3" />{ICP_NOMBRES[result.icpSugerido]}
                       </span>
                       {co.industry && <span className="text-xs text-gray-400">{co.industry}</span>}
-                      {co.estimated_employees && <span className="text-xs text-gray-400">{co.estimated_employees} empl.</span>}
+                      {co.estimated_employees && <span className="text-xs text-gray-400">{co.estimated_employees} empleados</span>}
                     </div>
                     {co.b2b_score != null && scoreDiff !== null && Math.abs(scoreDiff) >= 5 && (
                       <p className="text-[10px] mt-0.5 text-gray-400">
@@ -284,7 +285,7 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
                       className="inline-flex items-center gap-1 rounded-lg border border-[#1B3A6B]/20 bg-[#1B3A6B]/5 px-2.5 py-1.5 text-xs font-medium text-[#1B3A6B] hover:bg-[#1B3A6B]/10 transition-colors"
                     >
                       <TrendingUp className="h-3 w-3" />
-                      Oportunidad
+                      Nueva oportunidad
                     </button>
                     <button
                       onClick={() => setExpandedId(isExpanded ? null : co.id)}
@@ -354,7 +355,7 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
                         className="inline-flex items-center gap-1.5 rounded-lg bg-[#1B3A6B] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#1B3A6B]/90 disabled:opacity-50 transition-colors"
                       >
                         <CheckCircle2 className="h-3 w-3" />
-                        {savingId === co.id ? 'Guardando…' : `Aplicar potencial sugerido (${result.score})`}
+                        {savingId === co.id ? 'Guardando…' : `Guardar potencial sugerido (${result.score})`}
                       </button>
 
                       {!alreadyHasCampaign && suggestedCampaignId && (

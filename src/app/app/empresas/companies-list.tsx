@@ -29,16 +29,16 @@ export function CompaniesList({ companies, profile }: CompaniesListProps) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Empresas B2B</h1>
-          <p className="text-sm text-gray-500">Centralizá empresas, contactos, oportunidades y señales de potencial B2B.</p>
-          <p className="text-xs text-gray-400 mt-0.5">Primero cargá empresas. Después asociá contactos y oportunidades.</p>
+          <p className="text-sm text-gray-500">Centralizá empresas, contactos y oportunidades en un solo lugar.</p>
+          <p className="text-xs text-gray-400 mt-0.5">Primero cargá empresas, después asociá contactos y oportunidades.</p>
           <p className="text-xs text-gray-400 mt-0.5">{companies.length} empresas</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button><Plus className="h-4 w-4" /> Nueva empresa</Button>
           </DialogTrigger>
-          <DialogContent title="Nueva empresa" description="Registrá los datos de la empresa">
-            <CompanyForm onSuccess={() => setOpen(false)} />
+          <DialogContent title="Nueva empresa" description="Registrá los datos básicos de la empresa">
+            <CompanyForm onSuccess={() => setOpen(false)} onCancel={() => setOpen(false)} />
           </DialogContent>
         </Dialog>
       </div>

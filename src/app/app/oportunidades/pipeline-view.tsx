@@ -1,5 +1,5 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { Plus, TrendingUp, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -29,14 +29,21 @@ const TYPE_LABELS: Record<string, string> = {
 interface PipelineViewProps {
   opportunities: OppWithRelations[]
   profile: Profile
+  autoOpenNew?: boolean
+  initialContactId?: string
+  initialCompanyId?: string
 }
 
-export function PipelineView({ opportunities, profile }: PipelineViewProps) {
+export function PipelineView({ opportunities, profile, autoOpenNew, initialContactId, initialCompanyId }: PipelineViewProps) {
   const [open, setOpen] = useState(false)
   const [view, setView] = useState<'pipeline' | 'list'>('pipeline')
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [riskFilter, setRiskFilter] = useState('')
+
+  useEffect(() => {
+    if (autoOpenNew) setOpen(true)
+  }, [autoOpenNew])
 
   const filtered = useMemo(() => opportunities.filter(o => {
     if (typeFilter && o.type !== typeFilter) return false
@@ -83,8 +90,14 @@ export function PipelineView({ opportunities, profile }: PipelineViewProps) {
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4" /> Nueva oportunidad</Button>
             </DialogTrigger>
-            <DialogContent title="Nueva oportunidad">
-              <OpportunityForm onSuccess={() => setOpen(false)} />
+            <DialogContent title="Nueva oportunidad" description="Registrá una conversación comercial concreta con un contacto o empresa">
+              <OpportunityForm
+                contactId={initialContactId}
+                companyId={initialCompanyId}
+                defaultType={initialCompanyId ? 'b2b' : 'b2c'}
+                onSuccess={() => setOpen(false)}
+                onCancel={() => setOpen(false)}
+              />
             </DialogContent>
           </Dialog>
         </div>
@@ -110,7 +123,7 @@ export function PipelineView({ opportunities, profile }: PipelineViewProps) {
           ))}
         </select>
         <select value={riskFilter} onChange={e => setRiskFilter(e.target.value)} className={FILTER_SELECT}>
-          <option value="">Todos los riesgos</option>
+          <option value="">Todos los niveles de riesgo</option>
           {Object.entries(RISK_LEVEL_LABELS).map(([v, l]) => (
             <option key={v} value={v}>Riesgo {l}</option>
           ))}
@@ -178,7 +191,7 @@ export function PipelineView({ opportunities, profile }: PipelineViewProps) {
                   ))}
                   {(byStage[stage] ?? []).length === 0 && (
                     <div className="h-14 rounded-lg border-2 border-dashed border-gray-100 flex items-center justify-center">
-                      <p className="text-xs text-gray-300">Vacío</p>
+                      <p className="text-xs text-gray-300">Sin oportunidades en esta etapa</p>
                     </div>
                   )}
                 </div>

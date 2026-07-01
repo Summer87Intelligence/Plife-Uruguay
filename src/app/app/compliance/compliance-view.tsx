@@ -100,7 +100,7 @@ export function ComplianceView({ rules, recentReviews, interactions }: Complianc
           Revisor de mensajes
         </button>
         <button onClick={() => setTab('trazabilidad')} className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${tab === 'trazabilidad' ? 'border-[#1B3A6B] text-[#1B3A6B]' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
-          Trazabilidad IA ({interactions.length})
+          Historial IA ({interactions.length})
         </button>
       </div>
 
@@ -229,7 +229,12 @@ export function ComplianceView({ rules, recentReviews, interactions }: Complianc
           <CardHeader><CardTitle className="flex items-center gap-2"><Bot className="h-4 w-4 text-[#1B3A6B]" /> Interacciones IA recientes</CardTitle></CardHeader>
           <CardContent>
             {interactions.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-8">Todavía no hay interacciones IA registradas.</p>
+              <div className="text-center py-8 space-y-2">
+                <p className="text-sm text-gray-400">Todavía no hay interacciones IA registradas.</p>
+                <button type="button" onClick={() => setTab('revisor')} className="text-xs text-[#1B3A6B] hover:underline">
+                  Ir al revisor de mensajes
+                </button>
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -240,7 +245,7 @@ export function ComplianceView({ rules, recentReviews, interactions }: Complianc
                       <th className="py-2 pr-3 font-medium">Fecha</th>
                       <th className="py-2 pr-3 font-medium">Entidad</th>
                       <th className="py-2 pr-3 font-medium">Riesgo</th>
-                      <th className="py-2 pr-3 font-medium">Docs</th>
+                      <th className="py-2 pr-3 font-medium">Documentos</th>
                       <th className="py-2 font-medium"></th>
                     </tr>
                   </thead>
@@ -262,7 +267,7 @@ export function ComplianceView({ rules, recentReviews, interactions }: Complianc
                         <td className="py-2.5">
                           <Dialog>
                             <DialogTrigger asChild>
-                              <Button variant="ghost" size="sm"><Eye className="h-3.5 w-3.5" /> Ver</Button>
+                              <Button variant="ghost" size="sm"><Eye className="h-3.5 w-3.5" /> Ver detalle</Button>
                             </DialogTrigger>
                             <DialogContent title={`${AGENT_LABELS[i.agent_name] ?? i.agent_name}`} description={formatRelativeDate(i.created_at)} className="max-w-2xl">
                               <div className="max-h-[60vh] overflow-y-auto">

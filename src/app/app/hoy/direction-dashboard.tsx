@@ -31,7 +31,7 @@ export function DirectionDashboard({ metrics, recentOpps, stageCounts, globalOve
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-bold text-gray-900">Vista de Dirección</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Tablero diario para ver oportunidades, campañas y próximos pasos comerciales.</p>
+        <p className="text-sm text-gray-500 mt-0.5">Resumen del equipo: pipeline, alertas y acceso a herramientas de gestión.</p>
       </div>
 
       {isDemo && (

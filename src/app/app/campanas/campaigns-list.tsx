@@ -48,7 +48,6 @@ export function CampaignsList({ campaigns, profile }: CampaignsListProps) {
         <div>
           <h1 className="text-xl font-bold text-gray-900">Campañas B2B</h1>
           <p className="text-sm text-gray-500">Organizá acciones comerciales por segmento para que el equipo trabaje con un enfoque común.</p>
-          <p className="text-xs text-gray-400 mt-0.5">Usá campañas para ordenar esfuerzos comerciales por segmento.</p>
           <p className="text-xs text-gray-400 mt-0.5">{countLabel}</p>
         </div>
         {canManage && (
@@ -56,8 +55,8 @@ export function CampaignsList({ campaigns, profile }: CampaignsListProps) {
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4" /> Nueva campaña</Button>
             </DialogTrigger>
-            <DialogContent title="Nueva campaña B2B" description="Definí el segmento y objetivo">
-              <CampaignForm onSuccess={() => setOpen(false)} />
+            <DialogContent title="Nueva campaña" description="Definí el segmento, objetivo y mensaje inicial">
+              <CampaignForm onSuccess={() => setOpen(false)} onCancel={() => setOpen(false)} />
             </DialogContent>
           </Dialog>
         )}
@@ -99,7 +98,9 @@ export function CampaignsList({ campaigns, profile }: CampaignsListProps) {
           description={
             hasFilters
               ? 'Probá ajustando los filtros o la búsqueda'
-              : 'Creá una campaña para ordenar acciones comerciales por segmento.'
+              : canManage
+                ? 'Creá una campaña para ordenar acciones comerciales por segmento.'
+                : 'Las campañas las gestionan líderes comerciales. Consultá con tu equipo para ver las activas.'
           }
           example={
             !hasFilters
@@ -157,10 +158,10 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
 
       <div className="grid grid-cols-4 gap-2 text-center">
         {[
-          { label: 'Targets', value: campaign.total_targets },
+          { label: 'Objetivo', value: campaign.total_targets },
           { label: 'Contactados', value: campaign.total_contacted },
           { label: 'Reuniones', value: campaign.total_meetings },
-          { label: 'Convertidos', value: campaign.total_converted },
+          { label: 'Cierres', value: campaign.total_converted },
         ].map(stat => (
           <div key={stat.label} className="rounded-lg bg-gray-50 p-2">
             <p className="text-lg font-bold text-gray-900">{stat.value}</p>

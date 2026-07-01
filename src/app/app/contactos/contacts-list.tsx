@@ -1,7 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Plus, Search, Phone, Building2 } from 'lucide-react'
+import { Plus, Search, Phone, Building2, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar } from '@/components/ui/avatar'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -21,14 +21,21 @@ const FILTER_SELECT = 'h-8 rounded-lg border border-gray-200 bg-white px-2 text-
 
 interface ContactsListProps {
   contacts: (Contact & { company?: { id: string; name: string } | null })[]
+  companies: { id: string; name: string }[]
   profile: Profile
+  autoOpenNew?: boolean
+  initialCompanyId?: string
 }
 
-export function ContactsList({ contacts, profile }: ContactsListProps) {
+export function ContactsList({ contacts, companies, profile, autoOpenNew, initialCompanyId }: ContactsListProps) {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [interestFilter, setInterestFilter] = useState('')
   const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    if (autoOpenNew) setOpen(true)
+  }, [autoOpenNew])
 
   const filtered = contacts.filter(c => {
     if (statusFilter && c.status !== statusFilter) return false
@@ -55,15 +62,21 @@ export function ContactsList({ contacts, profile }: ContactsListProps) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Contactos</h1>
-          <p className="text-sm text-gray-500">Usá contactos para registrar a las personas con las que habla el asesor.</p>
+          <p className="text-sm text-gray-500">Registrá las personas con las que habla el asesor y vinculalas a una empresa.</p>
+          <p className="text-xs text-gray-400 mt-0.5">Después de cargar un contacto, creá una oportunidad para seguir la conversación comercial.</p>
           <p className="text-xs text-gray-400 mt-0.5">{countLabel}</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button><Plus className="h-4 w-4" /> Nuevo contacto</Button>
           </DialogTrigger>
-          <DialogContent title="Nuevo contacto" description="Agregá los datos del contacto">
-            <ContactForm onSuccess={() => setOpen(false)} />
+          <DialogContent title="Nuevo contacto" description="Completá los datos de la persona y asociala a una empresa si corresponde">
+            <ContactForm
+              companies={companies}
+              initial={initialCompanyId ? { company_id: initialCompanyId } : undefined}
+              onSuccess={() => setOpen(false)}
+              onCancel={() => setOpen(false)}
+            />
           </DialogContent>
         </Dialog>
       </div>
@@ -106,7 +119,7 @@ export function ContactsList({ contacts, profile }: ContactsListProps) {
       {/* Lista */}
       {filtered.length === 0 ? (
         <EmptyState
-          icon={Search}
+          icon={hasFilters ? Search : Users}
           title={hasFilters ? 'Sin resultados para estos filtros' : 'Todavía no cargaste contactos'}
           description={
             hasFilters
@@ -169,7 +182,7 @@ export function ContactsList({ contacts, profile }: ContactsListProps) {
                     )}
                     {contact.next_action_date && (
                       <span className="text-xs text-gray-400">
-                        Próx: {new Date(contact.next_action_date).toLocaleDateString('es-UY')}
+                        Seguimiento: {new Date(contact.next_action_date).toLocaleDateString('es-UY')}
                       </span>
                     )}
                   </div>

@@ -48,7 +48,10 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
         {/* Pipeline por etapa */}
         <Card>
           <CardHeader>
-            <CardTitle>Distribución del Pipeline</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Distribución del Pipeline</CardTitle>
+              <Link href="/app/oportunidades" className="text-xs text-[#1B3A6B] hover:underline">Ver pipeline completo</Link>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">

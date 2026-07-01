@@ -265,7 +265,7 @@ export function OpportunityDetail({ opportunity, activities, advisors, campaign 
           <Card>
             <CardHeader><CardTitle className="flex items-center gap-2"><Calendar className="h-4 w-4" />Próxima acción</CardTitle></CardHeader>
             <CardContent className="space-y-3">
-              <Input label="Acción" value={nextAction} onChange={e => setNextAction(e.target.value)} placeholder="Qué hay que hacer..." />
+              <Input label="Próximo paso" value={nextAction} onChange={e => setNextAction(e.target.value)} placeholder="Qué hay que hacer a continuación..." />
               <Input label="Fecha" type="date" value={nextActionDate} onChange={e => setNextActionDate(e.target.value)} />
               <Button variant="outline" size="sm" className="w-full" loading={busy} onClick={handleSaveNextAction}>Guardar próxima acción</Button>
               {opportunity.next_action_date && <p className="text-xs text-gray-400">Agendado: {formatDate(opportunity.next_action_date)}</p>}

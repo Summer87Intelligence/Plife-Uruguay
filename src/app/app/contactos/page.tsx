@@ -3,10 +3,15 @@ import { getProfile } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { ContactsList } from './contacts-list'
 
-export default async function ContactosPage() {
+export default async function ContactosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ nuevo?: string; empresa?: string }>
+}) {
   const profile = await getProfile()
   if (!profile) redirect('/login')
 
+  const params = await searchParams
   const supabase = await createClient()
 
   let query = supabase
@@ -16,12 +21,30 @@ export default async function ContactosPage() {
     .order('created_at', { ascending: false })
     .limit(100)
 
-  // Asesores solo ven sus contactos
   if (profile.role === 'asesor') {
     query = query.eq('assigned_to', profile.id)
   }
 
-  const { data: contacts } = await query
+  let companiesQuery = supabase
+    .from('companies')
+    .select('id, name')
+    .is('deleted_at', null)
+    .order('name')
+    .limit(200)
 
-  return <ContactsList contacts={contacts ?? []} profile={profile} />
+  if (profile.role === 'asesor') {
+    companiesQuery = companiesQuery.eq('assigned_to', profile.id)
+  }
+
+  const [{ data: contacts }, { data: companies }] = await Promise.all([query, companiesQuery])
+
+  return (
+    <ContactsList
+      contacts={contacts ?? []}
+      companies={companies ?? []}
+      profile={profile}
+      autoOpenNew={params.nuevo === '1'}
+      initialCompanyId={params.empresa}
+    />
+  )
 }

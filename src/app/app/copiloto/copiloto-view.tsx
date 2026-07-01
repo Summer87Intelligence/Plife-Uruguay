@@ -82,23 +82,23 @@ export function CopilotoView({ aiConfigured, contacts, companies, opportunities,
         </div>
         <div>
           <h1 className="text-xl font-bold text-gray-900">Copiloto del Asesor</h1>
-          <p className="text-sm text-gray-500">Asistencia comercial preparada para activar IA avanzada cuando PLIFE valide el flujo.</p>
+          <p className="text-sm text-gray-500">Prepará mensajes, objeciones y próximos pasos con asistencia comercial.</p>
+          <p className="text-xs text-gray-400 mt-0.5">Seleccioná un contacto u oportunidad y describí qué necesitás.</p>
         </div>
       </div>
-
-      {!aiConfigured && (
-        <div className="rounded-xl bg-blue-50 border border-blue-100 px-4 py-3 flex items-start gap-3">
-          <AlertTriangle className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
-          <p className="text-sm text-blue-800">
-            <strong>IA avanzada no configurada en esta demo.</strong> El sistema conserva estructura comercial, compliance y base de conocimiento para validar el flujo antes de activar IA real.
-          </p>
-        </div>
-      )}
 
       <div className="rounded-xl bg-blue-50 border border-blue-100 px-4 py-3 flex items-start gap-3">
         <AlertTriangle className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
         <p className="text-sm text-blue-800">
-          El copiloto <strong>nunca cotiza primas ni promete coberturas.</strong> Toda sugerencia pasa por compliance antes de mostrarse como usable.
+          {!aiConfigured ? (
+            <>
+              <strong>IA avanzada no configurada.</strong> El copiloto estará disponible cuando el administrador active la integración. Mientras tanto, podés usar Compliance y la base de conocimiento.
+            </>
+          ) : (
+            <>
+              El copiloto <strong>nunca cotiza primas ni promete coberturas.</strong> Toda sugerencia pasa por compliance antes de mostrarse.
+            </>
+          )}
         </p>
       </div>
 
@@ -137,9 +137,9 @@ export function CopilotoView({ aiConfigured, contacts, companies, opportunities,
             </div>
           </div>
 
-          <Button type="submit" loading={loading} disabled={!aiConfigured} className="w-full">
+          <Button type="submit" loading={loading} disabled={!aiConfigured} className="w-full" title={!aiConfigured ? 'Requiere configuración de IA por el administrador' : undefined}>
             <Sparkles className="h-4 w-4" />
-            {loading ? 'Generando...' : 'Generar con IA'}
+            {loading ? 'Generando...' : aiConfigured ? 'Generar sugerencia' : 'IA no configurada'}
           </Button>
         </form>
 

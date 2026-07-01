@@ -36,7 +36,7 @@ export function AdvisorDashboard({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">{greeting}, {profile.full_name.split(' ')[0]}</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Tablero diario para ver oportunidades, campañas y próximos pasos comerciales.</p>
+          <p className="text-sm text-gray-500 mt-0.5">Tu tablero de hoy: oportunidades, campañas y próximos pasos comerciales.</p>
         </div>
         <Link href="/app/copiloto">
           <Button><Bot className="h-4 w-4" />Preparar contacto con IA</Button>
@@ -46,7 +46,7 @@ export function AdvisorDashboard({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Tareas hoy" value={todayActivities.length} icon={Calendar} color="blue" />
         <StatCard title="Seguimientos vencidos" value={overdueActions.length} icon={AlertCircle} color={overdueActions.length > 0 ? 'red' : 'green'} />
-        <StatCard title="Oportunidades calientes" value={hotOpps.length} icon={TrendingUp} color="yellow" />
+        <StatCard title="Oportunidades en etapa avanzada" value={hotOpps.length} icon={TrendingUp} color="yellow" />
         <StatCard title="Empresas B2B" value={assignedCompanies.length} icon={Building2} color="purple" />
       </div>
 
@@ -97,7 +97,10 @@ export function AdvisorDashboard({
           </CardHeader>
           <CardContent>
             {upcomingOpps.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-6">Sin acciones programadas próximamente</p>
+              <p className="text-sm text-gray-500 text-center py-6">
+                Sin acciones programadas.{' '}
+                <Link href="/app/oportunidades" className="text-[#1B3A6B] hover:underline">Crear oportunidad</Link>
+              </p>
             ) : (
               <ul className="space-y-2">
                 {upcomingOpps.map(opp => (
@@ -119,13 +122,16 @@ export function AdvisorDashboard({
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2"><TrendingUp className="h-4 w-4 text-yellow-500" />Oportunidades calientes</CardTitle>
+              <CardTitle className="flex items-center gap-2"><TrendingUp className="h-4 w-4 text-yellow-500" />Oportunidades en etapa avanzada</CardTitle>
               <Link href="/app/oportunidades" className="text-xs text-[#1B3A6B] hover:underline">Ver pipeline</Link>
             </div>
           </CardHeader>
           <CardContent>
             {hotOpps.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-6">No hay oportunidades calientes</p>
+              <p className="text-sm text-gray-500 text-center py-6">
+                No hay oportunidades en etapas avanzadas.{' '}
+                <Link href="/app/oportunidades" className="text-[#1B3A6B] hover:underline">Ver pipeline</Link>
+              </p>
             ) : (
               <ul className="space-y-2">
                 {hotOpps.map(opp => (
@@ -154,14 +160,17 @@ export function AdvisorDashboard({
           </CardHeader>
           <CardContent>
             {activeCampaigns.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-6">No hay campañas activas</p>
+              <p className="text-sm text-gray-500 text-center py-6">
+                No hay campañas activas.{' '}
+                <Link href="/app/campanas" className="text-[#1B3A6B] hover:underline">Ver campañas</Link>
+              </p>
             ) : (
               <ul className="space-y-2">
                 {activeCampaigns.map(c => (
                   <li key={c.id}>
                     <Link href={`/app/campanas/${c.id}`} className="flex items-center justify-between rounded-lg px-3 py-2.5 hover:bg-gray-50">
                       <p className="text-sm font-medium text-gray-900">{c.name}</p>
-                      <span className="text-xs text-gray-400">{c.total_converted ?? 0}/{c.total_targets ?? 0} conv.</span>
+                      <span className="text-xs text-gray-400">{c.total_converted ?? 0}/{c.total_targets ?? 0} cierres</span>
                     </Link>
                   </li>
                 ))}
@@ -204,7 +213,10 @@ export function AdvisorDashboard({
           </CardHeader>
           <CardContent>
             {assignedCompanies.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-6">Sin empresas asignadas</p>
+              <p className="text-sm text-gray-500 text-center py-6">
+                Sin empresas asignadas.{' '}
+                <Link href="/app/empresas" className="text-[#1B3A6B] hover:underline">Nueva empresa</Link>
+              </p>
             ) : (
               <ul className="space-y-2">
                 {assignedCompanies.map(co => (
