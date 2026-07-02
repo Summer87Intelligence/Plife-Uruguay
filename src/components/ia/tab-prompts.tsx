@@ -6,12 +6,12 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { formatRelativeDate } from '@/lib/utils'
-import type { AIPrompt, AIPromptStatus } from '@/types/database'
+import type { AIPrompt, AIPromptStatus, AIPromptSuggestion } from '@/types/database'
 import type { IAEngineProps } from './types'
-import { getCategoryColor, getProfilePrompts, PROMPT_STATUS_LABELS, PROMPT_STATUS_VARIANTS } from './helpers'
+import { getCategoryColor, getProfilePrompts, PROMPT_STATUS_LABELS, PROMPT_STATUS_VARIANTS, buildPromptPreview, getPromptQualityBadge } from './helpers'
 import { ProfileSelector } from './profile-selector'
 import { PromptEditor } from './prompt-editor'
-import { buildPromptPreview } from './helpers'
+import { PromptSuggestionsPanel } from './prompt-suggestions-panel'
 
 interface PromptsTabProps extends IAEngineProps {
   activeProfileId: string
@@ -22,13 +22,14 @@ type ViewMode = 'category' | 'list'
 type StatusFilter = 'all' | AIPromptStatus
 
 export function PromptsTab({
-  stages, categories, prompts, profiles, profilePrompts,
+  stages, categories, prompts, profiles, profilePrompts, promptSuggestions,
   activeProfileId, onProfileChange,
 }: PromptsTabProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('category')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [viewingId, setViewingId] = useState<string | null>(null)
+  const [suggestionsId, setSuggestionsId] = useState<string | null>(null)
 
   const profileLinks = getProfilePrompts(activeProfileId, profilePrompts, prompts)
   const profilePromptIds = new Set(profileLinks.map(pl => pl.prompt?.id).filter(Boolean))
@@ -84,11 +85,14 @@ export function PromptsTab({
                     prompt={p}
                     categories={categories}
                     stages={stages}
+                    promptSuggestions={promptSuggestions}
                     colors={colors}
                     isEditing={editingId === p.id}
                     isViewing={viewingId === p.id}
+                    isSuggestionsOpen={suggestionsId === p.id}
                     onEdit={() => setEditingId(editingId === p.id ? null : p.id)}
                     onView={() => setViewingId(viewingId === p.id ? null : p.id)}
+                    onSuggestions={() => setSuggestionsId(suggestionsId === p.id ? null : p.id)}
                   />
                 ))}
               </div>
@@ -99,7 +103,19 @@ export function PromptsTab({
               <p className="text-sm font-semibold text-gray-700 mb-3">Sin categoría</p>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 {uncategorized.map(p => (
-                  <PromptCard key={p.id} prompt={p} categories={categories} stages={stages} isEditing={editingId === p.id} isViewing={viewingId === p.id} onEdit={() => setEditingId(editingId === p.id ? null : p.id)} onView={() => setViewingId(viewingId === p.id ? null : p.id)} />
+                  <PromptCard
+                    key={p.id}
+                    prompt={p}
+                    categories={categories}
+                    stages={stages}
+                    promptSuggestions={promptSuggestions}
+                    isEditing={editingId === p.id}
+                    isViewing={viewingId === p.id}
+                    isSuggestionsOpen={suggestionsId === p.id}
+                    onEdit={() => setEditingId(editingId === p.id ? null : p.id)}
+                    onView={() => setViewingId(viewingId === p.id ? null : p.id)}
+                    onSuggestions={() => setSuggestionsId(suggestionsId === p.id ? null : p.id)}
+                  />
                 ))}
               </div>
             </div>
@@ -111,7 +127,20 @@ export function PromptsTab({
             const cat = categories.find(c => c.id === p.category_id)
             const colors = getCategoryColor(cat)
             return (
-              <PromptCard key={p.id} prompt={p} categories={categories} stages={stages} colors={colors} isEditing={editingId === p.id} isViewing={viewingId === p.id} onEdit={() => setEditingId(editingId === p.id ? null : p.id)} onView={() => setViewingId(viewingId === p.id ? null : p.id)} />
+              <PromptCard
+                key={p.id}
+                prompt={p}
+                categories={categories}
+                stages={stages}
+                promptSuggestions={promptSuggestions}
+                colors={colors}
+                isEditing={editingId === p.id}
+                isViewing={viewingId === p.id}
+                isSuggestionsOpen={suggestionsId === p.id}
+                onEdit={() => setEditingId(editingId === p.id ? null : p.id)}
+                onView={() => setViewingId(viewingId === p.id ? null : p.id)}
+                onSuggestions={() => setSuggestionsId(suggestionsId === p.id ? null : p.id)}
+              />
             )
           })}
         </div>
@@ -125,20 +154,25 @@ export function PromptsTab({
 }
 
 function PromptCard({
-  prompt, categories, stages, colors, isEditing, isViewing, onEdit, onView,
+  prompt, categories, stages, promptSuggestions, colors, isEditing, isViewing, isSuggestionsOpen,
+  onEdit, onView, onSuggestions,
 }: {
   prompt: AIPrompt
   categories: IAEngineProps['categories']
   stages: IAEngineProps['stages']
+  promptSuggestions: AIPromptSuggestion[]
   colors?: ReturnType<typeof getCategoryColor>
   isEditing: boolean
   isViewing: boolean
+  isSuggestionsOpen: boolean
   onEdit: () => void
   onView: () => void
+  onSuggestions: () => void
 }) {
   const category = categories.find(c => c.id === prompt.category_id)
   const stage = stages.find(s => s.id === prompt.stage_id)
   const c = colors ?? getCategoryColor(category)
+  const qualityBadge = getPromptQualityBadge(prompt, promptSuggestions)
 
   return (
     <Card className={`overflow-hidden border ${c.border}`}>
@@ -148,14 +182,17 @@ function PromptCard({
             <p className="text-sm font-semibold text-gray-900 truncate">{prompt.name}</p>
             <p className="text-xs text-gray-500 mt-0.5">{[category?.label, stage?.label].filter(Boolean).join(' · ')}</p>
           </div>
-          <Badge variant={PROMPT_STATUS_VARIANTS[prompt.status]}>{PROMPT_STATUS_LABELS[prompt.status]}</Badge>
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            <Badge variant={PROMPT_STATUS_VARIANTS[prompt.status]}>{PROMPT_STATUS_LABELS[prompt.status]}</Badge>
+            <Badge variant={qualityBadge.variant}>{qualityBadge.label}</Badge>
+          </div>
         </div>
         <p className="text-xs text-gray-400 mt-2">Actualizado {formatRelativeDate(prompt.updated_at)}</p>
         <div className="flex flex-wrap gap-1.5 mt-3">
           <Button size="sm" variant="outline" onClick={onEdit}><Pencil className="h-3 w-3" />Editar</Button>
           <Button size="sm" variant="ghost" onClick={onView}><Eye className="h-3 w-3" />Ver</Button>
           <Button size="sm" variant="ghost" disabled title="Próximamente"><Copy className="h-3 w-3" />Duplicar</Button>
-          <Button size="sm" variant="ghost" disabled title="Próximamente"><Lightbulb className="h-3 w-3" />Sugerencias</Button>
+          <Button size="sm" variant="ghost" onClick={onSuggestions}><Lightbulb className="h-3 w-3" />Ver sugerencias</Button>
           <Button size="sm" variant="ghost" disabled title="Próximamente"><Power className="h-3 w-3" />Desactivar</Button>
         </div>
       </div>
@@ -165,9 +202,14 @@ function PromptCard({
           <pre className="text-xs text-gray-700 whitespace-pre-wrap font-sans max-h-40 overflow-y-auto">{buildPromptPreview(prompt)}</pre>
         </div>
       )}
+      {isSuggestionsOpen && (
+        <div className="px-4 py-3 border-t border-gray-100 bg-white">
+          <PromptSuggestionsPanel prompt={prompt} categories={categories} suggestions={promptSuggestions} />
+        </div>
+      )}
       {isEditing && (
         <div className="px-4 pb-4">
-          <PromptEditor prompt={prompt} categories={categories} stages={stages} onClose={onEdit} />
+          <PromptEditor prompt={prompt} categories={categories} stages={stages} promptSuggestions={promptSuggestions} onClose={onEdit} />
         </div>
       )}
     </Card>

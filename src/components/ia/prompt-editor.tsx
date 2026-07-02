@@ -4,19 +4,21 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input, Textarea } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import type { AICategory, AIPrompt, AIStage, AIPromptStatus } from '@/types/database'
+import type { AICategory, AIPrompt, AIStage, AIPromptStatus, AIPromptSuggestion } from '@/types/database'
 import { updatePrompt, type PromptFormData } from '@/app/app/ia/actions'
 import { buildPromptPreview, PROMPT_STATUS_LABELS } from './helpers'
+import { PromptSuggestionsPanel } from './prompt-suggestions-panel'
 
 interface PromptEditorProps {
   prompt: AIPrompt
   categories: AICategory[]
   stages: AIStage[]
+  promptSuggestions?: AIPromptSuggestion[]
   onClose: () => void
   onSaved?: () => void
 }
 
-export function PromptEditor({ prompt, categories, stages, onClose, onSaved }: PromptEditorProps) {
+export function PromptEditor({ prompt, categories, stages, promptSuggestions = [], onClose, onSaved }: PromptEditorProps) {
   const [name, setName] = useState(prompt.name)
   const [description, setDescription] = useState(prompt.description ?? '')
   const [categoryId, setCategoryId] = useState(prompt.category_id ?? '')
@@ -122,10 +124,12 @@ export function PromptEditor({ prompt, categories, stages, onClose, onSaved }: P
         <pre className="text-xs text-gray-700 whitespace-pre-wrap font-sans leading-relaxed max-h-48 overflow-y-auto">{preview}</pre>
       </div>
 
-      <div className="rounded-lg border border-dashed border-gray-200 bg-white/60 p-4">
-        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Sugerencias de mejora</p>
-        <p className="text-sm text-gray-400">Las sugerencias automáticas estarán disponibles en una próxima fase.</p>
-      </div>
+      <PromptSuggestionsPanel
+        prompt={prompt}
+        categories={categories}
+        suggestions={promptSuggestions}
+        compact
+      />
 
       <div className="flex items-center gap-2">
         <input id={`active-${prompt.id}`} type="checkbox" checked={isActive} onChange={e => setIsActive(e.target.checked)} className="h-4 w-4 rounded border-gray-300 accent-[#1B3A6B]" />

@@ -32,7 +32,7 @@ const TABS: { id: MainTab; label: string; icon: typeof LayoutDashboard }[] = [
 ]
 
 export function IAView({
-  stages, categories, prompts, profiles, profilePrompts, executionRuns,
+  stages, categories, prompts, profiles, profilePrompts, executionRuns, promptSuggestions,
   schemaNotApplied, supabaseError,
 }: IAViewProps) {
   const [tab, setTab] = useState<MainTab>('dashboard')
@@ -47,7 +47,7 @@ export function IAView({
   const systemOk = validatedCount > 0 && activeProfiles > 0 && profilePrompts.length > 0
 
   const engineProps: IAEngineProps = {
-    stages, categories, prompts, profiles, profilePrompts, executionRuns,
+    stages, categories, prompts, profiles, profilePrompts, executionRuns, promptSuggestions,
   }
 
   return (

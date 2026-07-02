@@ -17,6 +17,7 @@ export default async function IAPage() {
     { data: profiles,      error: profilesErr },
     { data: profilePrompts, error: ppErr },
     { data: executionRuns, error: runsErr },
+    { data: promptSuggestions, error: suggestionsErr },
   ] = await Promise.all([
     supabase.from('ai_stages').select('*').order('sort_order'),
     supabase.from('ai_categories').select('*').order('label'),
@@ -24,9 +25,10 @@ export default async function IAPage() {
     supabase.from('ai_analysis_profiles').select('*').order('name'),
     supabase.from('ai_profile_prompts').select('*').order('execution_order'),
     supabase.from('ai_execution_runs').select('*').order('created_at', { ascending: false }).limit(50),
+    supabase.from('ai_prompt_suggestions').select('*').order('created_at', { ascending: false }),
   ])
 
-  const allErrors = [stagesErr, categoriesErr, promptsErr, profilesErr, ppErr, runsErr]
+  const allErrors = [stagesErr, categoriesErr, promptsErr, profilesErr, ppErr, runsErr, suggestionsErr]
 
   // 42P01 = relation does not exist (schema not applied)
   const schemaNotApplied = allErrors.some(
@@ -46,6 +48,7 @@ export default async function IAPage() {
       profiles={profiles ?? []}
       profilePrompts={profilePrompts ?? []}
       executionRuns={executionRuns ?? []}
+      promptSuggestions={promptSuggestions ?? []}
       schemaNotApplied={schemaNotApplied}
       supabaseError={supabaseError}
     />

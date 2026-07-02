@@ -16,7 +16,7 @@ interface ConfiguracionTabProps extends IAEngineProps {
 }
 
 export function ConfiguracionTab({
-  stages, categories, prompts, profiles, profilePrompts,
+  stages, categories, prompts, profiles, profilePrompts, promptSuggestions,
   activeProfileId, onProfileChange,
 }: ConfiguracionTabProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -74,6 +74,7 @@ export function ConfiguracionTab({
                       prompt={prompt}
                       categories={categories}
                       stages={stages}
+                      promptSuggestions={promptSuggestions}
                       onClose={() => setEditingId(null)}
                     />
                   </div>
@@ -109,7 +110,7 @@ export function ConfiguracionTab({
                   </div>
                   {isEditing && (
                     <div className="px-5 pb-4">
-                      <PromptEditor prompt={prompt} categories={categories} stages={stages} onClose={() => setEditingId(null)} />
+                      <PromptEditor prompt={prompt} categories={categories} stages={stages} promptSuggestions={promptSuggestions} onClose={() => setEditingId(null)} />
                     </div>
                   )}
                 </div>

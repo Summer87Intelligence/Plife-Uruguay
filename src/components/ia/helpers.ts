@@ -1,4 +1,5 @@
-import type { AICategory, AIPrompt, AIPromptStatus, AIAnalysisProfile, AIProfilePrompt, AIExecutionRun } from '@/types/database'
+import type { AICategory, AIPrompt, AIPromptStatus, AIAnalysisProfile, AIProfilePrompt, AIExecutionRun, AIPromptSuggestion } from '@/types/database'
+import { buildStructuredPrompt } from '@/domains/ia-engine/prompt-builder'
 
 export const PROMPT_STATUS_LABELS: Record<AIPromptStatus, string> = {
   draft: 'Borrador',
@@ -49,15 +50,25 @@ export function buildPromptPreview(prompt: Pick<
   'role_persona' | 'context_environment' | 'objective' | 'specific_task' |
   'constraints' | 'output_format' | 'target_audience'
 >) {
-  const sections: string[] = []
-  if (prompt.role_persona) sections.push(`## Rol\n${prompt.role_persona}`)
-  if (prompt.context_environment) sections.push(`## Contexto\n${prompt.context_environment}`)
-  if (prompt.objective) sections.push(`## Objetivo\n${prompt.objective}`)
-  if (prompt.specific_task) sections.push(`## Tarea\n${prompt.specific_task}`)
-  if (prompt.constraints) sections.push(`## Restricciones\n${prompt.constraints}`)
-  if (prompt.output_format) sections.push(`## Formato de salida\n${prompt.output_format}`)
-  if (prompt.target_audience) sections.push(`## Público objetivo\n${prompt.target_audience}`)
-  return sections.join('\n\n') || 'Completá los campos estructurados para generar la vista previa.'
+  return buildStructuredPrompt(prompt)
+}
+
+export function getOpenSuggestionsForPrompt(promptId: string, suggestions: AIPromptSuggestion[]) {
+  return suggestions.filter(s => s.prompt_id === promptId && s.status === 'open')
+}
+
+export function getPromptQualityBadge(prompt: AIPrompt, suggestions: AIPromptSuggestion[]): {
+  label: string
+  variant: 'warning' | 'success' | 'secondary'
+} {
+  if (prompt.status === 'draft') {
+    return { label: 'Borrador', variant: 'warning' }
+  }
+  const openCount = getOpenSuggestionsForPrompt(prompt.id, suggestions).length
+  if (openCount > 0) {
+    return { label: 'Revisión', variant: 'warning' }
+  }
+  return { label: 'OK', variant: 'success' }
 }
 
 export function getActiveProfile(profiles: AIAnalysisProfile[]) {

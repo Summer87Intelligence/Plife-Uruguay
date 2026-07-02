@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { getProfile, canAccessAll } from '@/lib/auth'
+import { validateStructuredPrompt } from '@/domains/ia-engine/prompt-validation'
 
 const CategorySchema = z.object({
   label: z.string().min(1, 'Nombre requerido').max(100),
@@ -222,4 +223,77 @@ export async function updatePrompt(id: string, data: Partial<PromptFormData>) {
   if (error) return { error: error.message }
   revalidatePath('/app/ia')
   return { data: prompt }
+}
+
+// ---- ai_prompt_suggestions ----
+
+export async function regeneratePromptSuggestions(promptId: string) {
+  const admin = await requireAdmin()
+  if (!admin) return { error: 'Sin permisos' }
+
+  const supabase = await createClient()
+
+  const { data: prompt, error: promptErr } = await supabase
+    .from('ai_prompts')
+    .select('*')
+    .eq('id', promptId)
+    .single()
+
+  if (promptErr) return { error: promptErr.message }
+  if (!prompt) return { error: 'Prompt no encontrado' }
+
+  let categoryKey: string | null = null
+  if (prompt.category_id) {
+    const { data: category } = await supabase
+      .from('ai_categories')
+      .select('key')
+      .eq('id', prompt.category_id)
+      .single()
+    categoryKey = category?.key ?? null
+  }
+
+  const validation = validateStructuredPrompt({
+    name: prompt.name,
+    role_persona: prompt.role_persona,
+    context_environment: prompt.context_environment,
+    objective: prompt.objective,
+    specific_task: prompt.specific_task,
+    constraints: prompt.constraints,
+    output_format: prompt.output_format,
+    target_audience: prompt.target_audience,
+    status: prompt.status,
+    categoryKey,
+  })
+
+  const { error: dismissErr } = await supabase
+    .from('ai_prompt_suggestions')
+    .update({ status: 'dismissed' })
+    .eq('prompt_id', promptId)
+    .eq('status', 'open')
+
+  if (dismissErr) return { error: dismissErr.message }
+
+  if (validation.suggestions.length > 0) {
+    const rows = validation.suggestions.map(s => ({
+      prompt_id: promptId,
+      suggestion_type: s.suggestion_type,
+      reason: s.reason,
+      suggested_content: s.suggested_content ?? null,
+      status: 'open' as const,
+    }))
+
+    const { error: insertErr } = await supabase
+      .from('ai_prompt_suggestions')
+      .insert(rows)
+
+    if (insertErr) return { error: insertErr.message }
+  }
+
+  revalidatePath('/app/ia')
+  return {
+    data: {
+      status: validation.status,
+      suggestionCount: validation.suggestions.length,
+    },
+  }
 }

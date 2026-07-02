@@ -1,5 +1,5 @@
 import type {
-  AIStage, AICategory, AIPrompt, AIAnalysisProfile, AIProfilePrompt, AIExecutionRun,
+  AIStage, AICategory, AIPrompt, AIAnalysisProfile, AIProfilePrompt, AIExecutionRun, AIPromptSuggestion,
 } from '@/types/database'
 
 export interface IAEngineProps {
@@ -9,6 +9,7 @@ export interface IAEngineProps {
   profiles: AIAnalysisProfile[]
   profilePrompts: AIProfilePrompt[]
   executionRuns: AIExecutionRun[]
+  promptSuggestions: AIPromptSuggestion[]
 }
 
 export type MainTab =
