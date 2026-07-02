@@ -29,9 +29,26 @@ const AddPromptSchema = z.object({
   enabled_by_default: z.boolean(),
 })
 
+const PromptSchema = z.object({
+  name: z.string().min(1, 'Nombre requerido').max(200),
+  description: z.string().max(500).optional(),
+  stage_id: z.string().uuid().nullable().optional(),
+  category_id: z.string().uuid().nullable().optional(),
+  role_persona: z.string().max(8000).default(''),
+  context_environment: z.string().max(8000).default(''),
+  objective: z.string().max(8000).default(''),
+  specific_task: z.string().max(8000).default(''),
+  constraints: z.string().max(8000).default(''),
+  output_format: z.string().max(8000).default(''),
+  target_audience: z.string().max(2000).default(''),
+  status: z.enum(['draft', 'validated', 'archived']),
+  is_active: z.boolean(),
+})
+
 export type CategoryFormData = z.infer<typeof CategorySchema>
 export type ProfileFormData = z.infer<typeof ProfileSchema>
 export type AddPromptFormData = z.infer<typeof AddPromptSchema>
+export type PromptFormData = z.infer<typeof PromptSchema>
 
 async function requireAdmin() {
   const profile = await getProfile()
@@ -178,4 +195,31 @@ export async function updateProfilePrompt(id: string, data: { execution_order?: 
   if (error) return { error: error.message }
   revalidatePath('/app/ia')
   return { data: link }
+}
+
+// ---- ai_prompts ----
+
+export async function updatePrompt(id: string, data: Partial<PromptFormData>) {
+  const admin = await requireAdmin()
+  if (!admin) return { error: 'Sin permisos' }
+
+  const parsed = PromptSchema.partial().safeParse(data)
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+
+  const supabase = await createClient()
+  const { data: prompt, error } = await supabase
+    .from('ai_prompts')
+    .update({
+      ...parsed.data,
+      description: parsed.data.description ?? null,
+      stage_id: parsed.data.stage_id ?? null,
+      category_id: parsed.data.category_id ?? null,
+    })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) return { error: error.message }
+  revalidatePath('/app/ia')
+  return { data: prompt }
 }
