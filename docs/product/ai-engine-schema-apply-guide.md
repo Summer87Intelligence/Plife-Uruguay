@@ -486,3 +486,53 @@ Si el proyecto ya tiene una función con ese nombre en Supabase, `OR REPLACE` la
 ```
 
 No invertir el orden. El seed referencia tablas que crea el schema. Los triggers deben existir antes de que cualquier dato de producción pase por UPDATE.
+
+---
+
+## Registro FASE 12O-D (2026-07-02) — intento de aplicación remota
+
+**Estado:** BLOQUEADO — schema, immutability y seed **no aplicados** en remoto.
+
+### Pre-checks completados (antes de aplicar)
+
+| Check | Resultado |
+|---|---|
+| Rama `feat/plife-ai-engine` | OK |
+| Working tree limpio | OK (restaurado `.claude/settings.local.json`) |
+| Último commit | `1f05ad6` |
+| `is_admin_or_direccion()` en remoto | **SÍ** — RPC devuelve `true` para usuario admin autenticado |
+| Tablas Motor IA en remoto | **NO** — PostgREST `PGRST205` (`ai_stages` no en schema cache) |
+| Revisión SQL local (schema/seed/immutability/pentest) | OK — sin riesgos bloqueantes detectados |
+
+### Bloqueo de aplicación
+
+No fue posible ejecutar DDL en Supabase remoto desde este entorno:
+
+1. **Plugin MCP Supabase** (`plugin-supabase-supabase`) en estado `error` / sin OAuth activo en la sesión Cursor actual.
+2. **Sin credenciales de DB en entorno:** no hay `DATABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` ni `SUPABASE_ACCESS_TOKEN`.
+3. **Supabase CLI** no autenticado (`supabase login` requiere token interactivo).
+4. **`psql`** no instalado en el host Windows.
+
+### UI `/app/ia` (sin schema aplicado)
+
+Smoke test Playwright con usuario admin (`.env.test`):
+
+- Login OK, sidebar muestra **Motor IA**.
+- Pantalla carga título **Motor IA**.
+- Muestra banner de error DB: `Could not find the table 'public.ai_stages' in the schema cache` (código PostgREST `PGRST205`, no `42P01`).
+- **No** muestra aún el banner naranja “Schema del Motor IA no aplicado” (la UI distingue `42P01` de otros errores Supabase).
+
+### QA técnico local (post-intento)
+
+| Comando | Resultado |
+|---|---|
+| `npm run type-check` | PASS |
+| `npm run build` | PASS |
+| `npm run test:unit` | PASS (24/24) |
+
+### Próximo paso para desbloquear
+
+1. Re-autenticar plugin MCP Supabase en Cursor **o** proveer `DATABASE_URL` / password de Postgres del proyecto `ayvnloxijnfnooaefrlm`.
+2. Ejecutar en orden: `ai-engine-schema.sql` → `ai-engine-immutability.sql` → `ai-engine-seed.sql`.
+3. Correr verificaciones de conteo y `ai-engine-pentest.sql` (requiere usuarios `pentest_admin@plife.uy` / `pentest_asesor@plife.uy` si no existen).
+4. Re-validar `/app/ia` — debe desaparecer el error y mostrar seed (8 prompts, 7 categorías, perfil Comercial PLIFE).
