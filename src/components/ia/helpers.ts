@@ -1,4 +1,5 @@
 import type { AICategory, AIPrompt, AIPromptStatus, AIAnalysisProfile, AIProfilePrompt, AIExecutionRun, AIPromptSuggestion, AIExecutionOutput } from '@/types/database'
+import type { EntityNameMap } from './types'
 import { buildStructuredPrompt } from '@/domains/ia-engine/prompt-builder'
 
 export const PROMPT_STATUS_LABELS: Record<AIPromptStatus, string> = {
@@ -104,4 +105,19 @@ export function getLatestRun(runs: AIExecutionRun[]) {
 
 export function getOutputsForRun(runId: string, outputs: AIExecutionOutput[]) {
   return outputs.filter(o => o.run_id === runId)
+}
+
+export function shortUuid(id: string): string {
+  return `${id.slice(0, 8)}…`
+}
+
+export function formatRunEntityLabel(
+  run: AIExecutionRun,
+  entityNames: EntityNameMap,
+): string {
+  const key = `${run.entity_type}:${run.entity_id}`
+  const name = entityNames[key]
+  const typeLabel = ENTITY_TYPE_LABELS[run.entity_type]
+  if (name) return `${typeLabel} · ${name}`
+  return `${run.entity_type} · ${shortUuid(run.entity_id)}`
 }

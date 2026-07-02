@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
-import { getProfile } from '@/lib/auth'
+import { getProfile, canAccessAll } from '@/lib/auth'
 import { redirect, notFound } from 'next/navigation'
 import { CompanyDetail } from './company-detail'
+import type { AIExecutionRun } from '@/types/database'
 
 export default async function EmpresaDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -26,6 +27,20 @@ export default async function EmpresaDetailPage({ params }: { params: Promise<{ 
 
   if (!company) notFound()
 
+  let aiProfile: { id: string; name: string } | null = null
+  let latestAiRun: AIExecutionRun | null = null
+
+  if (canAccessAll(profile)) {
+    const [{ data: prof, error: profErr }, { data: run }] = await Promise.all([
+      supabase.from('ai_analysis_profiles').select('id, name').eq('is_active', true).order('name').limit(1).maybeSingle(),
+      supabase.from('ai_execution_runs').select('*').eq('entity_type', 'company').eq('entity_id', id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    ])
+    if (!profErr || profErr.code !== '42P01') {
+      aiProfile = prof
+      latestAiRun = run
+    }
+  }
+
   return (
     <CompanyDetail
       company={company}
@@ -34,6 +49,8 @@ export default async function EmpresaDetailPage({ params }: { params: Promise<{ 
       opportunities={opportunities ?? []}
       campaigns={campaigns ?? []}
       profile={profile}
+      aiProfile={aiProfile}
+      latestAiRun={latestAiRun}
     />
   )
 }

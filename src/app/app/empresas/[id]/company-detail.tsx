@@ -25,7 +25,8 @@ import { CLOSED_STAGES } from '@/lib/constants'
 import { calcularScoreB2B, nivelColor, nivelLabel } from '@/lib/b2b/scoring'
 import { ICP_NOMBRES } from '@/lib/b2b/icp'
 import { useRouter } from 'next/navigation'
-import type { Profile, Company, Contact, Activity, Opportunity } from '@/types/database'
+import type { Profile, Company, Contact, Activity, Opportunity, AIExecutionRun } from '@/types/database'
+import { EntityAIAnalysisCard } from '@/components/ia/entity-ai-analysis-card'
 
 interface CompanyDetailProps {
   company: Company
@@ -34,11 +35,13 @@ interface CompanyDetailProps {
   opportunities: Pick<Opportunity, 'id' | 'title' | 'stage' | 'type' | 'next_action' | 'next_action_date'>[]
   campaigns: { id: string; name: string }[]
   profile: Profile
+  aiProfile?: { id: string; name: string } | null
+  latestAiRun?: AIExecutionRun | null
 }
 
 const statusOptions = Object.entries(B2B_STATUS_LABELS).map(([v, l]) => ({ value: v, label: l }))
 
-export function CompanyDetail({ company, contacts, activities, opportunities, campaigns }: CompanyDetailProps) {
+export function CompanyDetail({ company, contacts, activities, opportunities, campaigns, aiProfile, latestAiRun }: CompanyDetailProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [editOpen, setEditOpen] = useState(false)
@@ -237,6 +240,17 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
           </div>
         )
       })()}
+
+      {aiProfile && (
+        <EntityAIAnalysisCard
+          entityType="company"
+          entityId={company.id}
+          entityLabel={company.name}
+          profileId={aiProfile.id}
+          profileName={aiProfile.name}
+          latestRun={latestAiRun}
+        />
+      )}
 
       {/* Por qué importa — strip de inteligencia */}
       {(company.opportunity_detected || company.commercial_angle || company.ideal_contact) && (

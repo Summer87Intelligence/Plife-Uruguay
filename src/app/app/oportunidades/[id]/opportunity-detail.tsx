@@ -21,7 +21,8 @@ import { OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS, RISK_LEVEL_LABELS, 
 import { formatDate, formatRelativeDate } from '@/lib/utils'
 import { updateOpportunityStage, updateOpportunity, closeOpportunity } from '@/domains/opportunities/actions'
 import { useRouter } from 'next/navigation'
-import type { Profile, Opportunity, Note, Contact, Company } from '@/types/database'
+import type { Profile, Opportunity, Note, Contact, Company, AIExecutionRun } from '@/types/database'
+import { EntityAIAnalysisCard } from '@/components/ia/entity-ai-analysis-card'
 
 type OpportunityWithRelations = Opportunity & {
   contact?: Pick<Contact, 'id' | 'first_name' | 'last_name' | 'phone' | 'email'> | null
@@ -36,12 +37,14 @@ interface OpportunityDetailProps {
   advisors: { id: string; full_name: string }[]
   campaign: { id: string; name: string } | null
   profile: Profile
+  aiProfile?: { id: string; name: string } | null
+  latestAiRun?: AIExecutionRun | null
 }
 
 const allStages = [...PIPELINE_STAGES, ...CLOSED_STAGES]
 const stageOptions = allStages.map(s => ({ value: s, label: OPPORTUNITY_STAGE_LABELS[s] }))
 
-export function OpportunityDetail({ opportunity, activities, advisors, campaign }: OpportunityDetailProps) {
+export function OpportunityDetail({ opportunity, activities, advisors, campaign, aiProfile, latestAiRun }: OpportunityDetailProps) {
   const router = useRouter()
   const [activityOpen, setActivityOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
@@ -354,6 +357,18 @@ export function OpportunityDetail({ opportunity, activities, advisors, campaign 
               )}
             </CardContent>
           </Card>
+
+          {aiProfile && (
+            <EntityAIAnalysisCard
+              entityType="opportunity"
+              entityId={opportunity.id}
+              entityLabel={opportunity.title}
+              profileId={aiProfile.id}
+              profileName={aiProfile.name}
+              latestRun={latestAiRun}
+              compact
+            />
+          )}
 
           {(opportunity.detected_need || opportunity.suggested_product) && (
             <Card>

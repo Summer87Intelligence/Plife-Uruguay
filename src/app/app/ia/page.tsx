@@ -2,6 +2,37 @@ import { createClient } from '@/lib/supabase/server'
 import { getProfile, canAccessAll } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { IAView } from './ia-view'
+import type { EntityNameMap } from '@/components/ia/types'
+import type { AIExecutionRun } from '@/types/database'
+
+async function resolveEntityNames(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  runs: AIExecutionRun[],
+): Promise<EntityNameMap> {
+  const entityNames: EntityNameMap = {}
+  if (runs.length === 0) return entityNames
+
+  const companyIds = [...new Set(runs.filter(r => r.entity_type === 'company').map(r => r.entity_id))]
+  const opportunityIds = [...new Set(runs.filter(r => r.entity_type === 'opportunity').map(r => r.entity_id))]
+
+  const [companiesRes, opportunitiesRes] = await Promise.all([
+    companyIds.length > 0
+      ? supabase.from('companies').select('id, name').in('id', companyIds)
+      : Promise.resolve({ data: [] as { id: string; name: string }[] }),
+    opportunityIds.length > 0
+      ? supabase.from('opportunities').select('id, title').in('id', opportunityIds)
+      : Promise.resolve({ data: [] as { id: string; title: string }[] }),
+  ])
+
+  for (const company of companiesRes.data ?? []) {
+    entityNames[`company:${company.id}`] = company.name
+  }
+  for (const opportunity of opportunitiesRes.data ?? []) {
+    entityNames[`opportunity:${opportunity.id}`] = opportunity.title
+  }
+
+  return entityNames
+}
 
 export default async function IAPage() {
   const profile = await getProfile()
@@ -32,15 +63,18 @@ export default async function IAPage() {
 
   const allErrors = [stagesErr, categoriesErr, promptsErr, profilesErr, ppErr, runsErr, outputsErr, suggestionsErr]
 
-  // 42P01 = relation does not exist (schema not applied)
   const schemaNotApplied = allErrors.some(
     e => e?.code === '42P01' || e?.message?.includes('does not exist')
   )
 
-  // Any other Supabase error (permissions, network, etc.)
   const supabaseError = !schemaNotApplied
     ? (allErrors.find(e => e !== null)?.message ?? null)
     : null
+
+  const runs = executionRuns ?? []
+  const entityNames = !schemaNotApplied && !supabaseError
+    ? await resolveEntityNames(supabase, runs)
+    : {}
 
   return (
     <IAView
@@ -49,9 +83,10 @@ export default async function IAPage() {
       prompts={prompts ?? []}
       profiles={profiles ?? []}
       profilePrompts={profilePrompts ?? []}
-      executionRuns={executionRuns ?? []}
+      executionRuns={runs}
       executionOutputs={executionOutputs ?? []}
       promptSuggestions={promptSuggestions ?? []}
+      entityNames={entityNames}
       schemaNotApplied={schemaNotApplied}
       supabaseError={supabaseError}
     />

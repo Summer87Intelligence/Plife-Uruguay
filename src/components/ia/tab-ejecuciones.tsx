@@ -8,16 +8,16 @@ import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { formatRelativeDate } from '@/lib/utils'
 import type { IAEngineProps } from './types'
-import { ENTITY_TYPE_LABELS, RUN_STATUS_LABELS, getOutputsForRun } from './helpers'
+import { RUN_STATUS_LABELS, getOutputsForRun, formatRunEntityLabel } from './helpers'
 import { MockExecutionForm } from './mock-execution-form'
 import { ExecutionDetail } from './execution-detail'
 
-interface EjecucionesTabProps extends Pick<IAEngineProps, 'executionRuns' | 'executionOutputs' | 'profiles' | 'prompts' | 'stages'> {
+interface EjecucionesTabProps extends Pick<IAEngineProps, 'executionRuns' | 'executionOutputs' | 'profiles' | 'prompts' | 'stages' | 'entityNames'> {
   activeProfileId: string
 }
 
 export function EjecucionesTab({
-  executionRuns, executionOutputs, profiles, prompts, stages, activeProfileId,
+  executionRuns, executionOutputs, profiles, prompts, stages, entityNames, activeProfileId,
 }: EjecucionesTabProps) {
   const [expandedRunId, setExpandedRunId] = useState<string | null>(null)
 
@@ -56,7 +56,7 @@ export function EjecucionesTab({
                     return (
                       <Fragment key={run.id}>
                         <tr className="hover:bg-gray-50/50">
-                          <td className="px-5 py-3.5 text-gray-900">{ENTITY_TYPE_LABELS[run.entity_type]}</td>
+                          <td className="px-5 py-3.5 text-gray-900">{formatRunEntityLabel(run, entityNames)}</td>
                           <td className="px-5 py-3.5 text-gray-600">{runProfile?.name ?? '—'}</td>
                           <td className="px-5 py-3.5">
                             <Badge variant={

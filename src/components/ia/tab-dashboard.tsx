@@ -10,8 +10,8 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { formatRelativeDate } from '@/lib/utils'
 import type { IAEngineProps } from './types'
 import {
-  countPromptsByCategory, getActiveProfile, getLatestRun, getProfilePrompts, getOutputsForRun,
-  RUN_STATUS_LABELS, ENTITY_TYPE_LABELS, PROMPT_STATUS_LABELS,
+  countPromptsByCategory, getActiveProfile, getLatestRun, getProfilePrompts, getOutputsForRun, formatRunEntityLabel,
+  RUN_STATUS_LABELS, PROMPT_STATUS_LABELS,
 } from './helpers'
 import { ProfileSelector } from './profile-selector'
 
@@ -21,7 +21,7 @@ interface DashboardTabProps extends IAEngineProps {
 }
 
 export function DashboardTab({
-  stages, categories, prompts, profiles, profilePrompts, executionRuns, executionOutputs,
+  stages, categories, prompts, profiles, profilePrompts, executionRuns, executionOutputs, entityNames,
   activeProfileId, onProfileChange,
 }: DashboardTabProps) {
   const activeProfile = profiles.find(p => p.id === activeProfileId) ?? getActiveProfile(profiles)
@@ -133,7 +133,7 @@ export function DashboardTab({
                     const outputCount = getOutputsForRun(run.id, executionOutputs).length
                     return (
                       <tr key={run.id}>
-                        <td className="py-2.5 pr-4 text-gray-900">{ENTITY_TYPE_LABELS[run.entity_type]}</td>
+                        <td className="py-2.5 pr-4 text-gray-900">{formatRunEntityLabel(run, entityNames)}</td>
                         <td className="py-2.5 pr-4 text-gray-600">{runProfile?.name ?? '—'}</td>
                         <td className="py-2.5 pr-4"><Badge variant={run.status === 'completed' ? 'success' : run.status === 'failed' ? 'destructive' : 'secondary'}>{RUN_STATUS_LABELS[run.status]}</Badge></td>
                         <td className="py-2.5 pr-4 text-gray-600">{outputCount}</td>
