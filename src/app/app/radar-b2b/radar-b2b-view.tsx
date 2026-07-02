@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
+import { SearchNoResults } from '@/components/navigation/search-no-results'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { B2B_STATUS_LABELS, B2B_STATUS_COLORS } from '@/lib/constants'
 import { CompanyForm } from '../empresas/company-form'
@@ -62,7 +63,12 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
         if (filterStatus !== ALL && co.b2b_status !== filterStatus) return false
         if (search) {
           const q = search.toLowerCase()
-          if (!co.name.toLowerCase().includes(q) && !(co.industry?.toLowerCase().includes(q) ?? false)) return false
+          if (
+            !co.name.toLowerCase().includes(q) &&
+            !(co.industry?.toLowerCase().includes(q) ?? false) &&
+            !(co.commercial_angle?.toLowerCase().includes(q) ?? false) &&
+            !(co.opportunity_detected?.toLowerCase().includes(q) ?? false)
+          ) return false
         }
         return true
       })
@@ -113,12 +119,13 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
             <Radar className="h-5 w-5 text-[#1B3A6B]" />
             Radar B2B
           </h1>
-          <p className="text-sm text-gray-500">Empresas rankeadas por potencial calculado — priorizá donde hay más oportunidad</p>
+          <p className="text-sm text-gray-500">Priorizá empresas con potencial comercial y definí el próximo paso antes de contactar.</p>
+          <p className="text-xs text-gray-400 mt-0.5">El radar funciona mejor cuando hay empresas cargadas con rubro, tamaño y señales comerciales.</p>
         </div>
         <Dialog open={newCompanyOpen} onOpenChange={setNewCompanyOpen}>
-          <Button onClick={() => setNewCompanyOpen(true)}><Plus className="h-4 w-4" /> Cargar empresa</Button>
-          <DialogContent title="Nueva empresa B2B" description="Cargá una empresa para el Radar">
-            <CompanyForm onSuccess={() => { setNewCompanyOpen(false); router.refresh() }} />
+          <Button onClick={() => setNewCompanyOpen(true)}><Plus className="h-4 w-4" /> Nueva empresa</Button>
+          <DialogContent title="Nueva empresa" description="Registrá una empresa para priorizarla en el radar">
+            <CompanyForm onSuccess={() => { setNewCompanyOpen(false); router.refresh() }} onCancel={() => setNewCompanyOpen(false)} />
           </DialogContent>
         </Dialog>
       </div>
@@ -126,24 +133,24 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
       {/* Stats */}
       <div className="grid grid-cols-4 gap-3">
         <div className="rounded-xl border border-green-100 bg-green-50 p-3">
-          <p className="text-[11px] font-medium text-green-700">Muy alto</p>
+          <p className="text-[11px] font-medium text-green-700">Potencial muy alto</p>
           <p className="text-2xl font-bold text-green-800 mt-0.5">{stats.muyAlto}</p>
-          <p className="text-[10px] text-green-600">Score 80+</p>
+          <p className="text-[10px] text-green-600">Potencial 80+</p>
         </div>
         <div className="rounded-xl border border-green-100 bg-green-50/60 p-3">
-          <p className="text-[11px] font-medium text-green-700">Alto</p>
+          <p className="text-[11px] font-medium text-green-700">Potencial alto</p>
           <p className="text-2xl font-bold text-green-700 mt-0.5">{stats.alto}</p>
-          <p className="text-[10px] text-green-500">Score 60-79</p>
+          <p className="text-[10px] text-green-500">Potencial 60-79</p>
         </div>
         <div className="rounded-xl border border-yellow-100 bg-yellow-50 p-3">
-          <p className="text-[11px] font-medium text-yellow-700">Medio</p>
+          <p className="text-[11px] font-medium text-yellow-700">Potencial medio</p>
           <p className="text-2xl font-bold text-yellow-800 mt-0.5">{stats.medio}</p>
-          <p className="text-[10px] text-yellow-600">Score 40-59</p>
+          <p className="text-[10px] text-yellow-600">Potencial 40-59</p>
         </div>
         <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-          <p className="text-[11px] font-medium text-gray-600">Bajo</p>
+          <p className="text-[11px] font-medium text-gray-600">Potencial bajo</p>
           <p className="text-2xl font-bold text-gray-800 mt-0.5">{stats.bajo}</p>
-          <p className="text-[10px] text-gray-400">Score &lt;40</p>
+          <p className="text-[10px] text-gray-400">Potencial &lt;40</p>
         </div>
       </div>
 
@@ -162,7 +169,7 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar empresa o rubro..."
+            placeholder="Buscar empresa, rubro o señal comercial"
             className="w-full h-9 pl-9 pr-4 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B]"
           />
         </div>
@@ -171,18 +178,18 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
           onChange={e => setFilterNivel(e.target.value)}
           className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B]"
         >
-          <option value={ALL}>Todos los niveles</option>
-          <option value="muy_alto">Muy alto (80+)</option>
-          <option value="alto">Alto (60-79)</option>
-          <option value="medio">Medio (40-59)</option>
-          <option value="bajo">Bajo (&lt;40)</option>
+          <option value={ALL}>Todo el potencial</option>
+          <option value="muy_alto">Potencial muy alto (80+)</option>
+          <option value="alto">Potencial alto (60-79)</option>
+          <option value="medio">Potencial medio (40-59)</option>
+          <option value="bajo">Potencial bajo (&lt;40)</option>
         </select>
         <select
           value={filterICP}
           onChange={e => setFilterICP(e.target.value)}
           className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B]"
         >
-          <option value={ALL}>Todos los ICP</option>
+          <option value={ALL}>Todos los perfiles de cliente</option>
           {icpOptions.map(icp => (
             <option key={icp} value={icp}>{ICP_NOMBRES[icp as ICPKey]}</option>
           ))}
@@ -192,7 +199,7 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
           onChange={e => setFilterStatus(e.target.value)}
           className="h-9 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B]"
         >
-          <option value={ALL}>Todos los estados</option>
+          <option value={ALL}>Todos los estados comerciales</option>
           {uniqueStatuses.map(s => (
             <option key={s} value={s}>{B2B_STATUS_LABELS[s]}</option>
           ))}
@@ -202,7 +209,7 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
             onClick={() => { setFilterICP(ALL); setFilterNivel(ALL); setFilterStatus(ALL); setSearch('') }}
             className="h-9 px-3 text-sm text-gray-400 hover:text-gray-700 rounded-lg border border-gray-200 bg-white"
           >
-            Limpiar
+            Limpiar filtros
           </button>
         )}
       </div>
@@ -215,6 +222,7 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
               companyId={oppCompanyId}
               defaultType="b2b"
               onSuccess={() => { setOppCompanyId(null); router.refresh() }}
+              onCancel={() => setOppCompanyId(null)}
             />
           )}
         </DialogContent>
@@ -223,9 +231,17 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
       {filtered.length === 0 ? (
         <EmptyState
           icon={Radar}
-          title={search || filterICP !== ALL || filterNivel !== ALL || filterStatus !== ALL ? 'Sin resultados' : 'El radar está vacío'}
-          description={search ? 'Probá con otro nombre o rubro' : 'Detectá y priorizá empresas con potencial comercial.'}
-          action={<Button onClick={() => setNewCompanyOpen(true)}><Plus className="h-4 w-4" />Cargar empresa</Button>}
+          title={search || filterICP !== ALL || filterNivel !== ALL || filterStatus !== ALL ? 'No encontramos resultados para esta búsqueda.' : 'El Radar B2B todavía no tiene empresas para priorizar'}
+          description={search || filterICP !== ALL || filterNivel !== ALL || filterStatus !== ALL ? undefined : 'Cargá empresas para que el sistema pueda ayudarte a detectar potencial comercial.'}
+          action={
+            search || filterICP !== ALL || filterNivel !== ALL || filterStatus !== ALL
+              ? <SearchNoResults
+                  onClearSearch={() => setSearch('')}
+                  onClearFilters={() => { setFilterICP(ALL); setFilterNivel(ALL); setFilterStatus(ALL); setSearch('') }}
+                  hasFilters={filterICP !== ALL || filterNivel !== ALL || filterStatus !== ALL}
+                />
+              : <Button onClick={() => setNewCompanyOpen(true)}><Plus className="h-4 w-4" />Nueva empresa</Button>
+          }
         />
       ) : (
         <div className="space-y-2">
@@ -260,15 +276,15 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
                       </span>
                     </div>
                     <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-                      <span className="text-xs text-[#1B3A6B] font-medium flex items-center gap-1">
-                        <Target className="h-3 w-3" />{ICP_NOMBRES[result.icpSugerido]}
+                        <span className="text-xs text-[#1B3A6B] font-medium flex items-center gap-1">
+                        <Target className="h-3 w-3" />Perfil: {ICP_NOMBRES[result.icpSugerido]}
                       </span>
                       {co.industry && <span className="text-xs text-gray-400">{co.industry}</span>}
-                      {co.estimated_employees && <span className="text-xs text-gray-400">{co.estimated_employees} empl.</span>}
+                      {co.estimated_employees && <span className="text-xs text-gray-400">{co.estimated_employees} empleados</span>}
                     </div>
                     {co.b2b_score != null && scoreDiff !== null && Math.abs(scoreDiff) >= 5 && (
                       <p className="text-[10px] mt-0.5 text-gray-400">
-                        Score guardado: {co.b2b_score} · Sugerido: {result.score}
+                        Potencial guardado: {co.b2b_score} · Sugerido: {result.score}
                         <span className={`ml-1 font-medium ${scoreDiff > 0 ? 'text-green-600' : 'text-orange-500'}`}>
                           ({scoreDiff > 0 ? '+' : ''}{scoreDiff})
                         </span>
@@ -283,7 +299,7 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
                       className="inline-flex items-center gap-1 rounded-lg border border-[#1B3A6B]/20 bg-[#1B3A6B]/5 px-2.5 py-1.5 text-xs font-medium text-[#1B3A6B] hover:bg-[#1B3A6B]/10 transition-colors"
                     >
                       <TrendingUp className="h-3 w-3" />
-                      Oportunidad
+                      Nueva oportunidad
                     </button>
                     <button
                       onClick={() => setExpandedId(isExpanded ? null : co.id)}
@@ -353,7 +369,7 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
                         className="inline-flex items-center gap-1.5 rounded-lg bg-[#1B3A6B] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#1B3A6B]/90 disabled:opacity-50 transition-colors"
                       >
                         <CheckCircle2 className="h-3 w-3" />
-                        {savingId === co.id ? 'Guardando…' : `Aplicar score sugerido (${result.score})`}
+                        {savingId === co.id ? 'Guardando…' : `Guardar potencial sugerido (${result.score})`}
                       </button>
 
                       {!alreadyHasCampaign && suggestedCampaignId && (

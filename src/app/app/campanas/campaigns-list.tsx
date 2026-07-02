@@ -5,6 +5,7 @@ import type { Route } from 'next'
 import { Plus, Megaphone, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
+import { SearchNoResults } from '@/components/navigation/search-no-results'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import { CAMPAIGN_STATUS_LABELS, CAMPAIGN_STATUS_COLORS } from '@/lib/constants'
 import { formatDate } from '@/lib/utils'
@@ -30,7 +31,8 @@ export function CampaignsList({ campaigns, profile }: CampaignsListProps) {
     const q = search.toLowerCase()
     return (
       c.name.toLowerCase().includes(q) ||
-      (c.target_segment?.toLowerCase().includes(q) ?? false)
+      (c.target_segment?.toLowerCase().includes(q) ?? false) ||
+      (c.objective?.toLowerCase().includes(q) ?? false)
     )
   }), [campaigns, statusFilter, search])
 
@@ -47,15 +49,16 @@ export function CampaignsList({ campaigns, profile }: CampaignsListProps) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Campañas B2B</h1>
-          <p className="text-sm text-gray-500">{countLabel}</p>
+          <p className="text-sm text-gray-500">Organizá acciones comerciales por segmento para que el equipo trabaje con un enfoque común.</p>
+          <p className="text-xs text-gray-400 mt-0.5">{countLabel}</p>
         </div>
         {canManage && (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4" /> Nueva campaña</Button>
             </DialogTrigger>
-            <DialogContent title="Nueva campaña B2B" description="Definí el segmento y objetivo">
-              <CampaignForm onSuccess={() => setOpen(false)} />
+            <DialogContent title="Nueva campaña" description="Definí el segmento, objetivo y mensaje inicial">
+              <CampaignForm onSuccess={() => setOpen(false)} onCancel={() => setOpen(false)} />
             </DialogContent>
           </Dialog>
         )}
@@ -67,7 +70,7 @@ export function CampaignsList({ campaigns, profile }: CampaignsListProps) {
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Buscar campaña o segmento..."
+          placeholder="Buscar por campaña, segmento u objetivo"
           className="w-full h-9 pl-9 pr-4 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B] focus:border-transparent"
         />
       </div>
@@ -80,6 +83,15 @@ export function CampaignsList({ campaigns, profile }: CampaignsListProps) {
             <option key={v} value={v}>{l}</option>
           ))}
         </select>
+        {search && (
+          <button
+            type="button"
+            onClick={() => setSearch('')}
+            className="h-8 px-3 text-xs text-[#1B3A6B] hover:underline rounded-lg border border-gray-100 bg-white"
+          >
+            Limpiar búsqueda
+          </button>
+        )}
         {hasFilters && (
           <button
             onClick={() => { setSearch(''); setStatusFilter('') }}
@@ -93,11 +105,13 @@ export function CampaignsList({ campaigns, profile }: CampaignsListProps) {
       {filtered.length === 0 ? (
         <EmptyState
           icon={Megaphone}
-          title={hasFilters ? 'Sin resultados para estos filtros' : 'Todavía no hay campañas'}
+          title={hasFilters ? 'No encontramos resultados para esta búsqueda.' : 'Todavía no hay campañas'}
           description={
             hasFilters
-              ? 'Probá ajustando los filtros o la búsqueda'
-              : 'Organizá tus acciones comerciales por segmento, con mensaje, guion y objetivos claros para todo el equipo.'
+              ? undefined
+              : canManage
+                ? 'Creá una campaña para ordenar acciones comerciales por segmento.'
+                : 'Las campañas las gestionan líderes comerciales. Consultá con tu equipo para ver las activas.'
           }
           example={
             !hasFilters
@@ -105,7 +119,13 @@ export function CampaignsList({ campaigns, profile }: CampaignsListProps) {
               : undefined
           }
           action={
-            canManage && !hasFilters
+            hasFilters
+              ? <SearchNoResults
+                  onClearSearch={() => setSearch('')}
+                  onClearFilters={() => { setSearch(''); setStatusFilter('') }}
+                  hasFilters={!!statusFilter}
+                />
+              : canManage && !hasFilters
               ? <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Nueva campaña</Button>
               : undefined
           }
@@ -155,10 +175,10 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
 
       <div className="grid grid-cols-4 gap-2 text-center">
         {[
-          { label: 'Targets', value: campaign.total_targets },
+          { label: 'Objetivo', value: campaign.total_targets },
           { label: 'Contactados', value: campaign.total_contacted },
           { label: 'Reuniones', value: campaign.total_meetings },
-          { label: 'Convertidos', value: campaign.total_converted },
+          { label: 'Cierres', value: campaign.total_converted },
         ].map(stat => (
           <div key={stat.label} className="rounded-lg bg-gray-50 p-2">
             <p className="text-lg font-bold text-gray-900">{stat.value}</p>

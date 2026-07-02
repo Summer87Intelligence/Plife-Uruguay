@@ -3,10 +3,15 @@ import { getProfile } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { PipelineView } from './pipeline-view'
 
-export default async function OportunidadesPage() {
+export default async function OportunidadesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ nuevo?: string; contacto?: string; empresa?: string; q?: string }>
+}) {
   const profile = await getProfile()
   if (!profile) redirect('/login')
 
+  const params = await searchParams
   const supabase = await createClient()
 
   let query = supabase
@@ -22,5 +27,14 @@ export default async function OportunidadesPage() {
 
   const { data: opportunities } = await query
 
-  return <PipelineView opportunities={opportunities ?? []} profile={profile} />
+  return (
+    <PipelineView
+      opportunities={opportunities ?? []}
+      profile={profile}
+      autoOpenNew={params.nuevo === '1'}
+      initialContactId={params.contacto}
+      initialCompanyId={params.empresa}
+      initialSearch={params.q}
+    />
+  )
 }

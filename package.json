@@ -16,7 +16,9 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
-    "test:e2e:report": "playwright show-report"
+    "test:e2e:report": "playwright show-report",
+    "test:e2e:manual:system": "playwright test tests/e2e/manual-system-walkthrough.spec.ts --headed --project=chromium",
+    "test:e2e:manual:system:debug": "playwright test tests/e2e/manual-system-walkthrough.spec.ts --headed --project=chromium --debug"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.2.0",

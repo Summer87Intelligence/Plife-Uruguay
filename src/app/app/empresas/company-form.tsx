@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
+import { CreateSuccessPanel } from '@/components/ui/create-success-panel'
 import { createCompany, updateCompany, type CompanyFormData } from '@/domains/companies/actions'
 import { B2B_STATUS_LABELS } from '@/lib/constants'
 
@@ -26,16 +27,19 @@ const industryOptions = [
 
 interface CompanyFormProps {
   onSuccess?: () => void
+  onCancel?: () => void
   mode?: 'create' | 'edit'
   companyId?: string
   initial?: Partial<CompanyFormData>
   campaigns?: { id: string; name: string }[]
 }
 
-export function CompanyForm({ onSuccess, mode = 'create', companyId, initial, campaigns = [] }: CompanyFormProps) {
+export function CompanyForm({ onSuccess, onCancel, mode = 'create', companyId, initial, campaigns = [] }: CompanyFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [created, setCreated] = useState<{ id: string } | null>(null)
   const [form, setForm] = useState({
     name: initial?.name ?? '',
     industry: initial?.industry ?? '',
@@ -58,14 +62,32 @@ export function CompanyForm({ onSuccess, mode = 'create', companyId, initial, ca
 
   function set(field: string, value: unknown) {
     setForm(prev => ({ ...prev, [field]: value }))
+    setErrors(prev => { const e = { ...prev }; delete e[field]; return e })
+  }
+
+  function validate(): Record<string, string> {
+    const errs: Record<string, string> = {}
+    if (!form.name.trim()) errs.name = 'Ingresá el nombre de la empresa.'
+    if (form.b2b_score !== '' && (isNaN(Number(form.b2b_score)) || Number(form.b2b_score) < 0 || Number(form.b2b_score) > 100)) {
+      errs.b2b_score = 'El potencial debe ser un número entre 0 y 100.'
+    }
+    if (form.estimated_employees !== '' && (isNaN(Number(form.estimated_employees)) || Number(form.estimated_employees) < 1)) {
+      errs.estimated_employees = 'La cantidad de empleados debe ser mayor a 0.'
+    }
+    return errs
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    const fieldErrors = validate()
+    if (Object.keys(fieldErrors).length > 0) { setErrors(fieldErrors); return }
+    setErrors({})
     setLoading(true)
     setError('')
     const payload = {
       ...form,
+      name: form.name.trim(),
+      location: form.location.trim(),
       estimated_employees: form.estimated_employees ? Number(form.estimated_employees) : undefined,
       b2b_score: form.b2b_score !== '' ? Number(form.b2b_score) : undefined,
     } as CompanyFormData
@@ -75,47 +97,69 @@ export function CompanyForm({ onSuccess, mode = 'create', companyId, initial, ca
     if (result.error) {
       setError(result.error)
       setLoading(false)
+    } else if (mode === 'create' && result.data) {
+      router.refresh()
+      setCreated({ id: result.data.id })
+      setLoading(false)
     } else {
       router.refresh()
       onSuccess?.()
     }
   }
 
+  if (created) {
+    return (
+      <CreateSuccessPanel
+        message="Empresa creada. Siguiente paso recomendado: agregar un contacto."
+        primaryAction={{ label: 'Agregar contacto', href: `/app/contactos?nuevo=1&empresa=${created.id}` }}
+        secondaryAction={{ label: 'Ver empresa', href: `/app/empresas/${created.id}` }}
+        onClose={onSuccess}
+      />
+    )
+  }
+
   const campaignOptions = [{ value: '', label: 'Sin campaña' }, ...campaigns.map(c => ({ value: c.id, label: c.name }))]
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
-      <Input label="Nombre de la empresa *" value={form.name} onChange={e => set('name', e.target.value)} required />
+      <p className="text-xs text-gray-500">Los campos con * son obligatorios.</p>
+      <Input label="Nombre de la empresa *" value={form.name} onChange={e => set('name', e.target.value)} placeholder="Ej: Estudio Contable García" error={errors.name} />
       <div className="grid grid-cols-2 gap-4">
-        <Select label="Rubro" value={form.industry} onValueChange={v => set('industry', v)} options={industryOptions} placeholder="Seleccioná..." />
-        <Input label="Ubicación" value={form.location} onChange={e => set('location', e.target.value)} placeholder="Montevideo..." />
+        <Select label="Rubro" value={form.industry} onValueChange={v => set('industry', v)} options={industryOptions} placeholder="Seleccioná el rubro..." />
+        <Input label="Ciudad" value={form.location} onChange={e => set('location', e.target.value)} placeholder="Ej: Montevideo, Canelones..." />
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <Input label="Sitio web" value={form.website} onChange={e => set('website', e.target.value)} placeholder="https://..." />
-        <Input label="LinkedIn" value={form.linkedin_url} onChange={e => set('linkedin_url', e.target.value)} placeholder="https://linkedin.com/company/..." />
+        <Input label="Tamaño aproximado" value={form.estimated_size} onChange={e => set('estimated_size', e.target.value)} placeholder="Pequeña, mediana o grande" />
+        <Input label="Cantidad de empleados (aprox.)" type="number" min={1} value={form.estimated_employees} onChange={e => set('estimated_employees', e.target.value)} placeholder="Ej: 25" error={errors.estimated_employees} />
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <Input label="Instagram" value={form.instagram_url} onChange={e => set('instagram_url', e.target.value)} placeholder="https://instagram.com/..." />
-        <Input label="Tamaño estimado" value={form.estimated_size} onChange={e => set('estimated_size', e.target.value)} placeholder="Pequeña, mediana, grande..." />
+        <Input label="Potencial comercial (0–100)" type="number" min={0} max={100} value={form.b2b_score} onChange={e => set('b2b_score', e.target.value)} placeholder="Opcional — se puede calcular después" error={errors.b2b_score} />
+        <Select label="Estado comercial" value={form.b2b_status} onValueChange={v => set('b2b_status', v)} options={statusOptions} />
       </div>
-      <div className="grid grid-cols-2 gap-4">
-        <Input label="Empleados estimados" type="number" value={form.estimated_employees} onChange={e => set('estimated_employees', e.target.value)} />
-        <Input label="Score B2B (0-100)" type="number" min={0} max={100} value={form.b2b_score} onChange={e => set('b2b_score', e.target.value)} />
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <Select label="Estado B2B" value={form.b2b_status} onValueChange={v => set('b2b_status', v)} options={statusOptions} />
-        {campaigns.length > 0 && (
-          <Select label="Campaña" value={form.campaign_id} onValueChange={v => set('campaign_id', v)} options={campaignOptions} placeholder="Sin campaña" />
-        )}
-      </div>
-      <Input label="Oportunidad detectada" value={form.opportunity_detected} onChange={e => set('opportunity_detected', e.target.value)} placeholder="Posible seguro colectivo, vida..." />
-      <Input label="Ángulo comercial sugerido" value={form.commercial_angle} onChange={e => set('commercial_angle', e.target.value)} placeholder="Por qué les conviene, cómo entrar..." />
+      <Input label="Próximo paso sugerido" value={form.commercial_angle} onChange={e => set('commercial_angle', e.target.value)} placeholder="Ej: Pedir reunión con el dueño para presentar seguro colectivo" />
+      <Input label="Oportunidad detectada" value={form.opportunity_detected} onChange={e => set('opportunity_detected', e.target.value)} placeholder="Ej: Seguro colectivo, protección de socios..." />
       <Input label="Contacto ideal" value={form.ideal_contact} onChange={e => set('ideal_contact', e.target.value)} placeholder="Dueño, gerente de RRHH, CFO..." />
-      <Input label="Fuente" value={form.source} onChange={e => set('source', e.target.value)} placeholder="LinkedIn, referido, búsqueda..." />
-      <Textarea label="Riesgo / observaciones" value={form.risk_notes} onChange={e => set('risk_notes', e.target.value)} rows={2} placeholder="Riesgos comerciales o de compliance a tener en cuenta..." />
-      <Textarea label="Notas" value={form.notes} onChange={e => set('notes', e.target.value)} rows={2} />
+      {campaigns.length > 0 && (
+        <Select label="Campaña asociada" value={form.campaign_id} onValueChange={v => set('campaign_id', v)} options={campaignOptions} placeholder="Sin campaña" />
+      )}
+      <details className="rounded-lg border border-gray-100 bg-gray-50/50 px-3 py-2">
+        <summary className="cursor-pointer text-xs font-medium text-gray-600 py-1">Más datos (web, fuente, notas)</summary>
+        <div className="space-y-4 pt-3">
+          <div className="grid grid-cols-2 gap-4">
+            <Input label="Sitio web" value={form.website} onChange={e => set('website', e.target.value)} placeholder="https://..." />
+            <Input label="LinkedIn" value={form.linkedin_url} onChange={e => set('linkedin_url', e.target.value)} placeholder="https://linkedin.com/company/..." />
+          </div>
+          <Input label="Instagram" value={form.instagram_url} onChange={e => set('instagram_url', e.target.value)} placeholder="https://instagram.com/..." />
+          <Input label="Fuente del dato" value={form.source} onChange={e => set('source', e.target.value)} placeholder="Referido, LinkedIn, evento..." />
+          <Textarea label="Riesgos u observaciones" value={form.risk_notes} onChange={e => set('risk_notes', e.target.value)} rows={2} placeholder="Aspectos comerciales o de compliance a tener en cuenta..." />
+          <Textarea label="Notas internas" value={form.notes} onChange={e => set('notes', e.target.value)} rows={2} placeholder="Contexto adicional para el equipo..." />
+        </div>
+      </details>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <div className="flex justify-end pt-2">
+      <div className="flex justify-end gap-3 pt-2">
+        {onCancel && (
+          <Button type="button" variant="outline" onClick={onCancel}>Cancelar</Button>
+        )}
         <Button type="submit" loading={loading}>{mode === 'edit' ? 'Guardar cambios' : 'Crear empresa'}</Button>
       </div>
     </form>

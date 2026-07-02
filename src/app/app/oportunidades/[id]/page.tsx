@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
-import { getProfile } from '@/lib/auth'
+import { getProfile, canAccessAll } from '@/lib/auth'
 import { redirect, notFound } from 'next/navigation'
 import { OpportunityDetail } from './opportunity-detail'
+import type { AIExecutionRun } from '@/types/database'
 
 export default async function OportunidadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -28,6 +29,20 @@ export default async function OportunidadDetailPage({ params }: { params: Promis
 
   const campaign = opportunity.campaign_id ? (campaigns ?? []).find(c => c.id === opportunity.campaign_id) ?? null : null
 
+  let aiProfile: { id: string; name: string } | null = null
+  let latestAiRun: AIExecutionRun | null = null
+
+  if (canAccessAll(profile)) {
+    const [{ data: prof, error: profErr }, { data: run }] = await Promise.all([
+      supabase.from('ai_analysis_profiles').select('id, name').eq('is_active', true).order('name').limit(1).maybeSingle(),
+      supabase.from('ai_execution_runs').select('*').eq('entity_type', 'opportunity').eq('entity_id', id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    ])
+    if (!profErr || profErr.code !== '42P01') {
+      aiProfile = prof
+      latestAiRun = run
+    }
+  }
+
   return (
     <OpportunityDetail
       opportunity={opportunity}
@@ -36,6 +51,8 @@ export default async function OportunidadDetailPage({ params }: { params: Promis
       advisors={advisors ?? []}
       campaign={campaign}
       profile={profile}
+      aiProfile={aiProfile}
+      latestAiRun={latestAiRun}
     />
   )
 }

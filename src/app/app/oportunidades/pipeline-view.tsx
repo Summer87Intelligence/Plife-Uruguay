@@ -1,14 +1,18 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { Plus, TrendingUp, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
+import { SearchNoResults } from '@/components/navigation/search-no-results'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import {
   OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS,
   PIPELINE_STAGES, RISK_LEVEL_LABELS, RISK_LEVEL_COLORS,
 } from '@/lib/constants'
+import { formatDate } from '@/lib/utils'
+import { getOpportunityPriority } from '@/lib/commercial-priority'
+import { PriorityBadge } from '@/components/commercial/priority-badge'
 import { OpportunityForm } from './opportunity-form'
 import type { Profile, Opportunity, Contact, Company, RiskLevel } from '@/types/database'
 
@@ -29,14 +33,22 @@ const TYPE_LABELS: Record<string, string> = {
 interface PipelineViewProps {
   opportunities: OppWithRelations[]
   profile: Profile
+  autoOpenNew?: boolean
+  initialContactId?: string
+  initialCompanyId?: string
+  initialSearch?: string
 }
 
-export function PipelineView({ opportunities, profile }: PipelineViewProps) {
+export function PipelineView({ opportunities, profile, autoOpenNew, initialContactId, initialCompanyId, initialSearch }: PipelineViewProps) {
   const [open, setOpen] = useState(false)
   const [view, setView] = useState<'pipeline' | 'list'>('pipeline')
-  const [search, setSearch] = useState('')
+  const [search, setSearch] = useState(initialSearch ?? '')
   const [typeFilter, setTypeFilter] = useState('')
   const [riskFilter, setRiskFilter] = useState('')
+
+  useEffect(() => {
+    if (autoOpenNew) setOpen(true)
+  }, [autoOpenNew])
 
   const filtered = useMemo(() => opportunities.filter(o => {
     if (typeFilter && o.type !== typeFilter) return false
@@ -46,7 +58,8 @@ export function PipelineView({ opportunities, profile }: PipelineViewProps) {
     return (
       o.title.toLowerCase().includes(q) ||
       (o.contact ? `${o.contact.first_name} ${o.contact.last_name}`.toLowerCase().includes(q) : false) ||
-      (o.company?.name.toLowerCase().includes(q) ?? false)
+      (o.company?.name.toLowerCase().includes(q) ?? false) ||
+      (o.next_action?.toLowerCase().includes(q) ?? false)
     )
   }), [opportunities, typeFilter, riskFilter, search])
 
@@ -70,7 +83,9 @@ export function PipelineView({ opportunities, profile }: PipelineViewProps) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Pipeline comercial</h1>
-          <p className="text-sm text-gray-500">{countLabel}{totalValue > 0 ? ` · $${totalValue.toLocaleString('es-UY')} estimado` : ''}</p>
+          <p className="text-sm text-gray-500">Visualizá el avance de cada conversación comercial desde el primer contacto hasta el cierre.</p>
+          <p className="text-xs text-gray-400 mt-0.5">Creá una oportunidad cada vez que exista una conversación comercial concreta.</p>
+          <p className="text-xs text-gray-400 mt-0.5">{countLabel}{totalValue > 0 ? ` · $${totalValue.toLocaleString('es-UY')} estimado` : ''}</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex rounded-lg border border-gray-200 bg-white overflow-hidden">
@@ -81,8 +96,14 @@ export function PipelineView({ opportunities, profile }: PipelineViewProps) {
             <DialogTrigger asChild>
               <Button><Plus className="h-4 w-4" /> Nueva oportunidad</Button>
             </DialogTrigger>
-            <DialogContent title="Nueva oportunidad">
-              <OpportunityForm onSuccess={() => setOpen(false)} />
+            <DialogContent title="Nueva oportunidad" description="Registrá una conversación comercial concreta con un contacto o empresa">
+              <OpportunityForm
+                contactId={initialContactId}
+                companyId={initialCompanyId}
+                defaultType={initialCompanyId ? 'b2b' : 'b2c'}
+                onSuccess={() => setOpen(false)}
+                onCancel={() => setOpen(false)}
+              />
             </DialogContent>
           </Dialog>
         </div>
@@ -94,7 +115,7 @@ export function PipelineView({ opportunities, profile }: PipelineViewProps) {
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
-          placeholder="Buscar por título, contacto o empresa..."
+          placeholder="Buscar por empresa, contacto o próximo paso"
           className="w-full h-9 pl-9 pr-4 rounded-lg border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B3A6B] focus:border-transparent"
         />
       </div>
@@ -108,11 +129,20 @@ export function PipelineView({ opportunities, profile }: PipelineViewProps) {
           ))}
         </select>
         <select value={riskFilter} onChange={e => setRiskFilter(e.target.value)} className={FILTER_SELECT}>
-          <option value="">Todos los riesgos</option>
+          <option value="">Todos los niveles de riesgo</option>
           {Object.entries(RISK_LEVEL_LABELS).map(([v, l]) => (
             <option key={v} value={v}>Riesgo {l}</option>
           ))}
         </select>
+        {search && (
+          <button
+            type="button"
+            onClick={() => setSearch('')}
+            className="h-8 px-3 text-xs text-[#1B3A6B] hover:underline rounded-lg border border-gray-100 bg-white"
+          >
+            Limpiar búsqueda
+          </button>
+        )}
         {hasFilters && (
           <button
             onClick={() => { setSearch(''); setTypeFilter(''); setRiskFilter('') }}
@@ -142,11 +172,11 @@ export function PipelineView({ opportunities, profile }: PipelineViewProps) {
       {filtered.length === 0 ? (
         <EmptyState
           icon={TrendingUp}
-          title={hasFilters ? 'Sin resultados para estos filtros' : 'Todavía no hay oportunidades'}
+          title={hasFilters ? 'No encontramos resultados para esta búsqueda.' : 'Todavía no hay oportunidades'}
           description={
             hasFilters
-              ? 'Probá ajustando los filtros o la búsqueda'
-              : 'Convertí el interés de un contacto o empresa en una oportunidad y seguí su avance por el pipeline comercial.'
+              ? undefined
+              : 'Creá una oportunidad cuando exista una conversación comercial concreta con una empresa o contacto.'
           }
           example={
             !hasFilters
@@ -154,7 +184,13 @@ export function PipelineView({ opportunities, profile }: PipelineViewProps) {
               : undefined
           }
           action={
-            !hasFilters
+            hasFilters
+              ? <SearchNoResults
+                  onClearSearch={() => setSearch('')}
+                  onClearFilters={() => { setSearch(''); setTypeFilter(''); setRiskFilter('') }}
+                  hasFilters={!!(typeFilter || riskFilter)}
+                />
+              : !hasFilters
               ? <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Nueva oportunidad</Button>
               : undefined
           }
@@ -176,7 +212,7 @@ export function PipelineView({ opportunities, profile }: PipelineViewProps) {
                   ))}
                   {(byStage[stage] ?? []).length === 0 && (
                     <div className="h-14 rounded-lg border-2 border-dashed border-gray-100 flex items-center justify-center">
-                      <p className="text-xs text-gray-300">Vacío</p>
+                      <p className="text-xs text-gray-300">Sin oportunidades en esta etapa</p>
                     </div>
                   )}
                 </div>
@@ -209,11 +245,17 @@ export function PipelineView({ opportunities, profile }: PipelineViewProps) {
                       {opp.next_action && (
                         <span className="text-xs text-[#1B3A6B] truncate">{opp.next_action}</span>
                       )}
+                      {opp.next_action_date && (
+                        <span className="text-xs text-gray-400 shrink-0">{formatDate(opp.next_action_date)}</span>
+                      )}
                     </div>
                   </div>
-                  <span className={`shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${OPPORTUNITY_STAGE_COLORS[opp.stage]}`}>
-                    {OPPORTUNITY_STAGE_LABELS[opp.stage]}
-                  </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {(() => { const p = getOpportunityPriority(opp); return p.label !== 'Baja' ? <PriorityBadge label={p.label} tone={p.tone} reason={p.reason} size="sm" /> : null })()}
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${OPPORTUNITY_STAGE_COLORS[opp.stage]}`}>
+                      {OPPORTUNITY_STAGE_LABELS[opp.stage]}
+                    </span>
+                  </div>
                 </Link>
               </li>
             ))}
@@ -225,9 +267,13 @@ export function PipelineView({ opportunities, profile }: PipelineViewProps) {
 }
 
 function OppCard({ opp }: { opp: OppWithRelations }) {
+  const priority = getOpportunityPriority(opp)
   return (
     <Link href={`/app/oportunidades/${opp.id}`} className="block rounded-lg bg-white border border-gray-100 p-3 shadow-sm hover:shadow-md transition-shadow">
-      <p className="text-xs font-semibold text-gray-900 truncate">{opp.title}</p>
+      <div className="flex items-start justify-between gap-1">
+        <p className="text-xs font-semibold text-gray-900 truncate flex-1">{opp.title}</p>
+        {priority.label === 'Alta' && <PriorityBadge label={priority.label} tone={priority.tone} reason={priority.reason} />}
+      </div>
       <p className="text-xs text-gray-400 mt-1 truncate">
         {opp.contact ? `${opp.contact.first_name} ${opp.contact.last_name}` : opp.company?.name ?? '—'}
       </p>
@@ -241,11 +287,25 @@ function OppCard({ opp }: { opp: OppWithRelations }) {
           </span>
         )}
         {opp.human_score != null && (
-          <span className="text-[10px] text-gray-400">Score {opp.human_score}</span>
+          <span className="text-[10px] text-gray-400">Potencial comercial {opp.human_score}</span>
         )}
       </div>
       {opp.next_action && (
-        <p className="text-[10px] text-gray-400 mt-1.5 truncate border-t border-gray-50 pt-1.5">{opp.next_action}</p>
+        <div className="border-t border-gray-50 mt-1.5 pt-1.5">
+          <div className="flex items-center justify-between gap-1">
+            <p className="text-[10px] text-gray-400 truncate">{opp.next_action}</p>
+            {opp.next_action_date && (() => {
+              const today = new Date(); today.setHours(0, 0, 0, 0)
+              const due = new Date(opp.next_action_date + 'T00:00:00')
+              return due < today
+                ? <span className="shrink-0 inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold bg-red-100 text-red-700">Vencido</span>
+                : null
+            })()}
+          </div>
+          {opp.next_action_date && (
+            <p className="text-[10px] text-[#1B3A6B]/50 mt-0.5">{formatDate(opp.next_action_date)}</p>
+          )}
+        </div>
       )}
     </Link>
   )

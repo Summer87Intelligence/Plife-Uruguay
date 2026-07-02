@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { StatCard } from '@/components/ui/stat-card'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Users, Building2, TrendingUp, Megaphone, Activity, Target } from 'lucide-react'
+import { Users, Building2, TrendingUp, Megaphone, Activity, Target, AlertCircle, Clock } from 'lucide-react'
 import { OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS, PIPELINE_STAGES } from '@/lib/constants'
 import { formatRelativeDate } from '@/lib/utils'
 import { calcularScoreB2B, nivelColor, nivelLabel } from '@/lib/b2b/scoring'
@@ -23,17 +23,40 @@ interface DireccionViewProps {
   stageCounts: Record<string, number>
   recentActivities: Array<{ id: string; type: string; title: string; created_at: string; created_by_profile?: { full_name: string } | null }>
   topB2BOpps: TopB2BOpp[]
+  focusMetrics: { overdueOpps: number; noNextActionOpps: number }
 }
 
-export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOpps }: DireccionViewProps) {
+export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOpps, focusMetrics }: DireccionViewProps) {
   const maxStageCount = Math.max(...PIPELINE_STAGES.map(s => stageCounts[s] ?? 0), 1)
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-gray-900">Analytics — Dirección</h1>
-        <p className="text-sm text-gray-500">Vista ejecutiva del pipeline y actividad comercial</p>
+        <h1 className="text-xl font-bold text-gray-900">Dirección</h1>
+        <p className="text-sm text-gray-500">Vista ejecutiva para decidir dónde enfocar al equipo comercial.</p>
+        <p className="text-xs text-gray-400 mt-0.5">Esta vista toma sentido cuando ya hay oportunidades y campañas cargadas.</p>
       </div>
+
+      {/* Foco comercial */}
+      {(focusMetrics.overdueOpps > 0 || focusMetrics.noNextActionOpps > 0) && (
+        <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3.5">
+          <h2 className="text-sm font-semibold text-gray-700 mb-2">Foco comercial del equipo</h2>
+          <div className="flex flex-wrap gap-2">
+            {focusMetrics.overdueOpps > 0 && (
+              <Link href="/app/oportunidades" className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-200 transition-colors">
+                <AlertCircle className="h-3 w-3" />
+                {focusMetrics.overdueOpps} oportunidad{focusMetrics.overdueOpps > 1 ? 'es' : ''} con seguimiento vencido
+              </Link>
+            )}
+            {focusMetrics.noNextActionOpps > 0 && (
+              <Link href="/app/oportunidades" className="inline-flex items-center gap-1.5 rounded-full bg-orange-100 px-3 py-1.5 text-xs font-medium text-orange-700 hover:bg-orange-200 transition-colors">
+                <Clock className="h-3 w-3" />
+                {focusMetrics.noNextActionOpps} oportunidad{focusMetrics.noNextActionOpps > 1 ? 'es' : ''} sin próximo paso
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* KPIs principales */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -47,7 +70,10 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
         {/* Pipeline por etapa */}
         <Card>
           <CardHeader>
-            <CardTitle>Distribución del Pipeline</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Distribución del Pipeline</CardTitle>
+              <Link href="/app/oportunidades" className="text-xs text-[#1B3A6B] hover:underline">Ver pipeline completo</Link>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">

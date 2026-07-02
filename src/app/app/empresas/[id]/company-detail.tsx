@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { useState, useTransition } from 'react'
-import { ArrowLeft, Globe, Link2 as Linkedin, AtSign as Instagram, MapPin, Users, Plus, TrendingUp, Pencil, Target, UserCheck, AlertTriangle, Megaphone, CheckCircle2, ArrowRight } from 'lucide-react'
+import { ArrowLeft, Globe, Link2 as Linkedin, AtSign as Instagram, MapPin, Users, Plus, TrendingUp, Pencil, Target, UserCheck, AlertTriangle, Megaphone, CheckCircle2, ArrowRight, UserPlus, ShieldCheck, List, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Select } from '@/components/ui/select'
@@ -11,13 +11,22 @@ import type { TimelineActivity } from '@/components/commercial/timeline'
 import { ActivityForm } from '@/components/commercial/activity-form'
 import { CompanyAIDialog } from './company-ai'
 import { CompanyForm } from '../company-form'
+import { ContactForm } from '../../contactos/contact-form'
 import { OpportunityForm } from '../../oportunidades/opportunity-form'
+import { SimpleBreadcrumb } from '@/components/navigation/simple-breadcrumb'
+import { QuickActions } from '@/components/navigation/quick-actions'
+import { EntitySummary } from '@/components/navigation/entity-summary'
+import { DetailBackLink } from '@/components/navigation/detail-back-link'
 import { B2B_STATUS_LABELS, B2B_STATUS_COLORS, CONTACT_STATUS_LABELS, CONTACT_STATUS_COLORS, OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS } from '@/lib/constants'
+import { industryLabel } from '@/lib/industry-labels'
 import { updateCompanyStatus, associateCompanyToCampaign, saveCompanyB2BSuggestions } from '@/domains/companies/actions'
+import { formatDate } from '@/lib/utils'
+import { CLOSED_STAGES } from '@/lib/constants'
 import { calcularScoreB2B, nivelColor, nivelLabel } from '@/lib/b2b/scoring'
 import { ICP_NOMBRES } from '@/lib/b2b/icp'
 import { useRouter } from 'next/navigation'
-import type { Profile, Company, Contact, Activity, Opportunity } from '@/types/database'
+import type { Profile, Company, Contact, Activity, Opportunity, AIExecutionRun } from '@/types/database'
+import { EntityAIAnalysisCard } from '@/components/ia/entity-ai-analysis-card'
 
 interface CompanyDetailProps {
   company: Company
@@ -26,19 +35,24 @@ interface CompanyDetailProps {
   opportunities: Pick<Opportunity, 'id' | 'title' | 'stage' | 'type' | 'next_action' | 'next_action_date'>[]
   campaigns: { id: string; name: string }[]
   profile: Profile
+  aiProfile?: { id: string; name: string } | null
+  latestAiRun?: AIExecutionRun | null
 }
 
 const statusOptions = Object.entries(B2B_STATUS_LABELS).map(([v, l]) => ({ value: v, label: l }))
 
-export function CompanyDetail({ company, contacts, activities, opportunities, campaigns }: CompanyDetailProps) {
+export function CompanyDetail({ company, contacts, activities, opportunities, campaigns, aiProfile, latestAiRun }: CompanyDetailProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [editOpen, setEditOpen] = useState(false)
   const [activityOpen, setActivityOpen] = useState(false)
   const [oppOpen, setOppOpen] = useState(false)
+  const [contactOpen, setContactOpen] = useState(false)
   const [savingScore, setSavingScore] = useState(false)
 
   const b2bScore = calcularScoreB2B(company)
+  const proximoPaso = company.commercial_angle || b2bScore.proximoPaso
+  const rubroLabel = industryLabel(company.industry)
 
   async function handleStatusChange(newStatus: string) {
     await updateCompanyStatus(company.id, newStatus)
@@ -62,10 +76,15 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
 
   return (
     <div className="space-y-6">
+      <div className="space-y-3">
+        <DetailBackLink href="/app/empresas" label="Volver a empresas" />
+        <SimpleBreadcrumb items={[
+          { label: 'Empresas', href: '/app/empresas' },
+          { label: company.name },
+        ]} />
+      </div>
+
       <div className="flex items-start gap-4">
-        <Link href="/app/empresas">
-          <Button variant="ghost" size="icon"><ArrowLeft className="h-4 w-4" /></Button>
-        </Link>
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <div className="h-12 w-12 rounded-xl bg-[#1B3A6B]/10 flex items-center justify-center shrink-0">
@@ -74,7 +93,7 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
             <div>
               <h1 className="text-xl font-bold text-gray-900">{company.name}</h1>
               <div className="flex flex-wrap items-center gap-3 mt-1">
-                {company.industry && <span className="text-sm text-gray-500">{company.industry}</span>}
+                {rubroLabel && <span className="text-sm text-gray-500">{rubroLabel}</span>}
                 {company.location && (
                   <span className="flex items-center gap-1 text-sm text-gray-400"><MapPin className="h-3 w-3" />{company.location}</span>
                 )}
@@ -121,7 +140,7 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
           </Dialog>
           <Dialog open={oppOpen} onOpenChange={setOppOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm"><TrendingUp className="h-4 w-4" />Crear oportunidad</Button>
+              <Button variant="outline" size="sm"><TrendingUp className="h-4 w-4" />Nueva oportunidad</Button>
             </DialogTrigger>
             <DialogContent title="Nueva oportunidad B2B" description="Generá una oportunidad desde esta empresa">
               <OpportunityForm companyId={company.id} campaignId={company.campaign_id ?? undefined} defaultType="b2b" onSuccess={() => setOppOpen(false)} />
@@ -137,6 +156,101 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
           </Dialog>
         </div>
       </div>
+
+      <EntitySummary
+        items={[
+          { label: 'Rubro', value: rubroLabel },
+          { label: 'Ciudad', value: company.location },
+          { label: 'Potencial comercial', value: company.b2b_score != null ? `${company.b2b_score}/100` : null, highlight: true },
+          { label: 'Próximo paso sugerido', value: proximoPaso },
+          { label: 'Contactos', value: contacts.length },
+          { label: 'Oportunidades', value: opportunities.length },
+        ]}
+      />
+
+      <QuickActions
+        actions={[
+          { label: 'Agregar contacto', onClick: () => setContactOpen(true), icon: UserPlus },
+          { label: 'Crear oportunidad', onClick: () => setOppOpen(true), icon: TrendingUp },
+          ...(opportunities.length > 0 || company.name
+            ? [{ label: 'Ver oportunidades', href: `/app/oportunidades?q=${encodeURIComponent(company.name)}`, icon: List }]
+            : []),
+          { label: 'Revisar mensaje', href: '/app/compliance', icon: ShieldCheck },
+        ]}
+      />
+
+      <Dialog open={contactOpen} onOpenChange={setContactOpen}>
+        <DialogContent title="Nuevo contacto" description={`Agregar contacto en ${company.name}`}>
+          <ContactForm
+            companies={[{ id: company.id, name: company.name }]}
+            initial={{ company_id: company.id }}
+            onSuccess={() => setContactOpen(false)}
+            onCancel={() => setContactOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Actividad comercial */}
+      {(() => {
+        const openOpps = opportunities.filter(o => !(CLOSED_STAGES as string[]).includes(o.stage))
+        const oppConPaso = openOpps.find(o => o.next_action)
+        if (openOpps.length === 0) return null
+
+        let statusLabel = 'Sin próximo paso'
+        let statusClasses = 'bg-gray-100 text-gray-500'
+        if (oppConPaso) {
+          if (!oppConPaso.next_action_date) {
+            statusLabel = 'Sin fecha'; statusClasses = 'bg-blue-100 text-blue-700'
+          } else {
+            const today = new Date(); today.setHours(0, 0, 0, 0)
+            const due = new Date(oppConPaso.next_action_date + 'T00:00:00')
+            if (due < today) { statusLabel = 'Vencido'; statusClasses = 'bg-red-100 text-red-700' }
+            else { statusLabel = 'Pendiente'; statusClasses = 'bg-yellow-100 text-yellow-700' }
+          }
+        }
+
+        return (
+          <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3">
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-[10px] font-semibold text-blue-700 uppercase tracking-wider flex items-center gap-1">
+                <Calendar className="h-3 w-3" />Actividad comercial
+              </p>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-gray-500">
+                  {openOpps.length} opp. {openOpps.length === 1 ? 'activa' : 'activas'}
+                </span>
+                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusClasses}`}>
+                  {statusLabel}
+                </span>
+              </div>
+            </div>
+            {oppConPaso ? (
+              <>
+                <p className="text-sm font-medium text-gray-800">{oppConPaso.next_action}</p>
+                {oppConPaso.next_action_date && (
+                  <p className="text-xs text-gray-500 mt-0.5">Fecha: {formatDate(oppConPaso.next_action_date)}</p>
+                )}
+                <Link href={`/app/oportunidades/${oppConPaso.id}`} className="text-xs text-[#1B3A6B] hover:underline mt-1.5 inline-flex items-center gap-0.5">
+                  {oppConPaso.title} <ArrowRight className="h-3 w-3" />
+                </Link>
+              </>
+            ) : (
+              <p className="text-xs text-gray-400 italic">Las oportunidades activas no tienen próximo paso definido.</p>
+            )}
+          </div>
+        )
+      })()}
+
+      {aiProfile && (
+        <EntityAIAnalysisCard
+          entityType="company"
+          entityId={company.id}
+          entityLabel={company.name}
+          profileId={aiProfile.id}
+          profileName={aiProfile.name}
+          latestRun={latestAiRun}
+        />
+      )}
 
       {/* Por qué importa — strip de inteligencia */}
       {(company.opportunity_detected || company.commercial_angle || company.ideal_contact) && (
@@ -165,13 +279,13 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="space-y-4">
           <Card>
-            <CardHeader><CardTitle>Estado y prioridad</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Estado comercial</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <Select label="Estado B2B" value={company.b2b_status} onValueChange={handleStatusChange} options={statusOptions} />
+              <Select label="Estado comercial" value={company.b2b_status} onValueChange={handleStatusChange} options={statusOptions} />
               {company.b2b_score != null && (
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <p className="text-xs text-gray-500">Score B2B</p>
+                    <p className="text-xs text-gray-500">Potencial comercial</p>
                     <span className="text-sm font-bold text-[#1B3A6B]">{company.b2b_score}/100</span>
                   </div>
                   <div className="w-full bg-gray-100 rounded-full h-2">
@@ -203,7 +317,7 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
-                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">ICP detectado</p>
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-0.5">Perfil de cliente detectado</p>
                 <p className="text-sm font-medium text-[#1B3A6B]">{ICP_NOMBRES[b2bScore.icpSugerido]}</p>
               </div>
               {b2bScore.razonesPositivas.slice(0, 3).length > 0 && (
@@ -247,7 +361,7 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
                   className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#1B3A6B] px-3 py-2 text-xs font-medium text-white hover:bg-[#1B3A6B]/90 disabled:opacity-50 transition-colors"
                 >
                   <CheckCircle2 className="h-3 w-3" />
-                  {savingScore ? 'Guardando…' : `Aplicar score sugerido (${b2bScore.score})`}
+                  {savingScore ? 'Guardando…' : `Aplicar potencial sugerido (${b2bScore.score})`}
                 </button>
               )}
             </CardContent>
@@ -312,7 +426,7 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
           </Card>
 
           {contacts.length > 0 && (
-            <Card>
+            <Card id="contactos-relacionados">
               <CardHeader><CardTitle>Contactos ({contacts.length})</CardTitle></CardHeader>
               <CardContent>
                 <ul className="space-y-2">
@@ -335,7 +449,7 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
           )}
 
           {opportunities.length > 0 && (
-            <Card>
+            <Card id="oportunidades-relacionadas">
               <CardHeader><CardTitle>Oportunidades ({opportunities.length})</CardTitle></CardHeader>
               <CardContent>
                 <ul className="space-y-2">

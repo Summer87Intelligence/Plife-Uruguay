@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { useState } from 'react'
-import { ArrowLeft, Plus, AlertTriangle, Calendar, Pencil, Trophy, CircleX, UserCircle, Megaphone } from 'lucide-react'
+import { Plus, AlertTriangle, Calendar, Pencil, Trophy, CircleX, UserCircle, Megaphone, Building2, ShieldCheck, List } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Select } from '@/components/ui/select'
@@ -13,11 +13,16 @@ import { ActivityForm } from '@/components/commercial/activity-form'
 import { AIAssistantDialog } from '@/components/commercial/ai-assistant-dialog'
 import { runCopilot, saveAIAsActivity } from '@/domains/ai/actions'
 import { OpportunityForm } from '../opportunity-form'
+import { SimpleBreadcrumb } from '@/components/navigation/simple-breadcrumb'
+import { QuickActions } from '@/components/navigation/quick-actions'
+import { EntitySummary } from '@/components/navigation/entity-summary'
+import { DetailBackLink } from '@/components/navigation/detail-back-link'
 import { OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS, RISK_LEVEL_LABELS, RISK_LEVEL_COLORS, PIPELINE_STAGES, CLOSED_STAGES } from '@/lib/constants'
-import { formatDate } from '@/lib/utils'
+import { formatDate, formatRelativeDate } from '@/lib/utils'
 import { updateOpportunityStage, updateOpportunity, closeOpportunity } from '@/domains/opportunities/actions'
 import { useRouter } from 'next/navigation'
-import type { Profile, Opportunity, Note, Contact, Company } from '@/types/database'
+import type { Profile, Opportunity, Note, Contact, Company, AIExecutionRun } from '@/types/database'
+import { EntityAIAnalysisCard } from '@/components/ia/entity-ai-analysis-card'
 
 type OpportunityWithRelations = Opportunity & {
   contact?: Pick<Contact, 'id' | 'first_name' | 'last_name' | 'phone' | 'email'> | null
@@ -32,12 +37,14 @@ interface OpportunityDetailProps {
   advisors: { id: string; full_name: string }[]
   campaign: { id: string; name: string } | null
   profile: Profile
+  aiProfile?: { id: string; name: string } | null
+  latestAiRun?: AIExecutionRun | null
 }
 
 const allStages = [...PIPELINE_STAGES, ...CLOSED_STAGES]
 const stageOptions = allStages.map(s => ({ value: s, label: OPPORTUNITY_STAGE_LABELS[s] }))
 
-export function OpportunityDetail({ opportunity, activities, advisors, campaign }: OpportunityDetailProps) {
+export function OpportunityDetail({ opportunity, activities, advisors, campaign, aiProfile, latestAiRun }: OpportunityDetailProps) {
   const router = useRouter()
   const [activityOpen, setActivityOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
@@ -93,10 +100,15 @@ export function OpportunityDetail({ opportunity, activities, advisors, campaign 
 
   return (
     <div className="space-y-6">
+      <div className="space-y-3">
+        <DetailBackLink href="/app/oportunidades" label="Volver a oportunidades" />
+        <SimpleBreadcrumb items={[
+          { label: 'Oportunidades', href: '/app/oportunidades' },
+          { label: opportunity.title },
+        ]} />
+      </div>
+
       <div className="flex items-start gap-4">
-        <Link href="/app/oportunidades">
-          <Button variant="ghost" size="icon"><ArrowLeft className="h-4 w-4" /></Button>
-        </Link>
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-medium text-gray-400 uppercase">{typeLabel}</span>
@@ -179,6 +191,54 @@ export function OpportunityDetail({ opportunity, activities, advisors, campaign 
         </div>
       </div>
 
+      <EntitySummary
+        items={[
+          { label: 'Etapa', value: OPPORTUNITY_STAGE_LABELS[opportunity.stage], highlight: true },
+          {
+            label: 'Empresa',
+            value: opportunity.company
+              ? <Link href={`/app/empresas/${opportunity.company.id}`} className="text-[#1B3A6B] hover:underline">{opportunity.company.name}</Link>
+              : null,
+          },
+          {
+            label: 'Contacto',
+            value: opportunity.contact
+              ? <Link href={`/app/contactos/${opportunity.contact.id}`} className="text-[#1B3A6B] hover:underline">{opportunity.contact.first_name} {opportunity.contact.last_name}</Link>
+              : null,
+          },
+          { label: 'Próximo paso', value: opportunity.next_action },
+          {
+            label: 'Valor estimado',
+            value: opportunity.estimated_value != null
+              ? `$${opportunity.estimated_value.toLocaleString('es-UY')}`
+              : null,
+            highlight: true,
+          },
+          ...(campaign
+            ? [{
+                label: 'Campaña',
+                value: <Link href={`/app/campanas/${campaign.id}`} className="text-[#1B3A6B] hover:underline">{campaign.name}</Link>,
+              }]
+            : []),
+        ]}
+      />
+
+      <QuickActions
+        actions={[
+          ...(opportunity.company
+            ? [{ label: 'Ver empresa', href: `/app/empresas/${opportunity.company.id}`, icon: Building2 }]
+            : []),
+          ...(opportunity.contact
+            ? [{ label: 'Ver contacto', href: `/app/contactos/${opportunity.contact.id}`, icon: UserCircle }]
+            : []),
+          ...(campaign
+            ? [{ label: 'Ver campaña', href: `/app/campanas/${campaign.id}`, icon: Megaphone }]
+            : []),
+          { label: 'Revisar mensaje', href: '/app/compliance', icon: ShieldCheck },
+          { label: 'Ir al pipeline', href: '/app/oportunidades', icon: List },
+        ]}
+      />
+
       {/* Pipeline progress indicator */}
       {!isClosed && (
         <div className="rounded-xl border border-gray-100 bg-white p-4">
@@ -212,7 +272,7 @@ export function OpportunityDetail({ opportunity, activities, advisors, campaign 
           <Card>
             <CardHeader><CardTitle>Etapa y cierre</CardTitle></CardHeader>
             <CardContent className="space-y-3">
-              <Select label="Mover etapa" value={opportunity.stage} onValueChange={handleStageChange} options={stageOptions} />
+              <Select label="Etapa" value={opportunity.stage} onValueChange={handleStageChange} options={stageOptions} />
               {!isClosed ? (
                 <div className="grid grid-cols-2 gap-2 pt-1">
                   <Button variant="outline" size="sm" loading={busy} onClick={handleWin} className="text-green-700 border-green-200 hover:bg-green-50">
@@ -242,18 +302,18 @@ export function OpportunityDetail({ opportunity, activities, advisors, campaign 
           </Card>
 
           <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2"><UserCircle className="h-4 w-4 text-[#1B3A6B]" />Asesor asignado</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><UserCircle className="h-4 w-4 text-[#1B3A6B]" />Responsable</CardTitle></CardHeader>
             <CardContent>
               <Select value={opportunity.assigned_to ?? ''} onValueChange={handleAssign} options={advisorOptions} placeholder="Sin asignar" />
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader><CardTitle>Scoring</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Potencial de cierre</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <Input label="Probabilidad de cierre (%)" type="number" min={0} max={100} value={probability} onChange={e => setProbability(e.target.value)} />
-              <Input label="Score humano (0-100)" type="number" min={0} max={100} value={humanScore} onChange={e => setHumanScore(e.target.value)} />
-              <Button variant="outline" size="sm" className="w-full" loading={busy} onClick={handleSaveScores}>Guardar scoring</Button>
+              <Input label="Potencial comercial (0–100)" type="number" min={0} max={100} value={humanScore} onChange={e => setHumanScore(e.target.value)} />
+              <Button variant="outline" size="sm" className="w-full" loading={busy} onClick={handleSaveScores}>Guardar potencial</Button>
               {opportunity.probability != null && (
                 <div className="w-full bg-gray-100 rounded-full h-2">
                   <div className="bg-[#1B3A6B] h-2 rounded-full" style={{ width: `${opportunity.probability}%` }} />
@@ -263,14 +323,52 @@ export function OpportunityDetail({ opportunity, activities, advisors, campaign 
           </Card>
 
           <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2"><Calendar className="h-4 w-4" />Próxima acción</CardTitle></CardHeader>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2"><Calendar className="h-4 w-4" />Seguimiento</CardTitle>
+                {(() => {
+                  if (!opportunity.next_action) return <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-gray-100 text-gray-500">Sin próximo paso</span>
+                  if (!opportunity.next_action_date) return <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-blue-100 text-blue-700">Sin fecha</span>
+                  const today = new Date(); today.setHours(0, 0, 0, 0)
+                  const due = new Date(opportunity.next_action_date + 'T00:00:00')
+                  if (due < today) return <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-red-100 text-red-700">Vencido</span>
+                  return <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold bg-yellow-100 text-yellow-700">Pendiente</span>
+                })()}
+              </div>
+            </CardHeader>
             <CardContent className="space-y-3">
-              <Input label="Acción" value={nextAction} onChange={e => setNextAction(e.target.value)} placeholder="Qué hay que hacer..." />
+              {opportunity.next_action ? (
+                <div className="rounded-lg bg-[#1B3A6B]/5 px-3 py-2.5">
+                  <p className="text-sm font-medium text-gray-900">{opportunity.next_action}</p>
+                  {opportunity.next_action_date && (
+                    <p className="text-xs text-gray-500 mt-0.5">{formatDate(opportunity.next_action_date)}</p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400 italic">Esta oportunidad todavía no tiene próximo paso definido.</p>
+              )}
+              <Input label="Próximo paso" value={nextAction} onChange={e => setNextAction(e.target.value)} placeholder="Qué hay que hacer a continuación..." />
               <Input label="Fecha" type="date" value={nextActionDate} onChange={e => setNextActionDate(e.target.value)} />
-              <Button variant="outline" size="sm" className="w-full" loading={busy} onClick={handleSaveNextAction}>Guardar próxima acción</Button>
-              {opportunity.next_action_date && <p className="text-xs text-gray-400">Agendado: {formatDate(opportunity.next_action_date)}</p>}
+              <Button variant="outline" size="sm" className="w-full" loading={busy} onClick={handleSaveNextAction}>Guardar seguimiento</Button>
+              {opportunity.last_activity_at && (
+                <p className="text-[10px] text-gray-400 border-t border-gray-50 pt-2">
+                  Última actividad: {formatRelativeDate(opportunity.last_activity_at)}
+                </p>
+              )}
             </CardContent>
           </Card>
+
+          {aiProfile && (
+            <EntityAIAnalysisCard
+              entityType="opportunity"
+              entityId={opportunity.id}
+              entityLabel={opportunity.title}
+              profileId={aiProfile.id}
+              profileName={aiProfile.name}
+              latestRun={latestAiRun}
+              compact
+            />
+          )}
 
           {(opportunity.detected_need || opportunity.suggested_product) && (
             <Card>

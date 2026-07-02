@@ -13,6 +13,13 @@ export type CampaignType = 'duenos_pymes' | 'empresas_familiares' | 'estudios_co
 export type DocumentStatus = 'activo' | 'inactivo' | 'en_revision' | 'archivado'
 export type ComplianceAction = 'aprobado' | 'bloqueado' | 'revision_requerida' | 'modificado'
 
+// --- Motor IA PLIFE (FASE 12O-B) -------------------------------------------
+export type AIPromptStatus = 'draft' | 'validated' | 'archived'
+export type AIExecutionEntityType = 'company' | 'contact' | 'opportunity' | 'campaign'
+export type AIExecutionRunStatus = 'queued' | 'running' | 'completed' | 'completed_with_errors' | 'failed'
+export type AIExecutionOutputStatus = 'queued' | 'running' | 'completed' | 'failed' | 'skipped'
+export type AIPromptSuggestionStatus = 'open' | 'accepted' | 'dismissed'
+
 export interface Profile {
   id: string
   email: string
@@ -345,6 +352,115 @@ export interface ObjectionItem {
   created_by: string | null
 }
 
+// --- Motor IA PLIFE (FASE 12O-B) -------------------------------------------
+
+export interface AIStage {
+  id: string
+  key: string
+  label: string
+  description: string | null
+  sort_order: number
+  tone: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface AICategory {
+  id: string
+  key: string
+  label: string
+  description: string | null
+  tone: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface AIPrompt {
+  id: string
+  name: string
+  description: string | null
+  stage_id: string | null
+  category_id: string | null
+  role_persona: string
+  context_environment: string
+  objective: string
+  specific_task: string
+  constraints: string
+  output_format: string
+  target_audience: string
+  provider: string
+  model: string
+  temperature: number
+  max_tokens: number
+  status: AIPromptStatus
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface AIAnalysisProfile {
+  id: string
+  name: string
+  description: string | null
+  target_client_type: string | null
+  target_industries: string | null
+  base_instructions: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface AIProfilePrompt {
+  id: string
+  profile_id: string
+  prompt_id: string
+  execution_order: number
+  enabled_by_default: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface AIPromptSuggestion {
+  id: string
+  prompt_id: string
+  suggestion_type: string
+  reason: string
+  suggested_content: string | null
+  status: AIPromptSuggestionStatus
+  created_at: string
+}
+
+export interface AIExecutionRun {
+  id: string
+  entity_type: AIExecutionEntityType
+  entity_id: string
+  profile_id: string | null
+  status: AIExecutionRunStatus
+  started_at: string | null
+  finished_at: string | null
+  error_message: string | null
+  created_by: string | null
+  created_at: string
+}
+
+export interface AIExecutionOutput {
+  id: string
+  run_id: string
+  stage_id: string | null
+  prompt_id: string | null
+  execution_order: number
+  status: AIExecutionOutputStatus
+  output: string | null
+  error_message: string | null
+  tokens_input: number | null
+  tokens_output: number | null
+  cost_estimate: number | null
+  duration_ms: number | null
+  created_at: string
+}
+
 // Database generic type for Supabase client
 // Each table includes `Relationships: []` and the schema includes `Views` /
 // `CompositeTypes` because @supabase/postgrest-js requires this shape to satisfy
@@ -410,6 +526,30 @@ export interface Database {
       training_modules: TableDef<TrainingModule>
       roleplay_sessions: TableDef<RoleplaySession>
       objections_library: TableDef<ObjectionItem>
+      // Motor IA PLIFE (FASE 12O-B)
+      ai_stages: TableDef<AIStage>
+      ai_categories: TableDef<AICategory>
+      ai_prompts: TableDef<AIPrompt, [
+        Rel<'ai_prompts_stage_id_fkey',    'stage_id',    'ai_stages'>,
+        Rel<'ai_prompts_category_id_fkey', 'category_id', 'ai_categories'>,
+      ]>
+      ai_analysis_profiles: TableDef<AIAnalysisProfile>
+      ai_profile_prompts: TableDef<AIProfilePrompt, [
+        Rel<'ai_profile_prompts_profile_id_fkey', 'profile_id', 'ai_analysis_profiles'>,
+        Rel<'ai_profile_prompts_prompt_id_fkey',  'prompt_id',  'ai_prompts'>,
+      ]>
+      ai_prompt_suggestions: TableDef<AIPromptSuggestion, [
+        Rel<'ai_prompt_suggestions_prompt_id_fkey', 'prompt_id', 'ai_prompts'>,
+      ]>
+      ai_execution_runs: TableDef<AIExecutionRun, [
+        Rel<'ai_execution_runs_profile_id_fkey',  'profile_id',  'ai_analysis_profiles'>,
+        Rel<'ai_execution_runs_created_by_fkey',  'created_by',  'profiles'>,
+      ]>
+      ai_execution_outputs: TableDef<AIExecutionOutput, [
+        Rel<'ai_execution_outputs_run_id_fkey',    'run_id',    'ai_execution_runs'>,
+        Rel<'ai_execution_outputs_stage_id_fkey',  'stage_id',  'ai_stages'>,
+        Rel<'ai_execution_outputs_prompt_id_fkey', 'prompt_id', 'ai_prompts'>,
+      ]>
     }
     Views: Record<string, never>
     CompositeTypes: Record<string, never>
@@ -438,6 +578,12 @@ export interface Database {
       campaign_type: CampaignType
       document_status: DocumentStatus
       compliance_action: ComplianceAction
+      // Motor IA PLIFE (FASE 12O-B)
+      ai_prompt_status: AIPromptStatus
+      ai_execution_entity_type: AIExecutionEntityType
+      ai_execution_run_status: AIExecutionRunStatus
+      ai_execution_output_status: AIExecutionOutputStatus
+      ai_prompt_suggestion_status: AIPromptSuggestionStatus
     }
   }
 }

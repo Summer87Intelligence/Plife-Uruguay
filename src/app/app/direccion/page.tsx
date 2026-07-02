@@ -9,6 +9,7 @@ export default async function DireccionPage() {
   if (!['admin', 'direccion'].includes(profile.role)) redirect('/app/hoy')
 
   const supabase = await createClient()
+  const today = new Date().toISOString().split('T')[0]
 
   const [
     { count: totalOpps },
@@ -19,6 +20,8 @@ export default async function DireccionPage() {
     { data: lossReasons },
     { data: recentActivities },
     { data: topB2BOpps },
+    { count: overdueOpps },
+    { count: noNextActionOpps },
   ] = await Promise.all([
     supabase.from('opportunities').select('*', { count: 'exact', head: true }).is('deleted_at', null),
     supabase.from('contacts').select('*', { count: 'exact', head: true }).is('deleted_at', null),
@@ -34,6 +37,8 @@ export default async function DireccionPage() {
       .is('deleted_at', null)
       .order('estimated_value', { ascending: false, nullsFirst: false })
       .limit(6),
+    supabase.from('opportunities').select('*', { count: 'exact', head: true }).lt('next_action_date', today).not('stage', 'in', '("ganada","perdida")').is('deleted_at', null),
+    supabase.from('opportunities').select('*', { count: 'exact', head: true }).is('next_action', null).not('stage', 'in', '("ganada","perdida")').is('deleted_at', null),
   ])
 
   // Calcular estadísticas por etapa
@@ -53,6 +58,7 @@ export default async function DireccionPage() {
       stageCounts={stageCounts}
       recentActivities={recentActivities ?? []}
       topB2BOpps={topB2BOpps ?? []}
+      focusMetrics={{ overdueOpps: overdueOpps ?? 0, noNextActionOpps: noNextActionOpps ?? 0 }}
     />
   )
 }

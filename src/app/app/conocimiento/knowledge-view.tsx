@@ -115,7 +115,7 @@ export function KnowledgeView({ documents, contentMap, chunkCount, embeddedCount
     if (res.error) {
       setIndexFeedback({ docId, message: res.error, ok: false })
     } else if (res.fallback) {
-      setIndexFeedback({ docId, message: 'Sin OPENAI_API_KEY — documento guardado sin embeddings. Configurá la key para indexar.', ok: false })
+      setIndexFeedback({ docId, message: 'Búsqueda inteligente no disponible. Contactá al administrador para activarla.', ok: false })
     } else {
       setIndexFeedback({ docId, message: `${res.chunksIndexed} chunk${res.chunksIndexed !== 1 ? 's' : ''} indexado${res.chunksIndexed !== 1 ? 's' : ''}${res.chunksSkipped ? `, ${res.chunksSkipped} ya tenían embedding` : ''}.`, ok: true })
     }
@@ -130,7 +130,7 @@ export function KnowledgeView({ documents, contentMap, chunkCount, embeddedCount
     if (res.error) {
       setIndexFeedback({ docId, message: res.error, ok: false })
     } else if (res.fallback) {
-      setIndexFeedback({ docId, message: 'Sin OPENAI_API_KEY — no se puede reindexar. Configurá la key.', ok: false })
+      setIndexFeedback({ docId, message: 'Búsqueda inteligente no disponible. Contactá al administrador.', ok: false })
     } else {
       setIndexFeedback({ docId, message: `Reindexado: ${res.chunksIndexed} chunk${res.chunksIndexed !== 1 ? 's' : ''} con nuevo embedding.`, ok: true })
     }
@@ -168,7 +168,8 @@ export function KnowledgeView({ documents, contentMap, chunkCount, embeddedCount
           <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-[#1B3A6B]" /> Base de Conocimiento
           </h1>
-          <p className="text-sm text-gray-500">Documentos validados que la IA usa como fuente de verdad</p>
+          <p className="text-sm text-gray-500">Documentos validados que el equipo y la IA usan para responder con precisión.</p>
+          <p className="text-xs text-gray-400 mt-0.5">Solo los documentos activos e indexados alimentan las búsquedas inteligentes.</p>
         </div>
         {canManage && (
           <Dialog open={open} onOpenChange={setOpen}>
@@ -215,18 +216,18 @@ export function KnowledgeView({ documents, contentMap, chunkCount, embeddedCount
           <p className="text-2xl font-bold text-yellow-800 mt-0.5">{byStatus.en_revision}</p>
         </div>
         <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-          <p className="text-xs font-medium text-gray-600">Total chunks</p>
+          <p className="text-xs font-medium text-gray-600">Fragmentos de texto</p>
           <p className="text-2xl font-bold text-gray-800 mt-0.5">{totalChunks}</p>
         </div>
         <div className={`rounded-xl border p-3 ${embeddingsReady ? 'border-blue-100 bg-blue-50' : 'border-gray-100 bg-gray-50'}`}>
           <p className={`text-xs font-medium ${embeddingsReady ? 'text-blue-700' : 'text-gray-500'}`}>
-            {embeddingsReady ? 'Indexados (IA)' : 'Embeddings'}
+            {embeddingsReady ? 'Listos para búsqueda' : 'Búsqueda inteligente'}
           </p>
           <p className={`text-2xl font-bold mt-0.5 ${embeddingsReady ? 'text-blue-800' : 'text-gray-400'}`}>
             {embeddingsReady ? `${totalEmbedded}/${totalChunks}` : '—'}
           </p>
           {!embeddingsReady && (
-            <p className="text-[10px] text-gray-400 mt-0.5">Aplicar knowledge-embeddings.sql</p>
+            <p className="text-[10px] text-gray-400 mt-0.5">Configuración pendiente — contactá al administrador</p>
           )}
         </div>
       </div>
@@ -244,7 +245,7 @@ export function KnowledgeView({ documents, contentMap, chunkCount, embeddedCount
           <Search className="h-3.5 w-3.5" />
           Buscar en contenido
           <span className={`ml-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${embeddingsReady ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'}`}>
-            {embeddingsReady ? 'semántico' : 'texto'}
+            {embeddingsReady ? 'inteligente' : 'por texto'}
           </span>
         </p>
         <form onSubmit={handleSemanticSearch} className="flex gap-2">
@@ -293,7 +294,7 @@ export function KnowledgeView({ documents, contentMap, chunkCount, embeddedCount
         <EmptyState
           icon={BookOpen}
           title="Sin documentos"
-          description="Agregá documentos validados que la IA usará como fuente de verdad"
+          description={canManage ? 'Agregá documentos validados que la IA usará como referencia.' : 'Los documentos los cargan administración y capacitación. Consultá con tu equipo si necesitás material.'}
           example="Condiciones de un seguro de vida, guion aprobado de apertura, FAQ de objeciones frecuentes."
           action={canManage ? <Button onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Agregar documento</Button> : undefined}
         />
@@ -323,7 +324,7 @@ export function KnowledgeView({ documents, contentMap, chunkCount, embeddedCount
                         </span>
                         {chunks > 0 && (
                           <span className="shrink-0 text-[10px] text-gray-400">
-                            {chunks} chunk{chunks !== 1 ? 's' : ''}
+                            {chunks} fragmento{chunks !== 1 ? 's' : ''}
                           </span>
                         )}
                         {embeddingsReady && chunks > 0 && (

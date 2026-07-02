@@ -5,6 +5,8 @@ import { OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS, B2B_STATUS_LABELS, 
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StatCard } from '@/components/ui/stat-card'
+import { GettingStartedCard } from '@/components/onboarding/getting-started-card'
+import { isDemoMode } from '@/lib/demo'
 import { AlertCircle, Calendar, TrendingUp, Building2, Bot, CheckCircle2, Megaphone, Clock } from 'lucide-react'
 import type { Profile, Activity, Contact, Opportunity, Company, Campaign } from '@/types/database'
 
@@ -26,14 +28,15 @@ export function AdvisorDashboard({
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Buenos días' : hour < 18 ? 'Buenas tardes' : 'Buenas noches'
 
+  const isEmpty = assignedCompanies.length === 0 && hotOpps.length === 0 && activeCampaigns.length === 0
+  const isDemo = isDemoMode()
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">{greeting}, {profile.full_name.split(' ')[0]}</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            Esto es lo que conviene atender hoy · {new Date().toLocaleDateString('es-UY', { weekday: 'long', day: 'numeric', month: 'long' })}
-          </p>
+          <p className="text-sm text-gray-500 mt-0.5">Tu tablero de hoy: oportunidades, campañas y próximos pasos comerciales.</p>
         </div>
         <Link href="/app/copiloto">
           <Button><Bot className="h-4 w-4" />Preparar contacto con IA</Button>
@@ -43,9 +46,70 @@ export function AdvisorDashboard({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Tareas hoy" value={todayActivities.length} icon={Calendar} color="blue" />
         <StatCard title="Seguimientos vencidos" value={overdueActions.length} icon={AlertCircle} color={overdueActions.length > 0 ? 'red' : 'green'} />
-        <StatCard title="Oportunidades calientes" value={hotOpps.length} icon={TrendingUp} color="yellow" />
+        <StatCard title="Oportunidades activas" value={hotOpps.length} icon={TrendingUp} color="yellow" />
         <StatCard title="Empresas B2B" value={assignedCompanies.length} icon={Building2} color="purple" />
       </div>
+
+      {/* Qué atender hoy */}
+      <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3.5">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-[#1B3A6B]" />Qué atender hoy
+          </h2>
+          <div className="flex items-center gap-3">
+            <Link href="/app/oportunidades" className="text-xs text-[#1B3A6B] hover:underline">Ver oportunidades</Link>
+            <span className="text-gray-300">·</span>
+            <Link href="/app/campanas" className="text-xs text-[#1B3A6B] hover:underline">Revisar campañas</Link>
+            <span className="text-gray-300">·</span>
+            <Link href="/app/compliance" className="text-xs text-[#1B3A6B] hover:underline">Revisar Compliance</Link>
+          </div>
+        </div>
+        {isEmpty ? (
+          <p className="text-sm text-gray-500">
+            No hay seguimientos cargados todavía.{' '}
+            <Link href="/app/oportunidades" className="text-[#1B3A6B] hover:underline">Cuando crees oportunidades con próximo paso, aparecerán acá.</Link>
+          </p>
+        ) : overdueActions.length === 0 && staleOpps.length === 0 && upcomingOpps.length === 0 ? (
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+            <span>Todo al día. Sin seguimientos pendientes ni oportunidades sin actividad.</span>
+          </div>
+        ) : (
+          <>
+          <div className="flex flex-wrap gap-2">
+            {overdueActions.length > 0 && (
+              <Link href="/app/contactos" className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-200 transition-colors">
+                <AlertCircle className="h-3 w-3" />
+                {overdueActions.length} seguimiento{overdueActions.length > 1 ? 's' : ''} vencido{overdueActions.length > 1 ? 's' : ''}
+              </Link>
+            )}
+            {staleOpps.length > 0 && (
+              <Link href="/app/oportunidades" className="inline-flex items-center gap-1.5 rounded-full bg-orange-100 px-3 py-1.5 text-xs font-medium text-orange-700 hover:bg-orange-200 transition-colors">
+                <Clock className="h-3 w-3" />
+                {staleOpps.length} oportunidad{staleOpps.length > 1 ? 'es' : ''} sin actividad
+              </Link>
+            )}
+            {upcomingOpps.length > 0 && (
+              <Link href="/app/oportunidades" className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-200 transition-colors">
+                <Calendar className="h-3 w-3" />
+                {upcomingOpps.length} próxima{upcomingOpps.length > 1 ? 's' : ''} acción{upcomingOpps.length > 1 ? 'es' : ''}
+              </Link>
+            )}
+            {activeCampaigns.length > 0 && (
+              <Link href="/app/campanas" className="inline-flex items-center gap-1.5 rounded-full bg-[#1B3A6B]/10 px-3 py-1.5 text-xs font-medium text-[#1B3A6B] hover:bg-[#1B3A6B]/20 transition-colors">
+                <Megaphone className="h-3 w-3" />
+                {activeCampaigns.length} campaña{activeCampaigns.length > 1 ? 's' : ''} activa{activeCampaigns.length > 1 ? 's' : ''}
+              </Link>
+            )}
+          </div>
+          <p className="text-xs text-gray-400 mt-1">Orden sugerido: resolvé los vencidos primero · oportunidades sin actividad · campañas activas</p>
+          </>
+        )}
+      </div>
+
+      {(isEmpty || (!isEmpty && isDemo)) && (
+        <GettingStartedCard mode={isEmpty ? 'empty' : 'demo'} />
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
@@ -90,7 +154,10 @@ export function AdvisorDashboard({
           </CardHeader>
           <CardContent>
             {upcomingOpps.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-6">Sin acciones programadas próximamente</p>
+              <p className="text-sm text-gray-500 text-center py-6">
+                Sin acciones programadas.{' '}
+                <Link href="/app/oportunidades" className="text-[#1B3A6B] hover:underline">Crear oportunidad</Link>
+              </p>
             ) : (
               <ul className="space-y-2">
                 {upcomingOpps.map(opp => (
@@ -112,13 +179,16 @@ export function AdvisorDashboard({
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2"><TrendingUp className="h-4 w-4 text-yellow-500" />Oportunidades calientes</CardTitle>
+              <CardTitle className="flex items-center gap-2"><TrendingUp className="h-4 w-4 text-yellow-500" />Oportunidades en etapa avanzada</CardTitle>
               <Link href="/app/oportunidades" className="text-xs text-[#1B3A6B] hover:underline">Ver pipeline</Link>
             </div>
           </CardHeader>
           <CardContent>
             {hotOpps.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-6">No hay oportunidades calientes</p>
+              <p className="text-sm text-gray-500 text-center py-6">
+                No hay oportunidades en etapas avanzadas.{' '}
+                <Link href="/app/oportunidades" className="text-[#1B3A6B] hover:underline">Ver pipeline</Link>
+              </p>
             ) : (
               <ul className="space-y-2">
                 {hotOpps.map(opp => (
@@ -147,14 +217,17 @@ export function AdvisorDashboard({
           </CardHeader>
           <CardContent>
             {activeCampaigns.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-6">No hay campañas activas</p>
+              <p className="text-sm text-gray-500 text-center py-6">
+                No hay campañas activas.{' '}
+                <Link href="/app/campanas" className="text-[#1B3A6B] hover:underline">Ver campañas</Link>
+              </p>
             ) : (
               <ul className="space-y-2">
                 {activeCampaigns.map(c => (
                   <li key={c.id}>
                     <Link href={`/app/campanas/${c.id}`} className="flex items-center justify-between rounded-lg px-3 py-2.5 hover:bg-gray-50">
                       <p className="text-sm font-medium text-gray-900">{c.name}</p>
-                      <span className="text-xs text-gray-400">{c.total_converted ?? 0}/{c.total_targets ?? 0} conv.</span>
+                      <span className="text-xs text-gray-400">{c.total_converted ?? 0}/{c.total_targets ?? 0} cierres</span>
                     </Link>
                   </li>
                 ))}
@@ -197,7 +270,10 @@ export function AdvisorDashboard({
           </CardHeader>
           <CardContent>
             {assignedCompanies.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-6">Sin empresas asignadas</p>
+              <p className="text-sm text-gray-500 text-center py-6">
+                Sin empresas asignadas.{' '}
+                <Link href="/app/empresas" className="text-[#1B3A6B] hover:underline">Nueva empresa</Link>
+              </p>
             ) : (
               <ul className="space-y-2">
                 {assignedCompanies.map(co => (
