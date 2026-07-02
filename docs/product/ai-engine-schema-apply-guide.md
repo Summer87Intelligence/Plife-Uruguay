@@ -234,7 +234,16 @@ Las constraints de `CHECK` son estrictas. Especialmente:
 4. Ejecutar en el SQL Editor
 5. Verificar que no haya errores en la salida
 
-### Paso 2 — Aplicar el seed
+### Paso 2 — Aplicar los triggers de inmutabilidad
+
+1. Abrir el archivo `supabase/ai-engine-immutability.sql`
+2. Copiar el contenido completo
+3. Ejecutar en el SQL Editor
+4. Verificar que no haya errores en la salida
+
+Este archivo crea dos funciones trigger y dos triggers `BEFORE UPDATE`. Usa `CREATE OR REPLACE` — es idempotente.
+
+### Paso 3 — Aplicar el seed
 
 1. Abrir el archivo `supabase/ai-engine-seed.sql`
 2. Copiar el contenido completo
@@ -243,7 +252,7 @@ Las constraints de `CHECK` son estrictas. Especialmente:
 
 El seed usa `ON CONFLICT DO UPDATE` — es seguro ejecutarlo múltiples veces.
 
-### Paso 3 — Verificar tablas creadas
+### Paso 4 — Verificar tablas creadas y triggers
 
 ```sql
 SELECT table_name, (SELECT count(*) FROM pg_policies WHERE tablename = t.table_name) AS policies
@@ -259,7 +268,18 @@ ORDER BY table_name;
 
 Debe devolver 8 filas.
 
-### Paso 4 — Verificar seed cargado
+Verificar también los triggers de inmutabilidad:
+```sql
+SELECT trigger_name, event_manipulation, event_object_table
+FROM information_schema.triggers
+WHERE trigger_name IN (
+  'ai_execution_runs_immutable_context',
+  'ai_execution_outputs_immutable_output'
+);
+```
+Debe devolver 2 filas — una por tabla.
+
+### Paso 5 — Verificar seed cargado
 
 ```sql
 SELECT 'ai_stages'             AS tabla, count(*) FROM ai_stages
@@ -280,7 +300,7 @@ Resultado esperado:
 - ai_prompts: 8
 - ai_profile_prompts: 8
 
-### Paso 5 — QA local post-migración
+### Paso 6 — QA local post-migración
 
 ```bash
 npm run type-check
@@ -288,6 +308,109 @@ npm run build
 ```
 
 Ambos deben pasar sin errores.
+
+---
+
+## Remediación FASE 12O-B4
+
+Esta sección documenta los hallazgos F-02, F-03 y F-04 de la auditoría de penetración RLS (FASE 12O-B3) y sus correcciones aplicadas antes de la UI.
+
+### F-02 — `ai_execution_runs.created_by` NOT NULL (cerrado)
+
+**Problema:** El campo `created_by` estaba definido como `UUID` sin restricción `NOT NULL`. RLS bloqueaba `NULL` para usuarios autenticados, pero el rol `service_role` (que bypasea RLS) podría insertar runs con `created_by = NULL`. Esos runs quedarían en un estado inaccesible: ningún usuario autenticado podría verlos ni modificarlos.
+
+**Corrección en `ai-engine-schema.sql`:**
+```sql
+-- Antes (vulnerable):
+created_by    UUID,
+
+-- Después (F-02 cerrado):
+created_by    UUID        NOT NULL,
+```
+
+**Garantía:** `NOT NULL` aplica a todos los roles incluyendo `service_role`. El server action del motor (FASE 12O-E) debe siempre pasar `created_by = user.id` — si no lo hace, el INSERT falla a nivel de DB antes de evaluar RLS.
+
+---
+
+### F-03 — Inmutabilidad de campos de contexto del run (cerrado)
+
+**Problema:** Las policies RLS verifican quién puede actualizar un run, pero no qué campos puede cambiar. Un asesor podía reasignar retroactivamente `entity_id`, `entity_type` o `profile_id` de sus propios runs, alterando el contexto histórico de un análisis ya generado.
+
+**Corrección en `ai-engine-immutability.sql`:** Trigger `BEFORE UPDATE` que aborta cualquier intento de modificar los campos de contexto, sin importar el rol.
+
+**Campos INMUTABLES post-INSERT (protegidos por trigger):**
+| Campo | Razón |
+|---|---|
+| `entity_id` | Empresa/contacto/oportunidad analizada — no puede cambiar |
+| `entity_type` | Tipo de entidad — inmutable por integridad referencial semántica |
+| `profile_id` | Perfil de análisis usado — define el conjunto de prompts ejecutados |
+| `created_by` | Usuario que disparó la ejecución — inmutable por trazabilidad |
+
+**Campos ACTUALIZABLES por el motor:**
+| Campo | Cuándo |
+|---|---|
+| `status` | Motor actualiza: `queued → running → completed/failed` |
+| `started_at` | Motor registra inicio de ejecución |
+| `finished_at` | Motor registra fin de ejecución |
+| `error_message` | Motor registra errores de ejecución |
+
+**El trigger aplica también con `service_role`** — es la capa de protección que RLS no puede ofrecer.
+
+---
+
+### F-04 — Inmutabilidad del output completado (cerrado)
+
+**Problema:** Las policies RLS permitían que el dueño de un run actualizara el campo `output` (texto del análisis generado por IA) incluso después de que el análisis estaba completado. Esto permitía reescribir retroactivamente el resultado de un análisis comercial.
+
+**Corrección en `ai-engine-immutability.sql`:** Trigger `BEFORE UPDATE` que bloquea la modificación del campo `output` cuando `OLD.status = 'completed'`.
+
+**Regla:** El campo `output` es inmutable una vez que `status = 'completed'`. El motor puede actualizar metadata operativa aun después de completado.
+
+**Tabla de restricciones post-completado:**
+| Campo | ¿Modificable con status=completed? | Razón |
+|---|---|---|
+| `output` | ❌ No (trigger bloquea) | Integridad del análisis generado |
+| `status` | ✅ Sí (puede pasar a 'failed') | Error puede detectarse post-análisis |
+| `tokens_input` | ✅ Sí | Puede registrarse después del output |
+| `tokens_output` | ✅ Sí | Ídem |
+| `cost_estimate` | ✅ Sí | Ídem |
+| `duration_ms` | ✅ Sí | Ídem |
+| `error_message` | ✅ Sí | Puede registrarse post-completado |
+
+**El trigger aplica también con `service_role`** — ningún proceso backend puede reescribir un output completado.
+
+---
+
+### Checklist de validación post-schema (inmutabilidad)
+
+Ejecutar después de aplicar `ai-engine-immutability.sql`:
+
+```sql
+-- Verificar que los triggers existen
+SELECT trigger_name, event_object_table, action_timing
+FROM information_schema.triggers
+WHERE trigger_name IN (
+  'ai_execution_runs_immutable_context',
+  'ai_execution_outputs_immutable_output'
+);
+-- Resultado esperado: 2 filas
+
+-- Verificar que las funciones trigger existen
+SELECT proname FROM pg_proc
+WHERE proname IN ('prevent_run_context_change', 'prevent_output_rewrite')
+  AND pronamespace = 'public'::regnamespace;
+-- Resultado esperado: 2 filas
+
+-- Test rápido F-03 (necesita un run existente)
+-- Intentar cambiar entity_id → debe fallar
+-- UPDATE ai_execution_runs SET entity_id = gen_random_uuid() WHERE id = '<run_id>';
+
+-- Test rápido F-04 (necesita un output con status = 'completed')
+-- Intentar cambiar output → debe fallar
+-- UPDATE ai_execution_outputs SET output = 'test' WHERE id = '<output_id_completed>';
+```
+
+Para el conjunto completo de pruebas, ejecutar `supabase/ai-engine-pentest.sql`.
 
 ---
 
@@ -300,7 +423,10 @@ Ambos deben pasar sin errores.
 | Asesor puede modificar prompts | Mitigado | INSERT/UPDATE/DELETE restringido a `is_admin_or_direccion()` |
 | Usuario puede crear run con `created_by` ajeno | Mitigado | `WITH CHECK (created_by = auth.uid())` en INSERT |
 | Usuario puede inyectar outputs en run ajeno | Mitigado | Subquery `run.created_by = auth.uid()` en INSERT de outputs |
-| Usuario puede reasignar `created_by` en UPDATE | Mitigado | `WITH CHECK` explícito en UPDATE de runs y outputs |
+| Usuario puede reasignar `created_by` en UPDATE | Mitigado | `WITH CHECK` + trigger `prevent_run_context_change` |
+| **F-02**: `created_by = NULL` via service_role | **Mitigado (B4)** | `NOT NULL` en DDL — aplica a todos los roles |
+| **F-03**: Asesor reasigna `entity_id`/`profile_id` del run | **Mitigado (B4)** | Trigger `ai_execution_runs_immutable_context` |
+| **F-04**: Asesor reescribe `output` completado | **Mitigado (B4)** | Trigger `ai_execution_outputs_immutable_output` |
 | Asesor puede ver sugerencias de prompts | Mitigado | `ai_prompt_suggestions` restringido a admin/dirección |
 | Runs o outputs borrados → pérdida de trazabilidad | Mitigado | No hay policies DELETE para runs ni outputs |
 
@@ -308,18 +434,35 @@ Ambos deben pasar sin errores.
 
 ## Checklist antes de ejecutar en Supabase
 
+**Pre-aplicación:**
 - [ ] Confirmar proyecto correcto en Dashboard (no otro proyecto)
 - [ ] Confirmar rama git correcta: `feat/plife-ai-engine`
 - [ ] Verificar que `is_admin_or_direccion()` existe en `public` con `security_definer = true`
 - [ ] Revisar que no hay tablas con los mismos nombres (query en "Verificar conflictos")
 - [ ] Hacer backup o snapshot del proyecto si es producción
+
+**Aplicación (en orden):**
 - [ ] Aplicar `ai-engine-schema.sql` — verificar que no hay errores y el bloque DO pasa
-- [ ] Verificar conteo de policies: 29 total, distribución correcta por tabla
-- [ ] Aplicar `ai-engine-seed.sql`
-- [ ] Verificar contadores de filas: 8 stages, 7 categories, 1 profile, 8 prompts, 8 links
-- [ ] Probar acceso SELECT desde rol `asesor` → stages/prompts visibles, sugerencias NO visibles
-- [ ] Probar INSERT de run desde rol `asesor` con `created_by` propio → OK
-- [ ] Probar INSERT de run desde rol `asesor` con `created_by` ajeno → debe fallar
+- [ ] Aplicar `ai-engine-immutability.sql` — verificar 0 errores
+- [ ] Aplicar `ai-engine-seed.sql` — verificar 0 errores
+
+**Verificaciones post-aplicación:**
+- [ ] Conteo de policies: 29 total (query en sección "Revisión RLS")
+- [ ] Conteo de triggers: 2 (ai_execution_runs_immutable_context, ai_execution_outputs_immutable_output)
+- [ ] Conteo de filas seed: 8 stages, 7 categories, 1 profile, 8 prompts, 8 links
+- [ ] `ai_execution_runs.created_by` es NOT NULL — verificar con `\d ai_execution_runs` o inspección en Dashboard
+
+**Tests de seguridad:**
+- [ ] SELECT desde rol `asesor` → stages/prompts visibles, sugerencias NO visibles
+- [ ] INSERT run con `created_by` propio → OK
+- [ ] INSERT run con `created_by` ajeno → debe fallar (RLS)
+- [ ] INSERT run sin `created_by` → debe fallar (NOT NULL constraint)
+- [ ] UPDATE `entity_id` de run propio → debe fallar (trigger F-03)
+- [ ] UPDATE `output` de output completado → debe fallar (trigger F-04)
+- [ ] UPDATE `status` de run propio → debe funcionar (campo permitido)
+- [ ] UPDATE metadata (`tokens_input`, `cost_estimate`) de output completado → debe funcionar
+
+**QA local:**
 - [ ] Correr `npm run type-check` → PASS
 - [ ] Correr `npm run build` → PASS
 - [ ] Smoke test manual: login → `/app/hoy` carga sin error
@@ -337,8 +480,9 @@ Si el proyecto ya tiene una función con ese nombre en Supabase, `OR REPLACE` la
 ## Orden de ejecución
 
 ```
-1. ai-engine-schema.sql   (tablas, índices, RLS, grants)
-2. ai-engine-seed.sql     (stages, categories, profiles, prompts, vínculos)
+1. ai-engine-schema.sql        (tablas, índices, RLS, grants, NOT NULL en created_by)
+2. ai-engine-immutability.sql  (triggers de inmutabilidad post-INSERT)
+3. ai-engine-seed.sql          (stages, categories, profiles, prompts, vínculos)
 ```
 
-No invertir el orden. El seed referencia tablas que crea el schema.
+No invertir el orden. El seed referencia tablas que crea el schema. Los triggers deben existir antes de que cualquier dato de producción pase por UPDATE.

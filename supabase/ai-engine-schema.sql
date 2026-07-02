@@ -18,6 +18,11 @@
 --
 -- IDEMPOTENCIA: usa IF NOT EXISTS — ejecutable múltiples veces sin daño.
 --
+-- ORDEN DE APLICACIÓN (no invertir):
+--   1. ai-engine-schema.sql       (este archivo)
+--   2. ai-engine-immutability.sql (triggers de inmutabilidad post-INSERT)
+--   3. ai-engine-seed.sql         (datos iniciales)
+--
 -- ANTES DE EJECUTAR EN REMOTO: leer docs/product/ai-engine-schema-apply-guide.md
 -- NO EJECUTAR en producción hasta autorización explícita.
 -- =============================================================================
@@ -179,11 +184,13 @@ CREATE TABLE IF NOT EXISTS ai_execution_runs (
   started_at    TIMESTAMPTZ,
   finished_at   TIMESTAMPTZ,
   error_message TEXT,
-  created_by    UUID,
+  created_by    UUID        NOT NULL,  -- F-02: NOT NULL obligatorio; RLS exige created_by = auth.uid()
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- ai_execution_runs no tiene updated_at — el estado se actualiza directamente.
+-- ai_execution_runs no tiene updated_at — solo se actualizan status/started_at/finished_at/error_message.
+-- Los campos de contexto (entity_id, entity_type, profile_id, created_by) son inmutables
+-- post-INSERT — ver trigger ai_execution_runs_immutable_context en ai-engine-immutability.sql.
 
 -- ---------------------------------------------------------------------------
 -- 8. ai_execution_outputs — Output individual por stage/prompt dentro de un run
@@ -206,7 +213,9 @@ CREATE TABLE IF NOT EXISTS ai_execution_outputs (
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- ai_execution_outputs no tiene updated_at — es inmutable una vez creado.
+-- ai_execution_outputs no tiene updated_at — el campo output es inmutable post-completado.
+-- La metadata operativa (tokens, cost, duration, error_message) sí puede actualizarse.
+-- Ver trigger ai_execution_outputs_immutable_output en ai-engine-immutability.sql.
 
 -- ---------------------------------------------------------------------------
 -- ÍNDICES
