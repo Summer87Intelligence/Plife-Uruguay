@@ -239,17 +239,55 @@ CREATE INDEX IF NOT EXISTS idx_ai_execution_outputs_prompt_id
   ON ai_execution_outputs(prompt_id);
 
 -- ---------------------------------------------------------------------------
--- RLS (Row Level Security)
+-- RLS (Row Level Security) — HARDENED (FASE 12O-B2)
 -- ---------------------------------------------------------------------------
--- El Motor IA PLIFE es una herramienta de configuración para admin y dirección.
--- Los asesores no acceden a /app/ia ni a estas tablas directamente.
+-- Revisión de seguridad completada antes de aplicar en remoto.
 --
--- Helpers de roles disponibles en el proyecto (STABLE SECURITY DEFINER):
---   get_user_role()         → devuelve el rol del usuario autenticado
---   is_admin_or_direccion() → TRUE si el rol es 'admin' o 'direccion'
+-- Función helper usada (STABLE SECURITY DEFINER, existe en el proyecto):
+--   is_admin_or_direccion() → TRUE si el usuario autenticado tiene rol
+--                             'admin' o 'direccion' en profiles.role
 --
--- Policies preparadas aquí. Requieren validación antes de aplicar en remoto.
+-- La función está declarada en src/types/database.ts como Functions.is_admin_or_direccion
+-- y referenciada en supabase/fix-profiles-rls.sql como existente en el proyecto.
+-- SIN EMBARGO, no hay CREATE FUNCTION en archivos locales — fue creada en
+-- Supabase directamente. Verificar con la query de precondición antes de aplicar.
+--
+-- Decisiones de diseño:
+--   Tablas de catálogo (stages, categories, prompts, profiles, profile_prompts):
+--     SELECT → USING (TRUE): cualquier usuario autenticado puede leerlos.
+--     Motivo: el motor de ejecución corre como server action con las credenciales
+--     del usuario autenticado (asesor o admin). Si el asesor no puede leer el
+--     perfil activo o los prompts, la ejecución falla en FASE 12O-E.
+--     INSERT/UPDATE/DELETE → solo admin/dirección.
+--
+--   Tabla de sugerencias (ai_prompt_suggestions):
+--     Completamente restringida a admin/dirección — no es parte del flujo del asesor.
+--
+--   Tablas de ejecución (ai_execution_runs, ai_execution_outputs):
+--     Cada usuario puede ver y modificar solo sus propios registros.
+--     INSERT requiere que created_by = auth.uid() — no se puede crear un run
+--     en nombre de otro usuario ni inyectar outputs en runs ajenos.
 -- ---------------------------------------------------------------------------
+
+-- ---------------------------------------------------------------------------
+-- PRECONDICIÓN: abortar si is_admin_or_direccion() no existe
+-- Ejecutar esta sección ANTES de las policies en el SQL Editor.
+-- ---------------------------------------------------------------------------
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE p.proname = 'is_admin_or_direccion'
+      AND n.nspname = 'public'
+  ) THEN
+    RAISE EXCEPTION
+      'PRECONDICIÓN FALLIDA: la función public.is_admin_or_direccion() no existe. '
+      'Verificar que el proyecto tiene los helpers de roles aplicados antes de '
+      'ejecutar este schema. Ver docs/product/ai-engine-schema-apply-guide.md';
+  END IF;
+END
+$$;
 
 ALTER TABLE ai_stages              ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ai_categories          ENABLE ROW LEVEL SECURITY;
@@ -260,80 +298,180 @@ ALTER TABLE ai_prompt_suggestions  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ai_execution_runs      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ai_execution_outputs   ENABLE ROW LEVEL SECURITY;
 
--- ai_stages: solo admin/dirección configuran; lectura amplia para el motor
-CREATE POLICY "ai_stages_select_authenticated"
+-- ---------------------------------------------------------------------------
+-- ai_stages — Catálogo de etapas
+-- SELECT: abierto (motor y UI admin necesitan leerlos)
+-- INSERT/UPDATE/DELETE: solo admin/dirección
+-- ---------------------------------------------------------------------------
+CREATE POLICY "ai_stages_select"
   ON ai_stages FOR SELECT TO authenticated
   USING (TRUE);
 
-CREATE POLICY "ai_stages_write_admin"
-  ON ai_stages FOR ALL TO authenticated
+CREATE POLICY "ai_stages_insert"
+  ON ai_stages FOR INSERT TO authenticated
+  WITH CHECK (is_admin_or_direccion());
+
+CREATE POLICY "ai_stages_update"
+  ON ai_stages FOR UPDATE TO authenticated
   USING (is_admin_or_direccion())
   WITH CHECK (is_admin_or_direccion());
 
--- ai_categories: misma lógica que stages
-CREATE POLICY "ai_categories_select_authenticated"
+CREATE POLICY "ai_stages_delete"
+  ON ai_stages FOR DELETE TO authenticated
+  USING (is_admin_or_direccion());
+
+-- ---------------------------------------------------------------------------
+-- ai_categories — Catálogo de categorías
+-- Misma política que ai_stages
+-- ---------------------------------------------------------------------------
+CREATE POLICY "ai_categories_select"
   ON ai_categories FOR SELECT TO authenticated
   USING (TRUE);
 
-CREATE POLICY "ai_categories_write_admin"
-  ON ai_categories FOR ALL TO authenticated
+CREATE POLICY "ai_categories_insert"
+  ON ai_categories FOR INSERT TO authenticated
+  WITH CHECK (is_admin_or_direccion());
+
+CREATE POLICY "ai_categories_update"
+  ON ai_categories FOR UPDATE TO authenticated
   USING (is_admin_or_direccion())
   WITH CHECK (is_admin_or_direccion());
 
--- ai_prompts: lectura para autenticados (el motor los necesita); escritura solo admin
-CREATE POLICY "ai_prompts_select_authenticated"
+CREATE POLICY "ai_categories_delete"
+  ON ai_categories FOR DELETE TO authenticated
+  USING (is_admin_or_direccion());
+
+-- ---------------------------------------------------------------------------
+-- ai_prompts — Prompts estructurados
+-- SELECT: abierto — el motor los lee en ejecución independientemente del rol
+-- INSERT/UPDATE: solo admin/dirección (son parte de la configuración del motor)
+-- DELETE: solo admin/dirección
+-- ---------------------------------------------------------------------------
+CREATE POLICY "ai_prompts_select"
   ON ai_prompts FOR SELECT TO authenticated
   USING (TRUE);
 
-CREATE POLICY "ai_prompts_write_admin"
-  ON ai_prompts FOR ALL TO authenticated
+CREATE POLICY "ai_prompts_insert"
+  ON ai_prompts FOR INSERT TO authenticated
+  WITH CHECK (is_admin_or_direccion());
+
+CREATE POLICY "ai_prompts_update"
+  ON ai_prompts FOR UPDATE TO authenticated
   USING (is_admin_or_direccion())
   WITH CHECK (is_admin_or_direccion());
 
--- ai_analysis_profiles: solo admin/dirección
-CREATE POLICY "ai_analysis_profiles_select_admin"
+CREATE POLICY "ai_prompts_delete"
+  ON ai_prompts FOR DELETE TO authenticated
+  USING (is_admin_or_direccion());
+
+-- ---------------------------------------------------------------------------
+-- ai_analysis_profiles — Perfiles de análisis
+-- SELECT: abierto — el motor necesita leer el perfil activo al ejecutar.
+--   Si se restringe a admin, el asesor no puede disparar análisis (FASE 12O-E).
+-- INSERT/UPDATE/DELETE: solo admin/dirección
+-- ---------------------------------------------------------------------------
+CREATE POLICY "ai_analysis_profiles_select"
   ON ai_analysis_profiles FOR SELECT TO authenticated
-  USING (is_admin_or_direccion());
+  USING (TRUE);
 
-CREATE POLICY "ai_analysis_profiles_write_admin"
-  ON ai_analysis_profiles FOR ALL TO authenticated
+CREATE POLICY "ai_analysis_profiles_insert"
+  ON ai_analysis_profiles FOR INSERT TO authenticated
+  WITH CHECK (is_admin_or_direccion());
+
+CREATE POLICY "ai_analysis_profiles_update"
+  ON ai_analysis_profiles FOR UPDATE TO authenticated
   USING (is_admin_or_direccion())
   WITH CHECK (is_admin_or_direccion());
 
--- ai_profile_prompts: solo admin/dirección
-CREATE POLICY "ai_profile_prompts_select_admin"
+CREATE POLICY "ai_analysis_profiles_delete"
+  ON ai_analysis_profiles FOR DELETE TO authenticated
+  USING (is_admin_or_direccion());
+
+-- ---------------------------------------------------------------------------
+-- ai_profile_prompts — Vínculos perfil ↔ prompt
+-- SELECT: abierto — el motor lee qué prompts ejecutar para el perfil activo.
+-- INSERT/UPDATE/DELETE: solo admin/dirección
+-- ---------------------------------------------------------------------------
+CREATE POLICY "ai_profile_prompts_select"
   ON ai_profile_prompts FOR SELECT TO authenticated
-  USING (is_admin_or_direccion());
+  USING (TRUE);
 
-CREATE POLICY "ai_profile_prompts_write_admin"
-  ON ai_profile_prompts FOR ALL TO authenticated
+CREATE POLICY "ai_profile_prompts_insert"
+  ON ai_profile_prompts FOR INSERT TO authenticated
+  WITH CHECK (is_admin_or_direccion());
+
+CREATE POLICY "ai_profile_prompts_update"
+  ON ai_profile_prompts FOR UPDATE TO authenticated
   USING (is_admin_or_direccion())
   WITH CHECK (is_admin_or_direccion());
 
--- ai_prompt_suggestions: solo admin/dirección
-CREATE POLICY "ai_prompt_suggestions_select_admin"
+CREATE POLICY "ai_profile_prompts_delete"
+  ON ai_profile_prompts FOR DELETE TO authenticated
+  USING (is_admin_or_direccion());
+
+-- ---------------------------------------------------------------------------
+-- ai_prompt_suggestions — Sugerencias de mejora de prompts
+-- Solo admin/dirección — no forma parte del flujo operativo del asesor
+-- ---------------------------------------------------------------------------
+CREATE POLICY "ai_prompt_suggestions_select"
   ON ai_prompt_suggestions FOR SELECT TO authenticated
   USING (is_admin_or_direccion());
 
-CREATE POLICY "ai_prompt_suggestions_write_admin"
-  ON ai_prompt_suggestions FOR ALL TO authenticated
+CREATE POLICY "ai_prompt_suggestions_insert"
+  ON ai_prompt_suggestions FOR INSERT TO authenticated
+  WITH CHECK (is_admin_or_direccion());
+
+CREATE POLICY "ai_prompt_suggestions_update"
+  ON ai_prompt_suggestions FOR UPDATE TO authenticated
   USING (is_admin_or_direccion())
   WITH CHECK (is_admin_or_direccion());
 
--- ai_execution_runs: admin/dirección ven todos; creador ve los suyos
+-- No se permite DELETE de sugerencias — son un log de calidad.
+
+-- ---------------------------------------------------------------------------
+-- ai_execution_runs — Registros de ejecución
+--
+-- SELECT: admin/dirección ven todos; cada usuario ve sus propios runs.
+--
+-- INSERT (FIX crítico): created_by = auth.uid() obligatorio.
+--   Impide crear runs en nombre de otro usuario o con created_by = NULL.
+--   El server action DEBE pasar el user.id como created_by.
+--
+-- UPDATE: admin/dirección pueden actualizar cualquier run;
+--   el creador puede actualizar el propio.
+--   WITH CHECK previene reasignar created_by a otro usuario.
+--
+-- DELETE: no permitido — los runs son trazabilidad histórica.
+-- ---------------------------------------------------------------------------
 CREATE POLICY "ai_execution_runs_select"
   ON ai_execution_runs FOR SELECT TO authenticated
   USING (is_admin_or_direccion() OR created_by = auth.uid());
 
+-- CRÍTICO: created_by debe ser el usuario que dispara la ejecución.
+-- El motor (server action) debe siempre incluir created_by = user.id en el INSERT.
 CREATE POLICY "ai_execution_runs_insert"
   ON ai_execution_runs FOR INSERT TO authenticated
-  WITH CHECK (TRUE);
+  WITH CHECK (created_by = auth.uid());
 
-CREATE POLICY "ai_execution_runs_update_admin"
+-- WITH CHECK incluido explícitamente para evitar reasignar created_by.
+CREATE POLICY "ai_execution_runs_update"
   ON ai_execution_runs FOR UPDATE TO authenticated
-  USING (is_admin_or_direccion() OR created_by = auth.uid());
+  USING    (is_admin_or_direccion() OR created_by = auth.uid())
+  WITH CHECK (is_admin_or_direccion() OR created_by = auth.uid());
 
--- ai_execution_outputs: acceso ligado al run padre
+-- ---------------------------------------------------------------------------
+-- ai_execution_outputs — Outputs por etapa dentro de un run
+--
+-- SELECT: acceso heredado del run padre (admin/dirección o creador del run).
+--
+-- INSERT (FIX crítico): solo se puede insertar output en un run propio.
+--   Impide inyectar outputs falsos en ejecuciones ajenas.
+--   El motor (server action) crea los outputs con las credenciales del usuario.
+--
+-- UPDATE: misma restricción que INSERT.
+--
+-- DELETE: no permitido — los outputs son el resultado histórico del análisis.
+-- ---------------------------------------------------------------------------
 CREATE POLICY "ai_execution_outputs_select"
   ON ai_execution_outputs FOR SELECT TO authenticated
   USING (
@@ -344,13 +482,28 @@ CREATE POLICY "ai_execution_outputs_select"
     )
   );
 
+-- CRÍTICO: el output solo puede insertarse si el run fue creado por auth.uid().
+-- Impide inyección de outputs en runs de otros usuarios.
 CREATE POLICY "ai_execution_outputs_insert"
   ON ai_execution_outputs FOR INSERT TO authenticated
-  WITH CHECK (TRUE);
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM ai_execution_runs r
+      WHERE r.id = ai_execution_outputs.run_id
+        AND r.created_by = auth.uid()
+    )
+  );
 
 CREATE POLICY "ai_execution_outputs_update"
   ON ai_execution_outputs FOR UPDATE TO authenticated
   USING (
+    EXISTS (
+      SELECT 1 FROM ai_execution_runs r
+      WHERE r.id = ai_execution_outputs.run_id
+        AND (is_admin_or_direccion() OR r.created_by = auth.uid())
+    )
+  )
+  WITH CHECK (
     EXISTS (
       SELECT 1 FROM ai_execution_runs r
       WHERE r.id = ai_execution_outputs.run_id
@@ -361,11 +514,11 @@ CREATE POLICY "ai_execution_outputs_update"
 -- ---------------------------------------------------------------------------
 -- GRANTS para el rol authenticated
 -- ---------------------------------------------------------------------------
-GRANT SELECT, INSERT, UPDATE ON ai_stages             TO authenticated;
-GRANT SELECT, INSERT, UPDATE ON ai_categories         TO authenticated;
-GRANT SELECT, INSERT, UPDATE ON ai_prompts            TO authenticated;
-GRANT SELECT, INSERT, UPDATE ON ai_analysis_profiles  TO authenticated;
-GRANT SELECT, INSERT, UPDATE ON ai_profile_prompts    TO authenticated;
-GRANT SELECT, INSERT, UPDATE ON ai_prompt_suggestions TO authenticated;
-GRANT SELECT, INSERT, UPDATE ON ai_execution_runs     TO authenticated;
-GRANT SELECT, INSERT, UPDATE ON ai_execution_outputs  TO authenticated;
+GRANT SELECT, INSERT, UPDATE         ON ai_stages             TO authenticated;
+GRANT SELECT, INSERT, UPDATE         ON ai_categories         TO authenticated;
+GRANT SELECT, INSERT, UPDATE         ON ai_prompts            TO authenticated;
+GRANT SELECT, INSERT, UPDATE         ON ai_analysis_profiles  TO authenticated;
+GRANT SELECT, INSERT, UPDATE         ON ai_profile_prompts    TO authenticated;
+GRANT SELECT, INSERT, UPDATE         ON ai_prompt_suggestions TO authenticated;
+GRANT SELECT, INSERT, UPDATE         ON ai_execution_runs     TO authenticated;
+GRANT SELECT, INSERT, UPDATE         ON ai_execution_outputs  TO authenticated;
