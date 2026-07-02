@@ -1,5 +1,5 @@
 import type {
-  AIStage, AICategory, AIPrompt, AIAnalysisProfile, AIProfilePrompt, AIExecutionRun, AIPromptSuggestion,
+  AIStage, AICategory, AIPrompt, AIAnalysisProfile, AIProfilePrompt, AIExecutionRun, AIPromptSuggestion, AIExecutionOutput,
 } from '@/types/database'
 
 export interface IAEngineProps {
@@ -9,6 +9,7 @@ export interface IAEngineProps {
   profiles: AIAnalysisProfile[]
   profilePrompts: AIProfilePrompt[]
   executionRuns: AIExecutionRun[]
+  executionOutputs: AIExecutionOutput[]
   promptSuggestions: AIPromptSuggestion[]
 }
 

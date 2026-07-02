@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { getProfile, canAccessAll } from '@/lib/auth'
 import { validateStructuredPrompt } from '@/domains/ia-engine/prompt-validation'
+import { runMockAIEngine } from '@/domains/ia-engine/mock-runner'
+import { buildStructuredPrompt } from '@/domains/ia-engine/prompt-builder'
 
 const CategorySchema = z.object({
   label: z.string().min(1, 'Nombre requerido').max(100),
@@ -50,6 +52,14 @@ export type CategoryFormData = z.infer<typeof CategorySchema>
 export type ProfileFormData = z.infer<typeof ProfileSchema>
 export type AddPromptFormData = z.infer<typeof AddPromptSchema>
 export type PromptFormData = z.infer<typeof PromptSchema>
+
+const MockAnalysisSchema = z.object({
+  entityType: z.enum(['company', 'contact', 'opportunity', 'campaign']),
+  entityId: z.string().uuid('ID de entidad debe ser un UUID válido'),
+  profileId: z.string().uuid('Perfil inválido'),
+})
+
+export type RunMockAnalysisInput = z.infer<typeof MockAnalysisSchema>
 
 async function requireAdmin() {
   const profile = await getProfile()
@@ -295,5 +305,166 @@ export async function regeneratePromptSuggestions(promptId: string) {
       status: validation.status,
       suggestionCount: validation.suggestions.length,
     },
+  }
+}
+
+// ---- ai_execution_runs (mock) ----
+
+export async function runMockAnalysis(input: RunMockAnalysisInput) {
+  const admin = await requireAdmin()
+  if (!admin) return { error: 'Sin permisos' }
+
+  const parsed = MockAnalysisSchema.safeParse(input)
+  if (!parsed.success) return { error: parsed.error.issues[0].message }
+
+  const { entityType, entityId, profileId } = parsed.data
+  const supabase = await createClient()
+  const now = new Date().toISOString()
+
+  const { data: profile, error: profileErr } = await supabase
+    .from('ai_analysis_profiles')
+    .select('*')
+    .eq('id', profileId)
+    .single()
+
+  if (profileErr) return { error: profileErr.message }
+  if (!profile) return { error: 'Perfil no encontrado' }
+
+  const [
+    { data: profilePromptLinks, error: linksErr },
+    { data: allPrompts, error: promptsErr },
+    { data: stages, error: stagesErr },
+    { data: categories, error: categoriesErr },
+  ] = await Promise.all([
+    supabase.from('ai_profile_prompts').select('*').eq('profile_id', profileId).order('execution_order'),
+    supabase.from('ai_prompts').select('*'),
+    supabase.from('ai_stages').select('*'),
+    supabase.from('ai_categories').select('*'),
+  ])
+
+  if (linksErr) return { error: linksErr.message }
+  if (promptsErr) return { error: promptsErr.message }
+  if (stagesErr) return { error: stagesErr.message }
+  if (categoriesErr) return { error: categoriesErr.message }
+
+  const promptMap = new Map((allPrompts ?? []).map(p => [p.id, p]))
+  const stageMap = new Map((stages ?? []).map(s => [s.id, s]))
+  const categoryMap = new Map((categories ?? []).map(c => [c.id, c]))
+
+  const eligiblePrompts = (profilePromptLinks ?? [])
+    .filter(link => link.enabled_by_default)
+    .map(link => {
+      const prompt = promptMap.get(link.prompt_id)
+      if (!prompt || prompt.status !== 'validated' || !prompt.is_active) return null
+      const stage = prompt.stage_id ? stageMap.get(prompt.stage_id) : null
+      const category = prompt.category_id ? categoryMap.get(prompt.category_id) : null
+      return {
+        link,
+        prompt,
+        stage,
+        category,
+      }
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null)
+    .sort((a, b) => a.link.execution_order - b.link.execution_order)
+
+  if (eligiblePrompts.length === 0) {
+    return {
+      error: 'No hay prompts validados y activos habilitados en este perfil. Verificá ai_profile_prompts y el estado de los prompts.',
+    }
+  }
+
+  const { data: run, error: runInsertErr } = await supabase
+    .from('ai_execution_runs')
+    .insert({
+      entity_type: entityType,
+      entity_id: entityId,
+      profile_id: profileId,
+      status: 'running',
+      started_at: now,
+      created_by: admin.id,
+    })
+    .select()
+    .single()
+
+  if (runInsertErr || !run) {
+    return { error: runInsertErr?.message ?? 'No se pudo crear la ejecución' }
+  }
+
+  try {
+    const mockInput = {
+      entityType,
+      entityId,
+      profileId,
+      profileName: profile.name,
+      prompts: eligiblePrompts.map(({ link, prompt, stage, category }) => ({
+        id: prompt.id,
+        name: prompt.name,
+        stageLabel: stage?.label ?? null,
+        categoryLabel: category?.label ?? null,
+        executionOrder: link.execution_order,
+        promptPreview: buildStructuredPrompt(prompt),
+      })),
+    }
+
+    const mockOutputs = runMockAIEngine(mockInput)
+
+    const outputRows = mockOutputs.map((mock, idx) => {
+      const source = eligiblePrompts[idx]
+      return {
+        run_id: run.id,
+        stage_id: source.prompt.stage_id,
+        prompt_id: source.prompt.id,
+        execution_order: mock.executionOrder,
+        status: 'completed' as const,
+        output: mock.output,
+        tokens_input: 0,
+        tokens_output: 0,
+        cost_estimate: 0,
+        duration_ms: mock.durationMs,
+      }
+    })
+
+    const { error: outputsErr } = await supabase
+      .from('ai_execution_outputs')
+      .insert(outputRows)
+
+    if (outputsErr) {
+      await supabase
+        .from('ai_execution_runs')
+        .update({
+          status: 'failed',
+          finished_at: new Date().toISOString(),
+          error_message: outputsErr.message,
+        })
+        .eq('id', run.id)
+      return { error: `Error al guardar outputs: ${outputsErr.message}` }
+    }
+
+    const { error: runUpdateErr } = await supabase
+      .from('ai_execution_runs')
+      .update({
+        status: 'completed',
+        finished_at: new Date().toISOString(),
+      })
+      .eq('id', run.id)
+
+    if (runUpdateErr) {
+      return { error: runUpdateErr.message }
+    }
+
+    revalidatePath('/app/ia')
+    return { data: { runId: run.id, outputCount: outputRows.length } }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Error inesperado en ejecución mock'
+    await supabase
+      .from('ai_execution_runs')
+      .update({
+        status: 'failed',
+        finished_at: new Date().toISOString(),
+        error_message: message,
+      })
+      .eq('id', run.id)
+    return { error: message }
   }
 }

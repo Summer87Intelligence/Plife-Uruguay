@@ -1,4 +1,4 @@
-import type { AICategory, AIPrompt, AIPromptStatus, AIAnalysisProfile, AIProfilePrompt, AIExecutionRun, AIPromptSuggestion } from '@/types/database'
+import type { AICategory, AIPrompt, AIPromptStatus, AIAnalysisProfile, AIProfilePrompt, AIExecutionRun, AIPromptSuggestion, AIExecutionOutput } from '@/types/database'
 import { buildStructuredPrompt } from '@/domains/ia-engine/prompt-builder'
 
 export const PROMPT_STATUS_LABELS: Record<AIPromptStatus, string> = {
@@ -100,4 +100,8 @@ export function getProfilePrompts(
 export function getLatestRun(runs: AIExecutionRun[]) {
   if (runs.length === 0) return null
   return [...runs].sort((a, b) => b.created_at.localeCompare(a.created_at))[0]
+}
+
+export function getOutputsForRun(runId: string, outputs: AIExecutionOutput[]) {
+  return outputs.filter(o => o.run_id === runId)
 }
