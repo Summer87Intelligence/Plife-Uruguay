@@ -489,7 +489,66 @@ No invertir el orden. El seed referencia tablas que crea el schema. Los triggers
 
 ---
 
-## Registro FASE 12O-D (2026-07-02) — intento de aplicación remota
+## Registro FASE 12O-D (2026-07-02) — aplicación remota COMPLETADA
+
+**Estado:** APLICADO — schema, immutability y seed ejecutados en proyecto `ayvnloxijnfnooaefrlm`.
+
+### Aplicación ejecutada (orden)
+
+1. `ai-engine-schema.sql` — vía MCP `apply_migration` (4 partes: tablas, índices+RLS, policies catálogo, policies ejecución+grants)
+2. `ai-engine-immutability.sql` — triggers `prevent_run_context_change`, `prevent_output_rewrite`
+3. `ai-engine-seed.sql` — stages, categories, profile, prompts 1–8, profile_prompts links
+
+### Conteos post-seed (validados)
+
+| Tabla | Conteo |
+|---|---|
+| ai_stages | 8 |
+| ai_categories | 7 |
+| ai_prompts | 8 |
+| ai_analysis_profiles | 1 |
+| ai_profile_prompts | 8 |
+
+Perfil **Comercial PLIFE**: `is_active = true`
+
+### RLS / policies
+
+29 policies activas (8 tablas). Helper `is_admin_or_direccion()` verificado antes de aplicar.
+
+### Pentest parcial (2026-07-02)
+
+| Test | Resultado |
+|---|---|
+| Admin lee catálogo (stages/prompts) | PASS |
+| INSERT run con `created_by = auth.uid()` | PASS |
+| INSERT run con `created_by` ajeno | BLOCKED (RLS) |
+| UPDATE `entity_id` post-INSERT (F-03) | BLOCKED (trigger) |
+| UPDATE `output` con status=completed (F-04) | BLOCKED (trigger) |
+| 29 policies contadas | PASS |
+| Tests cross-user asesor | PENDIENTE — no hay usuario `asesor` en remoto |
+
+### UI `/app/ia` post-aplicación
+
+Smoke Playwright (admin, puerto dev 3003):
+
+- Sidebar **Motor IA** visible
+- Título **Motor IA** carga
+- Sin banner schema/PGRST205/error DB
+- Tabs: Dashboard, Categorías, Perfiles
+- Dashboard: 8 etapas, 7 categorías, 8 prompts, 1 perfil, 8 vínculos
+- **Configuración lista** — 1 perfil activo con prompts vinculados
+
+### QA técnico post-aplicación
+
+| Comando | Resultado |
+|---|---|
+| `npm run type-check` | PASS |
+| `npm run build` | PASS |
+| `npm run test:unit` | PASS (24/24) |
+
+---
+
+## Registro FASE 12O-D (2026-07-02) — intento bloqueado (histórico)
 
 **Estado:** BLOQUEADO — schema, immutability y seed **no aplicados** en remoto.
 
