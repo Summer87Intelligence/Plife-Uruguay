@@ -53,10 +53,14 @@ export type ProfileFormData = z.infer<typeof ProfileSchema>
 export type AddPromptFormData = z.infer<typeof AddPromptSchema>
 export type PromptFormData = z.infer<typeof PromptSchema>
 
+// Zod v4 enforces strict UUID version/variant bits; seed UUIDs use non-standard
+// format (version=0, variant=0) so we match hex format only, same as the client.
+const UUID_HEX_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 const MockAnalysisSchema = z.object({
   entityType: z.enum(['company', 'contact', 'opportunity', 'campaign']),
-  entityId: z.string().uuid('ID de entidad debe ser un UUID válido'),
-  profileId: z.string().uuid('Perfil inválido'),
+  entityId: z.string().regex(UUID_HEX_RE, 'ID de entidad debe ser un UUID válido'),
+  profileId: z.string().regex(UUID_HEX_RE, 'Perfil inválido'),
 })
 
 export type RunMockAnalysisInput = z.infer<typeof MockAnalysisSchema>
