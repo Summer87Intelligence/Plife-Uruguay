@@ -2,7 +2,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import type { Route } from 'next'
-import { Plus, Megaphone, Search } from 'lucide-react'
+import { Plus, Megaphone, Search, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { SearchNoResults } from '@/components/navigation/search-no-results'
@@ -49,7 +49,7 @@ export function CampaignsList({ campaigns, profile }: CampaignsListProps) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Campañas B2B</h1>
-          <p className="text-sm text-gray-500">Organizá acciones comerciales por segmento para que el equipo trabaje con un enfoque común.</p>
+          <p className="text-sm text-gray-500">Las campañas sirven para organizar acciones comerciales por segmento u objetivo. No envían mensajes automáticamente: ayudan a planificar, priorizar y convertir respuestas en oportunidades.</p>
           <p className="text-xs text-gray-400 mt-0.5">{countLabel}</p>
         </div>
         {canManage && (
@@ -110,7 +110,7 @@ export function CampaignsList({ campaigns, profile }: CampaignsListProps) {
             hasFilters
               ? undefined
               : canManage
-                ? 'Creá una campaña para ordenar acciones comerciales por segmento.'
+                ? 'Creá una campaña para organizar tus acciones comerciales por segmento.'
                 : 'Las campañas las gestionan líderes comerciales. Consultá con tu equipo para ver las activas.'
           }
           example={
@@ -191,6 +191,12 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
         <p className="text-xs text-gray-400 mt-3">
           {formatDate(campaign.start_date)}{campaign.end_date ? ` → ${formatDate(campaign.end_date)}` : ' (sin fecha fin)'}
         </p>
+      )}
+      {campaign.total_contacted === 0 && campaign.status === 'activa' && (
+        <div className="mt-3 border-t border-gray-50 pt-2 flex items-start gap-1.5">
+          <Info className="h-3 w-3 text-[#1B3A6B]/50 shrink-0 mt-0.5" />
+          <p className="text-[11px] text-gray-400">Siguiente paso: revisá a qué empresas o contactos aplicar esta campaña y convertí respuestas en oportunidades.</p>
+        </div>
       )}
     </Link>
   )

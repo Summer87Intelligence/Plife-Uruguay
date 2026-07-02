@@ -16,6 +16,7 @@ import { OpportunityForm } from '../oportunidades/opportunity-form'
 import { calcularScoreB2B, nivelColor, nivelLabel } from '@/lib/b2b/scoring'
 import { ICP_NOMBRES } from '@/lib/b2b/icp'
 import { saveCompanyB2BSuggestions, associateCompanyToCampaign } from '@/domains/companies/actions'
+import { SectionGuideCard } from '@/components/guidance/section-guide-card'
 import type { Profile, Company } from '@/types/database'
 import type { ICPKey } from '@/lib/b2b/icp'
 import type { CampaignType } from '@/types/database'
@@ -119,7 +120,7 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
             <Radar className="h-5 w-5 text-[#1B3A6B]" />
             Radar B2B
           </h1>
-          <p className="text-sm text-gray-500">Priorizá empresas con potencial comercial y definí el próximo paso antes de contactar.</p>
+          <p className="text-sm text-gray-500">Detectá empresas con potencial comercial y convertí señales en oportunidades de seguimiento.</p>
           <p className="text-xs text-gray-400 mt-0.5">El radar funciona mejor cuando hay empresas cargadas con rubro, tamaño y señales comerciales.</p>
         </div>
         <Dialog open={newCompanyOpen} onOpenChange={setNewCompanyOpen}>
@@ -229,20 +230,31 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
       </Dialog>
 
       {filtered.length === 0 ? (
-        <EmptyState
-          icon={Radar}
-          title={search || filterICP !== ALL || filterNivel !== ALL || filterStatus !== ALL ? 'No encontramos resultados para esta búsqueda.' : 'El Radar B2B todavía no tiene empresas para priorizar'}
-          description={search || filterICP !== ALL || filterNivel !== ALL || filterStatus !== ALL ? undefined : 'Cargá empresas para que el sistema pueda ayudarte a detectar potencial comercial.'}
-          action={
-            search || filterICP !== ALL || filterNivel !== ALL || filterStatus !== ALL
-              ? <SearchNoResults
-                  onClearSearch={() => setSearch('')}
-                  onClearFilters={() => { setFilterICP(ALL); setFilterNivel(ALL); setFilterStatus(ALL); setSearch('') }}
-                  hasFilters={filterICP !== ALL || filterNivel !== ALL || filterStatus !== ALL}
-                />
-              : <Button onClick={() => setNewCompanyOpen(true)}><Plus className="h-4 w-4" />Nueva empresa</Button>
-          }
-        />
+        <>
+          <EmptyState
+            icon={Radar}
+            title={search || filterICP !== ALL || filterNivel !== ALL || filterStatus !== ALL ? 'No encontramos resultados para esta búsqueda.' : 'El Radar B2B todavía no tiene empresas para priorizar'}
+            description={search || filterICP !== ALL || filterNivel !== ALL || filterStatus !== ALL ? undefined : 'Cargá empresas para que el sistema pueda ayudarte a detectar potencial comercial.'}
+            action={
+              search || filterICP !== ALL || filterNivel !== ALL || filterStatus !== ALL
+                ? <SearchNoResults
+                    onClearSearch={() => setSearch('')}
+                    onClearFilters={() => { setFilterICP(ALL); setFilterNivel(ALL); setFilterStatus(ALL); setSearch('') }}
+                    hasFilters={filterICP !== ALL || filterNivel !== ALL || filterStatus !== ALL}
+                  />
+                : <Button onClick={() => setNewCompanyOpen(true)}><Plus className="h-4 w-4" />Nueva empresa</Button>
+            }
+          />
+          {companies.length === 0 && (
+            <SectionGuideCard
+              title="¿Por qué usar el Radar B2B?"
+              description="El Radar asigna un score automático a cada empresa según su rubro, tamaño y señales comerciales. Priorizá las de mayor potencial y creá oportunidades desde acá."
+              primaryActionLabel="Ver empresas"
+              primaryActionHref="/app/empresas"
+              nextStep="También podés ver oportunidades activas"
+            />
+          )}
+        </>
       ) : (
         <div className="space-y-2">
           <p className="text-xs text-gray-400">{filtered.length} empresa{filtered.length !== 1 ? 's' : ''}{filtered.length < scoredCompanies.length ? ` de ${scoredCompanies.length}` : ''}</p>

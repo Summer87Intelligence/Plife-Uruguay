@@ -27,6 +27,7 @@ import { ICP_NOMBRES } from '@/lib/b2b/icp'
 import { useRouter } from 'next/navigation'
 import type { Profile, Company, Contact, Activity, Opportunity, AIExecutionRun } from '@/types/database'
 import { EntityAIAnalysisCard } from '@/components/ia/entity-ai-analysis-card'
+import { SectionGuideCard } from '@/components/guidance/section-guide-card'
 
 interface CompanyDetailProps {
   company: Company
@@ -241,15 +242,38 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
         )
       })()}
 
-      {aiProfile && (
-        <EntityAIAnalysisCard
-          entityType="company"
-          entityId={company.id}
-          entityLabel={company.name}
-          profileId={aiProfile.id}
-          profileName={aiProfile.name}
-          latestRun={latestAiRun}
+      {contacts.length === 0 && (
+        <SectionGuideCard
+          title="Siguiente paso: agregar un contacto"
+          description="Agregá el primer contacto para avanzar comercialmente. Un contacto es la persona clave dentro de esta empresa."
+          primaryActionLabel="Agregar contacto"
+          nextStep="Empresa lista, falta contacto"
         />
+      )}
+
+      {contacts.length > 0 && opportunities.length === 0 && (
+        <SectionGuideCard
+          title="Siguiente paso: crear una oportunidad"
+          description="Creá una oportunidad cuando exista una conversación comercial concreta con alguno de los contactos de esta empresa."
+          primaryActionLabel="Crear oportunidad"
+          nextStep="Contactos listos, falta oportunidad"
+        />
+      )}
+
+      {aiProfile && (
+        <>
+          <EntityAIAnalysisCard
+            entityType="company"
+            entityId={company.id}
+            entityLabel={company.name}
+            profileId={aiProfile.id}
+            profileName={aiProfile.name}
+            latestRun={latestAiRun}
+          />
+          <p className="text-xs text-gray-400 -mt-3 px-1">
+            El análisis IA ayuda a preparar el seguimiento, pero no define primas, coberturas ni condiciones de póliza.
+          </p>
+        </>
       )}
 
       {/* Por qué importa — strip de inteligencia */}

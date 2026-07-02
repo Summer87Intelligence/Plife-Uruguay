@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { SectionGuideCard } from '@/components/guidance/section-guide-card'
 import { StatCard } from '@/components/ui/stat-card'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Users, Building2, TrendingUp, Megaphone, Activity, Target, AlertCircle, Clock } from 'lucide-react'
@@ -33,9 +34,23 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-bold text-gray-900">Dirección</h1>
-        <p className="text-sm text-gray-500">Vista ejecutiva para decidir dónde enfocar al equipo comercial.</p>
+        <p className="text-sm text-gray-500">Esta vista ayuda a mirar el foco comercial del equipo: oportunidades, seguimiento, campañas y prioridades.</p>
         <p className="text-xs text-gray-400 mt-0.5">Esta vista toma sentido cuando ya hay oportunidades y campañas cargadas.</p>
       </div>
+
+      <SectionGuideCard
+        title="Cómo usar esta vista"
+        description="Una vista ejecutiva para decidir dónde enfocar al equipo. Revisá las métricas, identificá alertas y tomá decisiones sobre el pipeline."
+        steps={[
+          'Revisá las métricas generales del equipo',
+          'Identificá oportunidades sin seguimiento o sin próximo paso',
+          'Verificá campañas activas y su progreso',
+          'Definí acciones prioritarias para el equipo',
+        ]}
+        primaryActionLabel="Ver pipeline completo"
+        primaryActionHref="/app/oportunidades"
+        compact
+      />
 
       {/* Foco comercial */}
       {(focusMetrics.overdueOpps > 0 || focusMetrics.noNextActionOpps > 0) && (

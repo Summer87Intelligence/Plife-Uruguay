@@ -27,6 +27,7 @@ import { formatDate, formatRelativeDate } from '@/lib/utils'
 import { updateContact } from '@/domains/contacts/actions'
 import { useRouter } from 'next/navigation'
 import { ActivitySummaryCard } from '@/components/activity/activity-summary-card'
+import { SectionGuideCard } from '@/components/guidance/section-guide-card'
 import type { Profile, Contact, Note, Opportunity, ContactStatus } from '@/types/database'
 
 interface ContactDetailProps {
@@ -189,6 +190,25 @@ export function ContactDetail({ contact, activities, opportunities, companies }:
           { label: 'Revisar mensaje', href: '/app/compliance', icon: ShieldCheck },
         ]}
       />
+
+      {!contact.next_action && (
+        <SectionGuideCard
+          title="Definí una próxima acción"
+          description="Sin una próxima acción definida, este contacto puede quedar sin seguimiento. Indicá qué hay que hacer y cuándo."
+          nextStep="Próxima acción pendiente"
+          compact
+        />
+      )}
+
+      {opportunities.length === 0 && (
+        <SectionGuideCard
+          title="¿Hay interés comercial?"
+          description="Si este contacto mostró interés en algún producto o servicio, creá una oportunidad para registrar y dar seguimiento a esa conversación."
+          primaryActionLabel="Crear oportunidad"
+          nextStep="Sin oportunidades vinculadas"
+          compact
+        />
+      )}
 
       {(contact.next_action || contact.last_interaction_at) && (
         <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3">

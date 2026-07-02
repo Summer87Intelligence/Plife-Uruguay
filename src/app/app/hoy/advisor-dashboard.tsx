@@ -8,6 +8,7 @@ import { StatCard } from '@/components/ui/stat-card'
 import { GettingStartedCard } from '@/components/onboarding/getting-started-card'
 import { isDemoMode } from '@/lib/demo'
 import { AlertCircle, Calendar, TrendingUp, Building2, Bot, CheckCircle2, Megaphone, Clock } from 'lucide-react'
+import { SectionGuideCard } from '@/components/guidance/section-guide-card'
 import type { Profile, Activity, Contact, Opportunity, Company, Campaign } from '@/types/database'
 
 interface AdvisorDashboardProps {
@@ -109,6 +110,24 @@ export function AdvisorDashboard({
 
       {(isEmpty || (!isEmpty && isDemo)) && (
         <GettingStartedCard mode={isEmpty ? 'empty' : 'demo'} />
+      )}
+
+      {isEmpty && (
+        <SectionGuideCard
+          title="Cómo avanzar hoy"
+          description="El sistema funciona mejor cuando hay datos cargados. Seguí estos pasos para activar el flujo comercial completo."
+          steps={[
+            'Empresa — cargá una organización o cliente potencial',
+            'Contacto — asociá la persona clave dentro de esa empresa',
+            'Oportunidad — creá una cuando exista una conversación comercial concreta',
+            'Seguimiento — definí el próximo paso y una fecha',
+            'Motor IA — usá el análisis para preparar el contacto o mensaje',
+            'Dirección — revisá el foco del equipo con métricas',
+          ]}
+          primaryActionLabel="Ver empresas"
+          primaryActionHref="/app/empresas"
+          nextStep="Siguiente: crear oportunidad"
+        />
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

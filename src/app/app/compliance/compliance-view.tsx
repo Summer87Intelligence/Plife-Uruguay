@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/input'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import { checkCompliance } from '@/domains/ai/actions'
+import { SectionGuideCard } from '@/components/guidance/section-guide-card'
 import {
   RISK_LEVEL_LABELS, RISK_LEVEL_COLORS,
   COMPLIANCE_ACTION_LABELS, COMPLIANCE_ACTION_COLORS,
@@ -93,6 +94,19 @@ export function ComplianceView({ rules, recentReviews, interactions }: Complianc
           <p className="text-xs text-gray-400 mt-0.5">Pegá un mensaje comercial antes de enviarlo para revisar si contiene promesas riesgosas.</p>
         </div>
       </div>
+
+      <SectionGuideCard
+        title="Cómo usar el revisor de mensajes"
+        description="Sirve para revisar mensajes y detectar riesgos antes de usarlos comercialmente. No reemplaza revisión legal ni condiciones oficiales de MAPFRE."
+        steps={[
+          'Pegá el mensaje que querés revisar',
+          'Detectá frases riesgosas en el resultado',
+          'Ajustá el texto con la versión sugerida',
+          'Usalo solo después de revisión humana',
+        ]}
+        nextStep="Siempre revisión humana primero"
+        compact
+      />
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-gray-100">

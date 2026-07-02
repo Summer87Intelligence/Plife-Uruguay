@@ -23,6 +23,7 @@ import { updateOpportunityStage, updateOpportunity, closeOpportunity } from '@/d
 import { useRouter } from 'next/navigation'
 import type { Profile, Opportunity, Note, Contact, Company, AIExecutionRun } from '@/types/database'
 import { EntityAIAnalysisCard } from '@/components/ia/entity-ai-analysis-card'
+import { SectionGuideCard } from '@/components/guidance/section-guide-card'
 
 type OpportunityWithRelations = Opportunity & {
   contact?: Pick<Contact, 'id' | 'first_name' | 'last_name' | 'phone' | 'email'> | null
@@ -358,16 +359,30 @@ export function OpportunityDetail({ opportunity, activities, advisors, campaign,
             </CardContent>
           </Card>
 
-          {aiProfile && (
-            <EntityAIAnalysisCard
-              entityType="opportunity"
-              entityId={opportunity.id}
-              entityLabel={opportunity.title}
-              profileId={aiProfile.id}
-              profileName={aiProfile.name}
-              latestRun={latestAiRun}
+          {!opportunity.next_action && !isClosed && (
+            <SectionGuideCard
+              title="Definí un próximo paso"
+              description="Esta oportunidad no tiene próximo paso definido. Sin seguimiento, puede perderse."
+              nextStep="Atención: sin próximo paso"
               compact
             />
+          )}
+
+          {aiProfile && (
+            <>
+              <EntityAIAnalysisCard
+                entityType="opportunity"
+                entityId={opportunity.id}
+                entityLabel={opportunity.title}
+                profileId={aiProfile.id}
+                profileName={aiProfile.name}
+                latestRun={latestAiRun}
+                compact
+              />
+              <p className="text-xs text-gray-400 -mt-3 px-1">
+                El análisis IA ayuda a preparar el seguimiento, pero no define primas, coberturas ni condiciones de póliza.
+              </p>
+            </>
           )}
 
           {(opportunity.detected_need || opportunity.suggested_product) && (

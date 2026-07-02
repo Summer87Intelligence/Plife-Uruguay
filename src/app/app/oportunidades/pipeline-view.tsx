@@ -83,8 +83,8 @@ export function PipelineView({ opportunities, profile, autoOpenNew, initialConta
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Pipeline comercial</h1>
-          <p className="text-sm text-gray-500">Visualizá el avance de cada conversación comercial desde el primer contacto hasta el cierre.</p>
-          <p className="text-xs text-gray-400 mt-0.5">Creá una oportunidad cada vez que exista una conversación comercial concreta.</p>
+          <p className="text-sm text-gray-500">Una oportunidad representa una conversación comercial concreta. Acá se define en qué etapa está, cuál es el próximo paso y cuándo hay que hacer seguimiento.</p>
+          <p className="text-xs text-gray-400 mt-0.5">Creá una oportunidad cada vez que exista una conversación comercial concreta con una empresa o contacto.</p>
           <p className="text-xs text-gray-400 mt-0.5">{countLabel}{totalValue > 0 ? ` · $${totalValue.toLocaleString('es-UY')} estimado` : ''}</p>
         </div>
         <div className="flex items-center gap-2">
@@ -176,7 +176,7 @@ export function PipelineView({ opportunities, profile, autoOpenNew, initialConta
           description={
             hasFilters
               ? undefined
-              : 'Creá una oportunidad cuando exista una conversación comercial concreta con una empresa o contacto.'
+              : 'Cuando tengas una conversación comercial concreta, creá una oportunidad para hacerle seguimiento.'
           }
           example={
             !hasFilters

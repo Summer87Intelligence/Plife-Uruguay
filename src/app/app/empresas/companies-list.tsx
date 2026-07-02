@@ -42,7 +42,7 @@ export function CompaniesList({ companies, profile }: CompaniesListProps) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Empresas B2B</h1>
-          <p className="text-sm text-gray-500">Centralizá empresas, contactos y oportunidades en un solo lugar.</p>
+          <p className="text-sm text-gray-500">Acá cargás organizaciones, negocios o clientes potenciales. Es el primer paso para ordenar el trabajo comercial.</p>
           <p className="text-xs text-gray-400 mt-0.5">Primero cargá empresas, después asociá contactos y oportunidades.</p>
           <p className="text-xs text-gray-400 mt-0.5">{countLabel}</p>
         </div>
@@ -96,8 +96,8 @@ export function CompaniesList({ companies, profile }: CompaniesListProps) {
       {filtered.length === 0 ? (
         <EmptyState
           icon={hasFilters ? Search : Building2}
-          title={hasFilters ? 'No encontramos resultados para esta búsqueda.' : 'Todavía no hay empresas cargadas.'}
-          description={hasFilters ? undefined : 'Empezá creando una empresa para construir oportunidades comerciales.'}
+          title={hasFilters ? 'No encontramos empresas con esos filtros.' : 'Todavía no hay empresas cargadas.'}
+          description={hasFilters ? 'Probá cambiar la búsqueda o limpiar filtros.' : 'Empezá creando una empresa para poder asociar contactos y oportunidades.'}
           example={!hasFilters ? 'Cargá un estudio contable de 25 empleados y vinculá a su socio fundador como contacto clave.' : undefined}
           action={
             hasFilters

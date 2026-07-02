@@ -66,7 +66,7 @@ export function ContactsList({ contacts, companies, profile, autoOpenNew, initia
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Contactos</h1>
-          <p className="text-sm text-gray-500">Registrá las personas con las que habla el asesor y vinculalas a una empresa.</p>
+          <p className="text-sm text-gray-500">Acá guardás las personas con las que hablás dentro de cada empresa. Un contacto sirve para no perder seguimiento y convertir conversaciones en oportunidades.</p>
           <p className="text-xs text-gray-400 mt-0.5">Después de cargar un contacto, creá una oportunidad para seguir la conversación comercial.</p>
           <p className="text-xs text-gray-400 mt-0.5">{countLabel}</p>
         </div>
@@ -136,8 +136,8 @@ export function ContactsList({ contacts, companies, profile, autoOpenNew, initia
           title={hasFilters ? 'No encontramos resultados para esta búsqueda.' : 'Todavía no hay contactos cargados.'}
           description={
             hasFilters
-              ? undefined
-              : 'Agregá personas asociadas a empresas para iniciar conversaciones comerciales.'
+              ? 'Probá cambiar el texto o limpiar filtros.'
+              : 'Creá un contacto y asocialo a una empresa para iniciar el seguimiento comercial.'
           }
           example={
             !hasFilters
