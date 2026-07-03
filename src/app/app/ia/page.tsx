@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getProfile, canAccessAll } from '@/lib/auth'
+import { isInternalOpenAccessEnabled } from '@/lib/internal-open-access'
 import { redirect } from 'next/navigation'
 import { IAView } from './ia-view'
 import type { EntityNameMap } from '@/components/ia/types'
@@ -37,7 +38,7 @@ async function resolveEntityNames(
 export default async function IAPage() {
   const profile = await getProfile()
   if (!profile) redirect('/login')
-  // TEMP: open during internal product testing. Restore: if (!canAccessAll(profile)) redirect('/app/hoy')
+  if (!isInternalOpenAccessEnabled() && !canAccessAll(profile)) redirect('/app/hoy')
 
   const supabase = await createClient()
 

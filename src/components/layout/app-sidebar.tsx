@@ -10,6 +10,7 @@ import {
 import { cn } from '@/lib/utils'
 import { Avatar } from '@/components/ui/avatar'
 import { isDemoMode } from '@/lib/demo'
+import { isInternalOpenAccessEnabled } from '@/lib/internal-open-access'
 import type { Profile } from '@/types/database'
 
 const icons = {
@@ -46,12 +47,22 @@ interface AppSidebarProps {
   profile: Profile
 }
 
+function filterNavItems(profile: Profile) {
+  if (isInternalOpenAccessEnabled()) return [...navItems]
+
+  const isAdmin = profile.role === 'admin'
+  const canSeeDirection = ['admin', 'direccion'].includes(profile.role)
+
+  return navItems.filter(item => {
+    if (ADMIN_ONLY.includes(item.href)) return isAdmin
+    if (DIRECTION_ALLOWED.includes(item.href)) return canSeeDirection
+    return true
+  })
+}
+
 export function AppSidebar({ profile }: AppSidebarProps) {
   const pathname = usePathname()
-  // TEMP: open navigation during internal product testing.
-  // Final role visibility will be defined with PLIFE before launch.
-  // To revert: restore the filter block below using ADMIN_ONLY and DIRECTION_ALLOWED.
-  const baseItems = [...navItems]
+  const baseItems = filterNavItems(profile)
 
   const visibleItems = isDemoMode()
     ? [{ href: '/app/demo', label: 'Recorrido demo', icon: 'RouteIcon' } as const, ...baseItems]

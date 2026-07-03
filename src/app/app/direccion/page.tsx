@@ -1,12 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { getProfile } from '@/lib/auth'
+import { isInternalOpenAccessEnabled } from '@/lib/internal-open-access'
 import { redirect } from 'next/navigation'
 import { DireccionView } from './direccion-view'
 
 export default async function DireccionPage() {
   const profile = await getProfile()
   if (!profile) redirect('/login')
-  // TEMP: open during internal product testing. Restore: if (!['admin', 'direccion'].includes(profile.role)) redirect('/app/hoy')
+  if (!isInternalOpenAccessEnabled() && !['admin', 'direccion'].includes(profile.role)) redirect('/app/hoy')
 
   const supabase = await createClient()
   const today = new Date().toISOString().split('T')[0]

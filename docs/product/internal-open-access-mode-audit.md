@@ -1,7 +1,44 @@
 # Internal Open Access Mode — Auditoría de permisos
 
 > FASE 13D-B · 2026-07-03  
-> Estado: TEMP — modo exploración interna activo
+> FASE 13J · feature flag `NEXT_PUBLIC_INTERNAL_OPEN_ACCESS`  
+> Estado: controlado por variable de entorno — **default seguro (cerrado)**
+
+---
+
+## Feature flag (FASE 13J)
+
+| Variable | Valor | Comportamiento |
+|----------|-------|----------------|
+| `NEXT_PUBLIC_INTERNAL_OPEN_ACCESS` | `"true"` | Sidebar y rutas admin/dirección/IA abiertas a cualquier usuario **autenticado** |
+| No definida / cualquier otro valor | default | Comportamiento normal por rol (ver secciones 1–2) |
+
+**Helper:** `src/lib/internal-open-access.ts` → `isInternalOpenAccessEnabled()`
+
+### Cómo activar (local o preview)
+
+Sin modificar `.env` comprometido en git, en la sesión de terminal:
+
+```powershell
+# PowerShell — antes de npm run dev
+$env:NEXT_PUBLIC_INTERNAL_OPEN_ACCESS = "true"
+npm run dev
+```
+
+En Vercel Preview: agregar `NEXT_PUBLIC_INTERNAL_OPEN_ACCESS=true` en Environment Variables del proyecto (solo Preview, no Production).
+
+### Cómo desactivar (release externo)
+
+- **Local:** no definir la variable, o `$env:NEXT_PUBLIC_INTERNAL_OPEN_ACCESS = "false"`.
+- **Vercel Production:** no incluir la variable, o dejarla en `false`.
+- Reiniciar el servidor de desarrollo tras cambiar la variable (`NEXT_PUBLIC_*` se inlined en build).
+
+### Qué NO cambia con el flag
+
+- Login sigue obligatorio (middleware sin cambios).
+- Usuarios no autenticados no acceden a `/app/*`.
+- Server actions sensibles (`requireAdmin()` en Motor IA) siguen protegidas.
+- RLS Supabase sin cambios.
 
 ---
 
@@ -93,7 +130,18 @@ Todas las acciones de configuración del Motor IA usan `requireAdmin()` interno 
 
 ---
 
-## 7. Plan para revertir cuando se definan roles finales
+## 7. Plan para revertir / desactivar open access
+
+**Recomendado (FASE 13J):** desactivar el feature flag — no requiere revertir código.
+
+```powershell
+# Quitar o poner en false; reiniciar dev server
+$env:NEXT_PUBLIC_INTERNAL_OPEN_ACCESS = "false"
+```
+
+En Vercel: eliminar la variable de Production o dejarla en `false`.
+
+### Reversión manual en código (solo si se elimina el flag)
 
 ### En `src/components/layout/app-sidebar.tsx`:
 
@@ -132,7 +180,7 @@ if (!canAccessAll(profile)) redirect('/app/hoy')
 
 ## Decisión temporal
 
-Durante la etapa de construcción interna, todas las secciones quedan visibles para usuarios autenticados con el objetivo de probar el flujo completo del producto. Esta decisión no representa el modelo final de permisos. Antes de presentar o implementar con PLIFE, se deberá definir una matriz formal de roles y accesos.
+Durante la etapa de construcción interna, el open access se activa **solo** con `NEXT_PUBLIC_INTERNAL_OPEN_ACCESS=true`. Sin esa variable, el sistema usa permisos por rol. Esta decisión no representa el modelo final de permisos. Antes de presentar o implementar con PLIFE, se deberá definir una matriz formal de roles y accesos y mantener el flag desactivado en producción.
 
 ---
 

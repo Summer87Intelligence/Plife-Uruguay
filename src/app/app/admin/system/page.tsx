@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { canAccessAll, getProfile } from '@/lib/auth'
+import { isInternalOpenAccessEnabled } from '@/lib/internal-open-access'
 import { isDemoMode } from '@/lib/demo'
 import { isAIConfigured } from '@/lib/ai/provider'
 import { redirect } from 'next/navigation'
@@ -8,7 +9,7 @@ import { SystemView } from './system-view'
 export default async function SystemPage() {
   const profile = await getProfile()
   if (!profile) redirect('/login')
-  // TEMP: open during internal product testing. Restore: if (!canAccessAll(profile)) redirect('/app/hoy')
+  if (!isInternalOpenAccessEnabled() && !canAccessAll(profile)) redirect('/app/hoy')
 
   const supabase = await createClient()
 
