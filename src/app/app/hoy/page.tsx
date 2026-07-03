@@ -64,6 +64,9 @@ export default async function HoyPage() {
     { data: upcomingOpps },
     { data: activeCampaigns },
     { data: staleOpps },
+    { data: overdueOpps },
+    { data: todayOpps },
+    { data: noNextStepOpps },
   ] = await Promise.all([
     supabase.from('activities').select('*').eq('created_by', profile.id).eq('is_completed', false).gte('scheduled_at', today + 'T00:00:00').lte('scheduled_at', today + 'T23:59:59').order('scheduled_at'),
     supabase.from('contacts').select('id, first_name, last_name, next_action, next_action_date, status').eq('assigned_to', profile.id).is('deleted_at', null).lt('next_action_date', today).not('next_action_date', 'is', null).limit(10),
@@ -72,6 +75,9 @@ export default async function HoyPage() {
     supabase.from('opportunities').select('id, title, stage, next_action, next_action_date').eq('assigned_to', profile.id).is('deleted_at', null).not('stage', 'in', '("cerrada_ganada","cerrada_perdida","dormida")').gte('next_action_date', today).not('next_action_date', 'is', null).order('next_action_date').limit(8),
     supabase.from('campaigns').select('id, name, status, total_targets, total_converted').eq('status', 'activa').limit(5),
     supabase.from('opportunities').select('id, title, stage, last_activity_at').eq('assigned_to', profile.id).is('deleted_at', null).not('stage', 'in', '("cerrada_ganada","cerrada_perdida","dormida")').or(`last_activity_at.is.null,last_activity_at.lt.${sevenDaysAgo}`).limit(5),
+    supabase.from('opportunities').select('id, title, stage, next_action, next_action_date').eq('assigned_to', profile.id).is('deleted_at', null).not('stage', 'in', '("cerrada_ganada","cerrada_perdida","dormida")').not('next_action_date', 'is', null).lt('next_action_date', today).order('next_action_date').limit(10),
+    supabase.from('opportunities').select('id, title, stage, next_action, next_action_date').eq('assigned_to', profile.id).is('deleted_at', null).not('stage', 'in', '("cerrada_ganada","cerrada_perdida","dormida")').eq('next_action_date', today).limit(10),
+    supabase.from('opportunities').select('id, title, stage, next_action, next_action_date').eq('assigned_to', profile.id).is('deleted_at', null).not('stage', 'in', '("cerrada_ganada","cerrada_perdida","dormida")').or('next_action.is.null,next_action_date.is.null').limit(10),
   ])
 
   return (
@@ -84,6 +90,9 @@ export default async function HoyPage() {
       upcomingOpps={upcomingOpps ?? []}
       activeCampaigns={activeCampaigns ?? []}
       staleOpps={staleOpps ?? []}
+      overdueOpps={overdueOpps ?? []}
+      todayOpps={todayOpps ?? []}
+      noNextStepOpps={noNextStepOpps ?? []}
     />
   )
 }

@@ -9,6 +9,8 @@ import { GettingStartedCard } from '@/components/onboarding/getting-started-card
 import { isDemoMode } from '@/lib/demo'
 import { AlertCircle, Calendar, TrendingUp, Building2, Bot, CheckCircle2, Megaphone, Clock } from 'lucide-react'
 import { SectionGuideCard } from '@/components/guidance/section-guide-card'
+import { FollowUpCenter } from '@/components/follow-up/follow-up-center'
+import type { FollowUpOpp } from '@/components/follow-up/follow-up-center'
 import type { Profile, Activity, Contact, Opportunity, Company, Campaign } from '@/types/database'
 
 interface AdvisorDashboardProps {
@@ -20,11 +22,14 @@ interface AdvisorDashboardProps {
   upcomingOpps: Partial<Opportunity>[]
   activeCampaigns: Partial<Campaign>[]
   staleOpps: Partial<Opportunity>[]
+  overdueOpps: Partial<Opportunity>[]
+  todayOpps: Partial<Opportunity>[]
+  noNextStepOpps: Partial<Opportunity>[]
 }
 
 export function AdvisorDashboard({
   profile, todayActivities, overdueActions, hotOpps, assignedCompanies,
-  upcomingOpps, activeCampaigns, staleOpps,
+  upcomingOpps, activeCampaigns, staleOpps, overdueOpps, todayOpps, noNextStepOpps,
 }: AdvisorDashboardProps) {
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Buenos días' : hour < 18 ? 'Buenas tardes' : 'Buenas noches'
@@ -111,6 +116,13 @@ export function AdvisorDashboard({
       {(isEmpty || (!isEmpty && isDemo)) && (
         <GettingStartedCard mode={isEmpty ? 'empty' : 'demo'} />
       )}
+
+      <FollowUpCenter
+        overdue={overdueOpps as FollowUpOpp[]}
+        today={todayOpps as FollowUpOpp[]}
+        missingNextStep={noNextStepOpps as FollowUpOpp[]}
+        stalled={staleOpps as FollowUpOpp[]}
+      />
 
       {isEmpty ? (
         <SectionGuideCard
