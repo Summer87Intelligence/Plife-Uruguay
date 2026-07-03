@@ -58,7 +58,7 @@ export function AppSidebar({ profile }: AppSidebarProps) {
     : baseItems
 
   return (
-    <aside className="hidden md:flex h-full w-56 flex-col border-r border-gray-100 bg-white shrink-0">
+    <aside data-testid="app-sidebar" className="hidden md:flex h-full w-56 flex-col border-r border-gray-100 bg-white shrink-0">
       {/* Logo */}
       <div className="flex h-14 items-center px-5 border-b border-gray-100">
         <div className="flex items-center gap-2.5">
@@ -73,7 +73,7 @@ export function AppSidebar({ profile }: AppSidebarProps) {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2">
+      <nav data-testid="app-sidebar-nav" className="flex-1 overflow-y-auto py-3 px-2">
         {visibleItems.map(item => {
           const Icon = icons[item.icon as keyof typeof icons]
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
