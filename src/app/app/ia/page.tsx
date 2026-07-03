@@ -37,7 +37,7 @@ async function resolveEntityNames(
 export default async function IAPage() {
   const profile = await getProfile()
   if (!profile) redirect('/login')
-  if (!canAccessAll(profile)) redirect('/app/hoy')
+  // TEMP: open during internal product testing. Restore: if (!canAccessAll(profile)) redirect('/app/hoy')
 
   const supabase = await createClient()
 

@@ -6,7 +6,7 @@ import { AdminView } from './admin-view'
 export default async function AdminPage() {
   const profile = await getProfile()
   if (!profile) redirect('/login')
-  if (profile.role !== 'admin') redirect('/app/hoy')
+  // TEMP: open during internal product testing. Restore: if (profile.role !== 'admin') redirect('/app/hoy')
 
   const supabase = await createClient()
 

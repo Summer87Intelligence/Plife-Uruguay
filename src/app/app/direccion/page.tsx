@@ -6,7 +6,7 @@ import { DireccionView } from './direccion-view'
 export default async function DireccionPage() {
   const profile = await getProfile()
   if (!profile) redirect('/login')
-  if (!['admin', 'direccion'].includes(profile.role)) redirect('/app/hoy')
+  // TEMP: open during internal product testing. Restore: if (!['admin', 'direccion'].includes(profile.role)) redirect('/app/hoy')
 
   const supabase = await createClient()
   const today = new Date().toISOString().split('T')[0]

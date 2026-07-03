@@ -23,6 +23,9 @@ export default async function HoyPage() {
       { data: stageStats },
       { data: globalOverdue },
       { data: abandonedOpps },
+      { data: dirOverdueOpps },
+      { data: dirTodayOpps },
+      { data: dirNoNextStepOpps },
     ] = await Promise.all([
       supabase.from('opportunities').select('*', { count: 'exact', head: true }).is('deleted_at', null).not('stage', 'in', '("cerrada_ganada","cerrada_perdida","dormida")'),
       supabase.from('companies').select('*', { count: 'exact', head: true }).is('deleted_at', null),
@@ -32,6 +35,9 @@ export default async function HoyPage() {
       supabase.from('opportunities').select('stage').is('deleted_at', null).not('stage', 'in', '("cerrada_ganada","cerrada_perdida","dormida")'),
       supabase.from('contacts').select('id, first_name, last_name, next_action, next_action_date').is('deleted_at', null).lt('next_action_date', today).not('next_action_date', 'is', null).limit(10),
       supabase.from('opportunities').select('id, title, stage, last_activity_at').is('deleted_at', null).not('stage', 'in', '("cerrada_ganada","cerrada_perdida","dormida")').or(`last_activity_at.is.null,last_activity_at.lt.${sevenDaysAgo}`).limit(10),
+      supabase.from('opportunities').select('id, title, stage, next_action, next_action_date').is('deleted_at', null).not('stage', 'in', '("cerrada_ganada","cerrada_perdida","dormida")').not('next_action_date', 'is', null).lt('next_action_date', today).order('next_action_date').limit(10),
+      supabase.from('opportunities').select('id, title, stage, next_action, next_action_date').is('deleted_at', null).not('stage', 'in', '("cerrada_ganada","cerrada_perdida","dormida")').eq('next_action_date', today).limit(10),
+      supabase.from('opportunities').select('id, title, stage, next_action, next_action_date').is('deleted_at', null).not('stage', 'in', '("cerrada_ganada","cerrada_perdida","dormida")').or('next_action.is.null,next_action_date.is.null').limit(10),
     ])
 
     const stageCounts: Partial<Record<OpportunityStage, number>> = {}
@@ -52,6 +58,9 @@ export default async function HoyPage() {
         globalOverdue={globalOverdue ?? []}
         abandonedOpps={abandonedOpps ?? []}
         profile={profile}
+        dirOverdueOpps={dirOverdueOpps ?? []}
+        dirTodayOpps={dirTodayOpps ?? []}
+        dirNoNextStepOpps={dirNoNextStepOpps ?? []}
       />
     )
   }

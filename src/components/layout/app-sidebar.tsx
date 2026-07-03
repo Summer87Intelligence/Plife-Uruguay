@@ -48,14 +48,10 @@ interface AppSidebarProps {
 
 export function AppSidebar({ profile }: AppSidebarProps) {
   const pathname = usePathname()
-  const isAdmin = profile.role === 'admin'
-  const canSeeDirection = ['admin', 'direccion'].includes(profile.role)
-
-  const baseItems = navItems.filter(item => {
-    if (ADMIN_ONLY.includes(item.href)) return isAdmin
-    if (DIRECTION_ALLOWED.includes(item.href)) return canSeeDirection
-    return true
-  })
+  // TEMP: open navigation during internal product testing.
+  // Final role visibility will be defined with PLIFE before launch.
+  // To revert: restore the filter block below using ADMIN_ONLY and DIRECTION_ALLOWED.
+  const baseItems = [...navItems]
 
   const visibleItems = isDemoMode()
     ? [{ href: '/app/demo', label: 'Recorrido demo', icon: 'RouteIcon' } as const, ...baseItems]
