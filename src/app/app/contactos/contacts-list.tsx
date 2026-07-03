@@ -66,8 +66,7 @@ export function ContactsList({ contacts, companies, profile, autoOpenNew, initia
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Contactos</h1>
-          <p className="text-sm text-gray-500">Acá guardás las personas con las que hablás dentro de cada empresa. Un contacto sirve para no perder seguimiento y convertir conversaciones en oportunidades.</p>
-          <p className="text-xs text-gray-400 mt-0.5">Después de cargar un contacto, creá una oportunidad para seguir la conversación comercial.</p>
+          <p className="text-sm text-gray-500">Las personas clave dentro de cada empresa. Asociá un contacto y creá una oportunidad para no perder el seguimiento.</p>
           <p className="text-xs text-gray-400 mt-0.5">{countLabel}</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>

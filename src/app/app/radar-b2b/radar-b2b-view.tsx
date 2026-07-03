@@ -248,10 +248,10 @@ export function RadarB2BView({ companies, campaigns, profile }: RadarB2BViewProp
           {companies.length === 0 && (
             <SectionGuideCard
               title="¿Por qué usar el Radar B2B?"
-              description="El Radar asigna un score automático a cada empresa según su rubro, tamaño y señales comerciales. Priorizá las de mayor potencial y creá oportunidades desde acá."
+              description="El Radar asigna un score automático a cada empresa según su rubro, tamaño y señales comerciales. Priorizá las de mayor potencial y convertí señales en oportunidades de seguimiento."
               primaryActionLabel="Ver empresas"
               primaryActionHref="/app/empresas"
-              nextStep="También podés ver oportunidades activas"
+              nextStep="Convertí el mejor resultado en oportunidad"
             />
           )}
         </>

@@ -157,3 +157,85 @@ Auditoría de textos orientativos, empty states y guías contextuales por pantal
 **Texto que falta hoy:** Header tiene subtítulo. Falta guía de 4 pasos para usar la vista eficientemente.
 **Mejora recomendada:** Agregar SectionGuideCard con pasos de uso de la vista de dirección.
 **Riesgo técnico:** Bajo.
+
+---
+
+## FASE 13B — Pulido UX
+
+### Hallazgos de la revisión
+
+**SectionGuideCard (section-guide-card.tsx)**
+- El modo `compact` solo cambiaba padding y font-size del título, pero mostraba los `steps` igual — cards compactos quedaban igual de altos que los normales.
+- El ícono era idéntico en compact y normal (`h-4 w-4`).
+- No había soporte para CTA secundario.
+
+**advisor-dashboard.tsx**
+- La guía "Cómo avanzar hoy" solo aparecía cuando `isEmpty`. El usuario con datos reales nunca veía orientación de flujo.
+
+**companies-list.tsx / contacts-list.tsx**
+- Dos líneas de descripción en el header que repetían la misma idea con distinto formato. La segunda era redundante.
+
+**contact-detail.tsx**
+- Dos `SectionGuideCard` podían aparecer simultáneamente (sin próxima acción + sin oportunidades). Saturaba la vista superior.
+
+**compliance-view.tsx**
+- Header tenía dos párrafos casi idénticos: "Revisá mensajes antes de enviarlos..." y "Pegá un mensaje comercial antes de enviarlo para revisar...".
+- El card compact pasaba `steps` aunque en compact los pasos no agregan valor: la pantalla ya los explica.
+
+**ia-view.tsx**
+- La descripción del SectionGuideCard acumulaba 5 negaciones seguidas: "No calcula primas. No inventa coberturas. No reemplaza MAPFRE. No envía mensajes. No reemplaza al asesor." Tono defensivo y pesado.
+
+**radar-b2b-view.tsx**
+- El `nextStep` en empty decía "También podés ver oportunidades activas" — no era un próximo paso real, era un link de escape.
+
+**direccion-view.tsx**
+- Dos líneas en el header, la segunda informaba lo mismo que la descripción del SectionGuideCard.
+- El card compact pasaba `steps` aunque la vista ya los implementa visualmente.
+
+---
+
+### Mejoras aplicadas
+
+| Archivo | Cambio |
+|---|---|
+| `section-guide-card.tsx` | Compact no muestra steps por defecto · ícono más pequeño en compact · prop `secondaryActionLabel/Href` nuevo · spacing mejorado |
+| `advisor-dashboard.tsx` | Guía compacta visible cuando hay datos ("Flujo recomendado") con 2 CTAs |
+| `companies-list.tsx` | Dos líneas de descripción → una sola concisa |
+| `contacts-list.tsx` | Dos líneas de descripción → una sola concisa |
+| `contact-detail.tsx` | Los dos cards ahora son mutuamente excluyentes: si no hay próxima acción se muestra ese; solo si hay próxima acción y sin oportunidades se muestra el segundo |
+| `radar-b2b-view.tsx` | nextStep corregido a "Convertí el mejor resultado en oportunidad" |
+| `ia-view.tsx` | Descripción reescrita: positiva primero, disclaimer conciso al final |
+| `compliance-view.tsx` | Eliminada segunda línea redundante del header · steps removidos del compact card |
+| `direccion-view.tsx` | Subtexto redundante del header eliminado · steps removidos del compact card |
+
+---
+
+### Pantallas revisadas
+
+- `/app/hoy` — guía compacta agregada para usuarios con datos
+- `/app/empresas` — header simplificado
+- `/app/contactos` — header simplificado
+- `/app/contactos/[id]` — máximo un card de guía a la vez
+- `/app/radar-b2b` — nextStep corregido
+- `/app/ia` — copy de seguridad mejorado
+- `/app/compliance` — header limpiado, card simplificado
+- `/app/direccion` — header limpiado, card simplificado
+
+---
+
+### Decisiones de copy
+
+- **Negaciones → afirmación + disclaimer corto**: "No calcula primas, no inventa coberturas..." reemplazado por "Los outputs siempre requieren revisión humana. No define primas, coberturas ni reemplaza condiciones MAPFRE." Menos defensivo, mismo nivel de seguridad.
+- **Compact sin steps**: En modo compacto, los pasos se suprimen porque la pantalla ya los implementa. Agregar steps en compact sólo add ruido visual.
+- **Un card a la vez en detalle de contacto**: Mostrar dos avisos simultáneos en el mismo espacio compite por atención. Se prioriza la acción más urgente (próxima acción > oportunidad).
+- **Flujo recomendado siempre visible en /hoy**: El usuario activo necesita recordatorio del flujo aunque ya tenga datos. La versión compacta no compite con las métricas principales.
+
+---
+
+### Riesgos evitados
+
+- No se prometieron automatizaciones de mensajes
+- No se prometieron primas, coberturas ni condiciones de póliza
+- No se mencionó que la IA reemplaza al asesor
+- No se mencionó que Compliance reemplaza revisión legal
+- La guía en /hoy no compite visualmente con las métricas del dashboard

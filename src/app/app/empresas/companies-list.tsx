@@ -42,8 +42,7 @@ export function CompaniesList({ companies, profile }: CompaniesListProps) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Empresas B2B</h1>
-          <p className="text-sm text-gray-500">Acá cargás organizaciones, negocios o clientes potenciales. Es el primer paso para ordenar el trabajo comercial.</p>
-          <p className="text-xs text-gray-400 mt-0.5">Primero cargá empresas, después asociá contactos y oportunidades.</p>
+          <p className="text-sm text-gray-500">Primer paso del flujo comercial: cargá organizaciones y asociales contactos y oportunidades.</p>
           <p className="text-xs text-gray-400 mt-0.5">{countLabel}</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>

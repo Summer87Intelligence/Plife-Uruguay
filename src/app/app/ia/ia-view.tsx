@@ -97,7 +97,7 @@ export function IAView({
 
       <SectionGuideCard
         title="Cómo usar el Motor IA"
-        description="El Motor IA ayuda a preparar seguimiento, mensajes y lectura comercial, siempre con revisión humana. No calcula primas. No inventa coberturas. No reemplaza condiciones MAPFRE. No envía mensajes automáticamente. No reemplaza al asesor."
+        description="Usá el motor para preparar seguimiento, mensajes y lectura comercial. Los outputs siempre requieren revisión humana antes de usarse. No define primas, coberturas ni reemplaza condiciones MAPFRE."
         steps={[
           'Revisá el perfil comercial PLIFE activo',
           'Verificá que los prompts estén validados',

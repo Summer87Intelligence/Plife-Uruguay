@@ -90,20 +90,13 @@ export function ComplianceView({ rules, recentReviews, interactions }: Complianc
         </div>
         <div>
           <h1 className="text-xl font-bold text-gray-900">Compliance Comercial</h1>
-          <p className="text-sm text-gray-500">Revisá mensajes antes de enviarlos para evitar promesas comerciales riesgosas.</p>
-          <p className="text-xs text-gray-400 mt-0.5">Pegá un mensaje comercial antes de enviarlo para revisar si contiene promesas riesgosas.</p>
+          <p className="text-sm text-gray-500">Revisá mensajes antes de enviarlos para detectar promesas comerciales riesgosas.</p>
         </div>
       </div>
 
       <SectionGuideCard
         title="Cómo usar el revisor de mensajes"
-        description="Sirve para revisar mensajes y detectar riesgos antes de usarlos comercialmente. No reemplaza revisión legal ni condiciones oficiales de MAPFRE."
-        steps={[
-          'Pegá el mensaje que querés revisar',
-          'Detectá frases riesgosas en el resultado',
-          'Ajustá el texto con la versión sugerida',
-          'Usalo solo después de revisión humana',
-        ]}
+        description="Pegá un mensaje, detectá frases riesgosas en el resultado y ajustá con la versión sugerida. No reemplaza revisión legal ni condiciones oficiales de MAPFRE."
         nextStep="Siempre revisión humana primero"
         compact
       />

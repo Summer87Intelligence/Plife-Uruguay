@@ -194,16 +194,16 @@ export function ContactDetail({ contact, activities, opportunities, companies }:
       {!contact.next_action && (
         <SectionGuideCard
           title="Definí una próxima acción"
-          description="Sin una próxima acción definida, este contacto puede quedar sin seguimiento. Indicá qué hay que hacer y cuándo."
-          nextStep="Próxima acción pendiente"
+          description="Sin próxima acción, este contacto puede quedar sin seguimiento. Indicá qué hay que hacer y cuándo."
+          nextStep="Sin próxima acción"
           compact
         />
       )}
 
-      {opportunities.length === 0 && (
+      {contact.next_action && opportunities.length === 0 && (
         <SectionGuideCard
-          title="¿Hay interés comercial?"
-          description="Si este contacto mostró interés en algún producto o servicio, creá una oportunidad para registrar y dar seguimiento a esa conversación."
+          title="Crear oportunidad si hay interés"
+          description="Si este contacto mostró interés comercial, creá una oportunidad para registrar y dar seguimiento a esa conversación."
           primaryActionLabel="Crear oportunidad"
           nextStep="Sin oportunidades vinculadas"
           compact

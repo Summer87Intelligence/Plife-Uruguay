@@ -34,19 +34,12 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
     <div className="space-y-6">
       <div>
         <h1 className="text-xl font-bold text-gray-900">Dirección</h1>
-        <p className="text-sm text-gray-500">Esta vista ayuda a mirar el foco comercial del equipo: oportunidades, seguimiento, campañas y prioridades.</p>
-        <p className="text-xs text-gray-400 mt-0.5">Esta vista toma sentido cuando ya hay oportunidades y campañas cargadas.</p>
+        <p className="text-sm text-gray-500">Vista ejecutiva del foco comercial del equipo: oportunidades, seguimiento, campañas y prioridades.</p>
       </div>
 
       <SectionGuideCard
         title="Cómo usar esta vista"
-        description="Una vista ejecutiva para decidir dónde enfocar al equipo. Revisá las métricas, identificá alertas y tomá decisiones sobre el pipeline."
-        steps={[
-          'Revisá las métricas generales del equipo',
-          'Identificá oportunidades sin seguimiento o sin próximo paso',
-          'Verificá campañas activas y su progreso',
-          'Definí acciones prioritarias para el equipo',
-        ]}
+        description="Revisá métricas, identificá alertas de seguimiento y tomá decisiones sobre el pipeline. Bajá a oportunidades específicas o campañas activas para operar."
         primaryActionLabel="Ver pipeline completo"
         primaryActionHref="/app/oportunidades"
         compact

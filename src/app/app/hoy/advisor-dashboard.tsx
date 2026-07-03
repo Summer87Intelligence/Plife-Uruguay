@@ -112,7 +112,7 @@ export function AdvisorDashboard({
         <GettingStartedCard mode={isEmpty ? 'empty' : 'demo'} />
       )}
 
-      {isEmpty && (
+      {isEmpty ? (
         <SectionGuideCard
           title="Cómo avanzar hoy"
           description="El sistema funciona mejor cuando hay datos cargados. Seguí estos pasos para activar el flujo comercial completo."
@@ -127,6 +127,16 @@ export function AdvisorDashboard({
           primaryActionLabel="Ver empresas"
           primaryActionHref="/app/empresas"
           nextStep="Siguiente: crear oportunidad"
+        />
+      ) : (
+        <SectionGuideCard
+          title="Flujo recomendado"
+          description="Trabajá desde empresas y contactos hacia oportunidades con próximo paso definido. Usá Motor IA como apoyo para preparar seguimiento y Dirección para revisar foco."
+          primaryActionLabel="Ver oportunidades"
+          primaryActionHref="/app/oportunidades"
+          secondaryActionLabel="Abrir Motor IA"
+          secondaryActionHref="/app/ia"
+          compact
         />
       )}
 
