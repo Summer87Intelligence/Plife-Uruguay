@@ -143,3 +143,19 @@ En conjunto, los cambios entregan:
 ---
 
 *Documento generado en FASE 13I. No modifica código de producto.*
+
+---
+
+## Contexto de roadmap
+
+Este PR mejora la **operación vigente** del modelo Empresa → Contacto → Oportunidad. Su validez no depende del modelo futuro.
+
+En paralelo, **FASE 13L** definió el modelo conceptual Lead-first (`docs/product/lead-pipeline-concept-redesign.md`):
+
+- **Lead** será la entrada general de cualquier posible venta.
+- Empresa y Contacto pasarán a ser entidades de datos asociadas al lead, no punto de partida obligatorio.
+- **Oportunidad** se mantiene como entidad separada; se crea cuando el lead está calificado.
+- Campañas y Radar alimentarán leads.
+- Pipeline mostrará el avance de cada lead.
+
+La implementación del modelo Lead-first corresponde a **Fase 14**. Este PR (#2) es una mejora operativa previa, independiente y compatible con esa evolución.

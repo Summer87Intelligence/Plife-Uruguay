@@ -27,13 +27,15 @@ El sistema **no envía WhatsApp, email ni mensajes automáticos**. **No hace scr
 
 ## 2. Cómo se usa el sistema en general
 
-Flujo recomendado:
+Flujo vigente (versión actual):
 
 ```
 Empresa → Contacto → Oportunidad → Seguimiento → Campaña / Radar → Motor IA → Compliance → Dirección
 ```
 
 Cada paso construye sobre el anterior. Sin empresa y contacto, el seguimiento se desordena. Sin próximo paso en la oportunidad, PLIFE Hoy no puede ayudar al asesor.
+
+> **Nota de roadmap — Fase 14:** el modelo evolucionará hacia **Lead-first**. El lead será el punto de entrada general antes de empresa y contacto. Empresa y Contacto pasarán a ser datos asociados al lead. Oportunidad se mantendrá como entidad separada, creándose solo cuando el lead esté calificado. Ver `docs/product/lead-pipeline-concept-redesign.md`.
 
 ---
 

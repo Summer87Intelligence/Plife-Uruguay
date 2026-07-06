@@ -73,3 +73,9 @@ Sección de configuración y control interno del sistema. En etapas de prueba pu
 ## PLIFE Hoy
 
 Pantalla principal del día a día. Muestra seguimiento comercial, alertas y el foco inmediato del asesor.
+
+---
+
+## Lead *(modelo futuro — Fase 14)*
+
+Entrada inicial de cualquier posible venta. Representa una persona, empresa o caso no definido al momento de ingreso. Será el punto de partida del CRM a partir de Fase 14: el asesor registrará primero el interés (lead) y luego asociará o creará empresa, contacto u oportunidad según avance la calificación. Ver `docs/product/lead-pipeline-concept-redesign.md`.
