@@ -39,16 +39,27 @@
 -- 0. PRECONDICIÓN: abortar si los helpers de roles no existen
 -- ---------------------------------------------------------------------------
 DO $$
+DECLARE
+  missing TEXT[];
 BEGIN
-  IF NOT EXISTS (
+  SELECT array_agg(required.proname)
+  INTO missing
+  FROM (VALUES
+    ('is_admin_or_direccion'),
+    ('get_user_role'),
+    ('is_in_my_team')
+  ) AS required(proname)
+  WHERE NOT EXISTS (
     SELECT 1 FROM pg_proc p
     JOIN pg_namespace n ON n.oid = p.pronamespace
-    WHERE p.proname = 'is_admin_or_direccion'
+    WHERE p.proname = required.proname
       AND n.nspname = 'public'
-  ) THEN
+  );
+
+  IF missing IS NOT NULL THEN
     RAISE EXCEPTION
-      'PRECONDICIÓN FALLIDA: public.is_admin_or_direccion() no existe. '
-      'Ver docs/product/leads-schema-apply-guide.md antes de aplicar.';
+      'PRECONDICIÓN FALLIDA: faltan funciones public.% — Ver docs/product/leads-schema-apply-guide.md antes de aplicar.',
+      array_to_string(missing, ', ');
   END IF;
 END
 $$;
@@ -224,7 +235,7 @@ CREATE INDEX IF NOT EXISTS idx_opportunities_lead_id ON opportunities(lead_id);
 --   * UPDATE: admin/direccion cualquier lead; el asesor solo los propios.
 --     NOTA: RLS de Postgres no restringe columnas por política — la limitación
 --     de "campos editables por asesor" (si se decide) se aplica en la capa de
---     server actions (14F), no aquí. Documentado como decisión, no como TODO.
+--     server actions (post-persistencia), no aquí. Documentado como decisión.
 --   * DELETE: NO se otorga a nadie por política. El borrado es soft-delete
 --     (UPDATE de deleted_at), consistente con el resto del sistema.
 --   * El modo open-access temporal de la UI (PR #2) no afecta estas políticas:
@@ -233,43 +244,65 @@ CREATE INDEX IF NOT EXISTS idx_opportunities_lead_id ON opportunities(lead_id);
 
 ALTER TABLE leads ENABLE ROW LEVEL SECURITY;
 
--- SELECT: propios + equipo (líder) + todos (admin/direccion); nunca borrados
-CREATE POLICY "leads_select"
-  ON leads FOR SELECT TO authenticated
-  USING (
-    deleted_at IS NULL
-    AND (
-      is_admin_or_direccion()
-      OR assigned_to = auth.uid()
-      OR created_by = auth.uid()
-      OR (get_user_role() = 'lider_comercial' AND is_in_my_team(assigned_to))
-    )
-  );
+-- Políticas idempotentes: no fallan en re-ejecución (mismo patrón que fix-profiles-rls.sql)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policy
+    WHERE polrelid = 'public.leads'::regclass AND polname = 'leads_select'
+  ) THEN
+    CREATE POLICY "leads_select"
+      ON leads FOR SELECT TO authenticated
+      USING (
+        deleted_at IS NULL
+        AND (
+          is_admin_or_direccion()
+          OR assigned_to = auth.uid()
+          OR created_by = auth.uid()
+          OR (get_user_role() = 'lider_comercial' AND is_in_my_team(assigned_to))
+        )
+      );
+  END IF;
+END
+$$;
 
--- INSERT: asignarse a sí mismo, o admin/direccion asignan a cualquiera.
--- created_by debe ser el usuario autenticado (no se crean leads en nombre de otro).
-CREATE POLICY "leads_insert"
-  ON leads FOR INSERT TO authenticated
-  WITH CHECK (
-    created_by = auth.uid()
-    AND (assigned_to = auth.uid() OR is_admin_or_direccion())
-  );
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policy
+    WHERE polrelid = 'public.leads'::regclass AND polname = 'leads_insert'
+  ) THEN
+    CREATE POLICY "leads_insert"
+      ON leads FOR INSERT TO authenticated
+      WITH CHECK (
+        created_by = auth.uid()
+        AND (assigned_to = auth.uid() OR is_admin_or_direccion())
+      );
+  END IF;
+END
+$$;
 
--- UPDATE: admin/direccion cualquier lead; asesor los propios.
--- WITH CHECK evita reasignar created_by; la reasignación de assigned_to por
--- asesores comunes se controla en server actions (14F).
-CREATE POLICY "leads_update"
-  ON leads FOR UPDATE TO authenticated
-  USING (
-    is_admin_or_direccion()
-    OR assigned_to = auth.uid()
-    OR created_by = auth.uid()
-  )
-  WITH CHECK (
-    is_admin_or_direccion()
-    OR assigned_to = auth.uid()
-    OR created_by = auth.uid()
-  );
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policy
+    WHERE polrelid = 'public.leads'::regclass AND polname = 'leads_update'
+  ) THEN
+    CREATE POLICY "leads_update"
+      ON leads FOR UPDATE TO authenticated
+      USING (
+        is_admin_or_direccion()
+        OR assigned_to = auth.uid()
+        OR created_by = auth.uid()
+      )
+      WITH CHECK (
+        is_admin_or_direccion()
+        OR assigned_to = auth.uid()
+        OR created_by = auth.uid()
+      );
+  END IF;
+END
+$$;
 
 -- DELETE: sin política — nadie borra físicamente vía API.
 -- El soft-delete (deleted_at) pasa por la política de UPDATE.
