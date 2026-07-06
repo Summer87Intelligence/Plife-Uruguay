@@ -28,6 +28,8 @@ const sizes = {
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'default', size = 'md', asChild = false, loading, disabled, children, ...props }, ref) => {
     const Comp = asChild ? Slot : 'button'
+    const isDisabled = Boolean(loading || disabled)
+
     return (
       <Comp
         ref={ref}
@@ -35,12 +37,15 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B3A6B] focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
           variants[variant],
           sizes[size],
+          asChild && isDisabled && 'pointer-events-none opacity-50',
           className
         )}
-        disabled={loading || disabled}
+        disabled={asChild ? undefined : isDisabled}
+        aria-disabled={asChild && isDisabled ? true : undefined}
+        data-loading={loading ? true : undefined}
         {...props}
       >
-        {loading && (
+        {loading && !asChild && (
           <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>

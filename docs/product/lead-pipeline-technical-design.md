@@ -389,6 +389,16 @@ Comportamiento:
 - **Mantiene Lead-first**: no exige empresa ni contacto al inicio — solo título y clasificación progresiva (tipo, origen, prioridad, temperatura con defaults del schema 14B).
 - **Prepara la server action futura**: el shape del estado del form coincide con los campos de creación mínima definidos en §2; al implementar persistencia (post-aplicación del schema) solo se reemplaza el handler del submit.
 
+### 10.1 FASE 14E-B — Button asChild stability fix
+
+Durante el smoke visual de 14E se detectó un bug latente en `src/components/ui/button.tsx`:
+
+- **Bug**: `Button` con `asChild` + `Link` puede crashear con el error de Radix *"Slot failed to slot onto its children"*.
+- **Causa**: cuando `loading=true`, el componente renderizaba el spinner SVG como hermano de `children` dentro de `Slot`. Radix exige un único hijo válido.
+- **Caso expuesto**: `src/components/ui/create-success-panel.tsx` usa `Button asChild` con `Link`; cualquier uso futuro con `loading` rompería el panel de éxito compartido por formularios de alta.
+- **Fix**: si `asChild=true`, no se inserta el spinner como sibling; se mantiene un solo child y el estado de carga se comunica con `aria-disabled`, `data-loading` y clases de opacidad/pointer-events. Los botones normales (`asChild=false`) conservan el spinner visible.
+- **Por qué antes de seguir con UI**: el panel de éxito y otros CTAs con `asChild` son piezas transversales del flujo de creación (leads, contactos, empresas, campañas, oportunidades); un crash en `Button` bloquea smoke y despliegues incrementales de la fase 14.
+
 ---
 
 ## Resumen de decisiones
