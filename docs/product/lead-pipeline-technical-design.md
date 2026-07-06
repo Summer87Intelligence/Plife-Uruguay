@@ -332,6 +332,25 @@ Contexto por lead para el copiloto existente (`src/domains/ai/actions.ts`):
 
 ---
 
+## 8. FASE 14C — Domain helpers
+
+Se agregó la capa de dominio `src/domains/leads/` — **TypeScript puro, sin dependencia de Supabase** (no importa clientes ni queries; la tabla `leads` sigue sin aplicarse).
+
+| Archivo | Contenido |
+|---|---|
+| `types.ts` | Unions (`LeadType`, `LeadSource`, `LeadStatus`, `LeadPipelineStage`, `LeadPriority`, `LeadTemperature`) + `LeadLike` (shape mínimo que consumen los helpers, no la tabla completa) |
+| `constants.ts` | Labels en español + `LEAD_PIPELINE_ORDER`, `ACTIVE_LEAD_STAGES`, `TERMINAL_LEAD_STAGES`, `CONVERTIBLE_LEAD_STAGES` |
+| `pipeline.ts` | Orden/labels de etapa, terminalidad, `canMoveLeadToStage` (terminales no se abandonan; activas se mueven libre), `getNextRecommendedStage`, sort |
+| `conversion.ts` | `canConvertLeadToOpportunity` / `getLeadConversionReadiness` — regla 13L/14A: solo leads `open` en etapa calificada, con título y próximo paso. Devuelve razones legibles para UI |
+| `follow-up.ts` | Buckets `overdue / today / missing_next_step / none` por comparación de fecha `YYYY-MM-DD` local; estados terminales quedan fuera del follow-up activo |
+| `index.ts` | Re-export del dominio |
+
+- Cubierto por `tests/unit/leads.test.ts` (transiciones, conversión, buckets, orden).
+- Prepara la UI futura (14D/14E) y el PLIFE Hoy basado en leads (14G): los componentes consumirán estos helpers sin lógica duplicada.
+- `src/types/database.ts` **no se tocó**: se alineará cuando el schema 14B se aplique.
+
+---
+
 ## Resumen de decisiones
 
 | Tema | Decisión |
