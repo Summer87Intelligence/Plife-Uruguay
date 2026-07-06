@@ -7,6 +7,8 @@ import type { LeadLike, LeadSource, LeadType } from './types'
 export interface MockLead extends LeadLike {
   display_name: string | null
   interest_area: string | null
+  phone?: string | null
+  email?: string | null
 }
 
 function dateKey(daysFromToday: number): string {
@@ -35,6 +37,8 @@ function mockLead(input: {
   priority?: LeadLike['priority']
   temperature?: LeadLike['temperature']
   interest_area?: string
+  phone?: string | null
+  email?: string | null
   next_action?: string | null
   next_action_days?: number | null
   converted_at?: string | null
@@ -53,6 +57,8 @@ function mockLead(input: {
     priority: input.priority ?? 'medium',
     temperature: input.temperature ?? 'warm',
     interest_area: input.interest_area ?? null,
+    phone: input.phone ?? null,
+    email: input.email ?? null,
     next_action: input.next_action ?? null,
     next_action_date:
       input.next_action_days === null || input.next_action_days === undefined
@@ -77,6 +83,8 @@ export const MOCK_LEADS: MockLead[] = [
     priority: 'high',
     temperature: 'warm',
     interest_area: 'Seguro de vida',
+    phone: '+598 99 111 222',
+    email: 'juan.demo@ejemplo.uy',
     next_action: null,
     next_action_days: null,
     created_days_ago: 1,
@@ -144,6 +152,8 @@ export const MOCK_LEADS: MockLead[] = [
     priority: 'high',
     temperature: 'hot',
     interest_area: 'Seguro para socios',
+    phone: '+598 2 400 5566',
+    email: 'contacto@estudiodemo.uy',
     next_action: 'Preparar propuesta conceptual',
     next_action_days: 1,
     created_days_ago: 12,
@@ -205,3 +215,7 @@ export const MOCK_LEADS: MockLead[] = [
     created_days_ago: 45,
   }),
 ]
+
+export function getMockLeadById(id: string): MockLead | undefined {
+  return MOCK_LEADS.find((lead) => lead.id === id)
+}

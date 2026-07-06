@@ -1,3 +1,5 @@
+import Link from 'next/link'
+import type { Route } from 'next'
 import { CalendarDays, Building2, User, HelpCircle, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { MockLead } from '@/domains/leads/mock-data'
@@ -23,9 +25,11 @@ export function LeadCard({ lead, compact = false }: { lead: MockLead; compact?: 
   const isOverdue = bucket === 'overdue'
 
   return (
-    <div
+    <Link
+      href={`/app/leads/${lead.id}` as Route}
+      aria-label={`Ver detalle de ${lead.title}`}
       className={cn(
-        'rounded-xl border bg-white p-4 shadow-sm',
+        'block rounded-xl border bg-white p-4 shadow-sm transition-colors hover:border-[#1B3A6B]/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1B3A6B] focus-visible:ring-offset-2',
         isOverdue ? 'border-red-200' : 'border-gray-100'
       )}
     >
@@ -81,6 +85,6 @@ export function LeadCard({ lead, compact = false }: { lead: MockLead; compact?: 
           <p className="text-xs text-gray-400">Sin gestión activa</p>
         )}
       </div>
-    </div>
+    </Link>
   )
 }

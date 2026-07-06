@@ -401,6 +401,29 @@ Durante el smoke visual de 14E se detectó un bug latente en `src/components/ui/
 
 ---
 
+## 11. FASE 14F — Mock lead detail and actions
+
+Se agregó el workspace conceptual para trabajar un lead individual, **sin persistencia**:
+
+| Pieza | Ubicación |
+|---|---|
+| Ruta de detalle (auth requerida, lookup en mock local) | `src/app/app/leads/[leadId]/page.tsx` |
+| Vista compuesta del detalle | `src/components/leads/lead-detail-view.tsx` |
+| Header, resumen, próximo paso, timeline | `lead-detail-header.tsx`, `lead-detail-summary.tsx`, `lead-next-action-panel.tsx`, `lead-timeline-mock.tsx` |
+| Acciones mock, IA mock, compliance mock | `lead-actions-panel.tsx`, `lead-ai-assistant-mock.tsx`, `lead-compliance-mock.tsx` |
+| Navegación desde listado y pipeline | `lead-card.tsx` → `/app/leads/[leadId]` |
+
+Comportamiento:
+
+- **Detalle conceptual**: muestra título, etapa, prioridad, temperatura, estado, resumen, próximo paso (bucket vencido/hoy/sin paso/ninguno), timeline demo y aviso visible de datos no reales.
+- **Acciones mock**: botones deshabilitados (marcar contactado, cambiar etapa, preparar mensaje, compliance, descartar) con mensaje *"Disponible cuando el módulo esté conectado a la base."*
+- **IA mock**: sugerencias locales según etapa, temperatura e interés — sin APIs externas.
+- **Compliance mock**: advertencias preventivas estáticas — sin APIs externas.
+- **Conversión evaluada con helpers**: `canConvertLeadToOpportunity()` y `getLeadConversionReadiness()` determinan si mostrar CTA mock o razones de bloqueo; no crea oportunidad real.
+- **Sin persistencia**: sin Supabase, sin server actions, sin inserts/updates; prepara los handlers futuros reemplazando mocks por mutaciones reales post-aplicación del schema.
+
+---
+
 ## Resumen de decisiones
 
 | Tema | Decisión |
