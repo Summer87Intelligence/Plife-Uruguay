@@ -485,6 +485,26 @@ Comportamiento:
 
 ---
 
+## 12.2 FASE 14H-B — Dev seed and read-only validation
+
+Para validar la lectura real se cargaron 3 leads demo activos en Supabase dev (`ayvnloxijnfnooaefrlm`):
+
+- `Lead Demo Dev Vida 14HB` (`nuevo`)
+- `Lead Demo Dev Empresa 14HB` (`interesado`)
+- `Lead Demo Dev Seguimiento 14HB` (`seguimiento`, vencido)
+
+Resultado:
+
+- `/app/leads` muestra los 3 leads reales y deja de mostrar empty state.
+- `/app/pipeline` distribuye correctamente los 3 leads por columna.
+- `/app/leads/[id]` carga detalle real con resumen y próximo paso desde DB.
+- La UI **sigue sin mutaciones**: `/app/leads/new`, acciones del detalle y pipeline permanecen mock/read-only.
+- Producción y Vercel siguen intactos.
+
+Detalle completo en `docs/product/leads-dev-seed-readonly-14hb.md`.
+
+---
+
 ## Resumen de decisiones
 
 | Tema | Decisión |
