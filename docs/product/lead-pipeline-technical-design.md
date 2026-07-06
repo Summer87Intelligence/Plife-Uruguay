@@ -424,6 +424,28 @@ Comportamiento:
 
 ---
 
+## 12. FASE 14G — Schema applied in Supabase dev
+
+El schema de leads se aplicó **solo en Supabase dev** (`plife-crm`, ref `ayvnloxijnfnooaefrlm`):
+
+| Pieza | Estado |
+|---|---|
+| Tabla `leads` + índices + RLS + grants | Aplicado en dev |
+| Columna `opportunities.lead_id` (nullable) | Aplicado en dev |
+| Migración remota | `leads_schema_fase_14g` |
+| Registro detallado | `docs/product/leads-schema-apply-dev-14g.md` |
+
+Decisiones y límites:
+
+- **UI sigue mock** — `/app/leads` y `/app/pipeline` consumen `MOCK_LEADS` locales; no hay lectura real todavía.
+- **No producción** — no se aplicó en otros proyectos Supabase ni en Vercel.
+- **No migración de datos** — oportunidades/contactos/empresas intactos; `opportunities.lead_id` queda `NULL` en registros existentes.
+- **Smoke dev** — 1 lead demo insertado y soft-deleted para validar schema; ver reporte 14G.
+- **Hallazgo RLS** — soft-delete vía rol `authenticated` bloqueado por interacción `leads_select` + `UPDATE`; resolver antes de server actions de descarte.
+- **Siguiente paso** — regenerar `database.ts` con entidad `Lead` y conectar lectura controlada (sin reemplazar mock completo de inmediato).
+
+---
+
 ## Resumen de decisiones
 
 | Tema | Decisión |
