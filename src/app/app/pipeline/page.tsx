@@ -1,15 +1,16 @@
 import { redirect } from 'next/navigation'
-import { FlaskConical } from 'lucide-react'
+import { Database } from 'lucide-react'
 import { getProfile } from '@/lib/auth'
-import { MOCK_LEADS } from '@/domains/leads/mock-data'
+import { getLeads } from '@/domains/leads/queries'
 import { LeadPipelineBoard } from '@/components/leads/lead-pipeline-board'
 
-// FASE 14D — Tablero conceptual con datos mock locales.
-// Sin queries a Supabase: la tabla `leads` no está aplicada todavía.
+// FASE 14H — Pipeline con lectura real desde Supabase dev (read-only).
 
 export default async function PipelinePage() {
   const profile = await getProfile()
   if (!profile) redirect('/login')
+
+  const leads = await getLeads()
 
   return (
     <div className="space-y-5">
@@ -20,15 +21,24 @@ export default async function PipelinePage() {
         </p>
       </div>
 
-      <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3.5">
-        <FlaskConical className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-        <p className="text-sm text-amber-800">
-          <span className="font-semibold">Pipeline conceptual con datos demo.</span> Todavía no
-          modifica datos reales. El movimiento de etapas llega en fases posteriores.
+      <div className="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 p-3.5">
+        <Database className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+        <p className="text-sm text-blue-800">
+          <span className="font-semibold">Pipeline conectado a Supabase dev en modo lectura.</span>{' '}
+          Sin drag & drop ni cambios de etapa reales todavía.
         </p>
       </div>
 
-      <LeadPipelineBoard leads={MOCK_LEADS} />
+      {leads.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
+          <p className="text-sm font-medium text-gray-700">Todavía no hay leads en el pipeline.</p>
+          <p className="mt-1 text-sm text-gray-500">
+            Los leads reales visibles en dev se agruparán aquí por etapa.
+          </p>
+        </div>
+      ) : (
+        <LeadPipelineBoard leads={leads} />
+      )}
     </div>
   )
 }

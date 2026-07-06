@@ -2,11 +2,11 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { getProfile } from '@/lib/auth'
-import { getMockLeadById } from '@/domains/leads/mock-data'
+import { getLeadById } from '@/domains/leads/queries'
 import { LeadDetailView } from '@/components/leads/lead-detail-view'
 
-// FASE 14F — Detalle conceptual de lead con datos mock locales.
-// Sin Supabase, sin server actions, sin persistencia.
+// FASE 14H — Detalle con lectura real desde Supabase dev (read-only).
+// Acciones, IA/compliance mock y conversión siguen sin mutar datos.
 
 export default async function LeadDetailPage({
   params,
@@ -17,15 +17,16 @@ export default async function LeadDetailPage({
   const profile = await getProfile()
   if (!profile) redirect('/login')
 
-  const lead = getMockLeadById(leadId)
+  const lead = await getLeadById(leadId)
 
   if (!lead) {
     return (
       <div className="mx-auto max-w-lg space-y-4 py-12 text-center">
-        <h1 className="text-xl font-bold text-gray-900">Lead demo no encontrado</h1>
+        <h1 className="text-xl font-bold text-gray-900">Lead no encontrado o sin acceso</h1>
         <p className="text-sm text-gray-500">
           El identificador <code className="rounded bg-gray-100 px-1.5 py-0.5 text-xs">{leadId}</code>{' '}
-          no corresponde a ningún lead demo del catálogo local.
+          no corresponde a un lead visible en Supabase dev para tu usuario, o fue eliminado
+          lógicamente.
         </p>
         <Link
           href="/app/leads"
@@ -38,5 +39,5 @@ export default async function LeadDetailPage({
     )
   }
 
-  return <LeadDetailView lead={lead} />
+  return <LeadDetailView lead={lead} dataSource="dev-readonly" />
 }

@@ -8,7 +8,24 @@ import { LeadActionsPanel } from './lead-actions-panel'
 import { LeadAIAssistantMock } from './lead-ai-assistant-mock'
 import { LeadComplianceMock } from './lead-compliance-mock'
 
-export function LeadDetailView({ lead }: { lead: MockLead }) {
+interface LeadDetailViewProps {
+  lead: MockLead
+  /** FASE 14H — banner según origen de datos */
+  dataSource?: 'mock' | 'dev-readonly'
+}
+
+export function LeadDetailView({ lead, dataSource = 'mock' }: LeadDetailViewProps) {
+  const banner =
+    dataSource === 'dev-readonly'
+      ? {
+          title: 'Detalle conectado a Supabase dev.',
+          body: 'Acciones todavía no modifican datos.',
+        }
+      : {
+          title: 'Detalle conceptual con datos demo.',
+          body: 'Todavía no modifica datos reales.',
+        }
+
   return (
     <div className="space-y-5">
       <LeadDetailHeader lead={lead} />
@@ -16,8 +33,7 @@ export function LeadDetailView({ lead }: { lead: MockLead }) {
       <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3.5">
         <FlaskConical className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
         <p className="text-sm text-amber-800">
-          <span className="font-semibold">Detalle conceptual con datos demo.</span> Todavía no modifica
-          datos reales.
+          <span className="font-semibold">{banner.title}</span> {banner.body}
         </p>
       </div>
 

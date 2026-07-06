@@ -1,17 +1,19 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { FlaskConical, Plus } from 'lucide-react'
+import { Database, Plus } from 'lucide-react'
 import { getProfile } from '@/lib/auth'
-import { MOCK_LEADS } from '@/domains/leads/mock-data'
+import { getLeads } from '@/domains/leads/queries'
 import { LeadFollowUpSummary } from '@/components/leads/lead-follow-up-summary'
 import { LeadList } from '@/components/leads/lead-list'
 
-// FASE 14D — Vista conceptual con datos mock locales.
-// Sin queries a Supabase: la tabla `leads` no está aplicada todavía.
+// FASE 14H — Lectura real de leads desde Supabase dev (read-only).
+// Creación y mutaciones siguen en modo mock.
 
 export default async function LeadsPage() {
   const profile = await getProfile()
   if (!profile) redirect('/login')
+
+  const leads = await getLeads()
 
   return (
     <div className="space-y-5">
@@ -34,17 +36,34 @@ export default async function LeadsPage() {
         </Link>
       </div>
 
-      <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3.5">
-        <FlaskConical className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-        <p className="text-sm text-amber-800">
-          <span className="font-semibold">Vista conceptual con datos demo.</span> El módulo Leads
-          todavía no está conectado a la base. Nada de lo que se muestra modifica datos reales.
+      <div className="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 p-3.5">
+        <Database className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+        <p className="text-sm text-blue-800">
+          <span className="font-semibold">Leads conectados a Supabase dev.</span> Creación y acciones
+          siguen en modo mock. Solo lectura bajo RLS del usuario autenticado.
         </p>
       </div>
 
-      <LeadFollowUpSummary leads={MOCK_LEADS} />
-
-      <LeadList leads={MOCK_LEADS} />
+      {leads.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
+          <p className="text-sm font-medium text-gray-700">Todavía no hay leads reales cargados.</p>
+          <p className="mt-1 text-sm text-gray-500">
+            Cuando existan registros en dev visibles para tu usuario, aparecerán aquí.
+          </p>
+          <p className="mt-3 text-xs text-gray-400">
+            Podés usar{' '}
+            <Link href="/app/leads/new" className="text-[#1B3A6B] hover:underline">
+              Nuevo lead (Mock)
+            </Link>{' '}
+            para probar el formulario sin persistencia.
+          </p>
+        </div>
+      ) : (
+        <>
+          <LeadFollowUpSummary leads={leads} />
+          <LeadList leads={leads} />
+        </>
+      )}
     </div>
   )
 }

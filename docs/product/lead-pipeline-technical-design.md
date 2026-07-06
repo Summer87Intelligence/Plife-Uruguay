@@ -437,7 +437,7 @@ El schema de leads se aplicó **solo en Supabase dev** (`plife-crm`, ref `ayvnlo
 
 Decisiones y límites:
 
-- **UI sigue mock** — `/app/leads` y `/app/pipeline` consumen `MOCK_LEADS` locales; no hay lectura real todavía.
+- **UI sigue mock** — `/app/leads` y `/app/pipeline` consumían `MOCK_LEADS` locales; lectura real llega en 14H.
 - **No producción** — no se aplicó en otros proyectos Supabase ni en Vercel.
 - **No migración de datos** — oportunidades/contactos/empresas intactos; `opportunities.lead_id` queda `NULL` en registros existentes.
 - **Smoke dev** — 1 lead demo insertado y soft-deleted para validar schema; ver reporte 14G.
@@ -458,6 +458,30 @@ Se analizó y documentó el bug RLS de soft-delete en dev:
 - **Alcance**: cambio aplicado **solo en Supabase dev** (`ayvnloxijnfnooaefrlm`). Producción y Vercel siguen intactos. La UI continúa en modo mock sobre `MOCK_LEADS`.
 
 Detalle en `docs/product/leads-rls-soft-delete-fix-14gb.md`.
+
+---
+
+## 13. FASE 14H — Read-only leads from Supabase dev
+
+Se conectó lectura real de leads en dev sin habilitar mutaciones:
+
+| Pieza | Ubicación |
+|---|---|
+| Queries read-only (RLS, sin service role) | `src/domains/leads/queries.ts` |
+| Listado | `src/app/app/leads/page.tsx` → `getLeads()` |
+| Pipeline | `src/app/app/pipeline/page.tsx` → `getLeads()` |
+| Detalle | `src/app/app/leads/[leadId]/page.tsx` → `getLeadById()` |
+| Tipos DB | `src/types/database.ts` — `Lead`, `leads`, `opportunities.lead_id` |
+| Estado dev | `docs/product/leads-dev-schema-state-14h.md` |
+
+Comportamiento:
+
+- **Lectura real**: rutas principales consultan Supabase dev (`ayvnloxijnfnooaefrlm`) con cliente server anon + sesión; filtro `deleted_at IS NULL`.
+- **Empty state**: si no hay leads visibles, mensaje claro sin mezclar `MOCK_LEADS`.
+- **Banners**: indican conexión dev y que creación/acciones siguen mock.
+- **Detalle**: resumen y próximo paso desde DB; timeline, IA, compliance y acciones siguen mock/deshabilitadas.
+- **Sin mutaciones**: `/app/leads/new` no inserta; pipeline sin drag/drop; soft-delete no conectado.
+- **`MOCK_LEADS`**: conservado en repo, no usado en rutas principales.
 
 ---
 

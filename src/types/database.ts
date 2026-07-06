@@ -133,12 +133,47 @@ export interface Opportunity {
   company_id: string | null
   assigned_to: string | null
   campaign_id: string | null
+  lead_id: string | null
   last_activity_at: string | null
   deleted_at: string | null
   created_at: string
   updated_at: string
   created_by: string | null
   updated_by: string | null
+}
+
+export interface Lead {
+  id: string
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+  assigned_to: string | null
+  created_by: string | null
+  title: string
+  display_name: string | null
+  lead_type: string
+  source: string
+  status: string
+  pipeline_stage: string
+  priority: string
+  temperature: string
+  interest_area: string | null
+  phone: string | null
+  email: string | null
+  company_name_raw: string | null
+  person_name_raw: string | null
+  company_id: string | null
+  contact_id: string | null
+  campaign_id: string | null
+  radar_source_id: string | null
+  opportunity_id: string | null
+  next_action: string | null
+  next_action_date: string | null
+  notes: string | null
+  converted_at: string | null
+  discarded_at: string | null
+  discard_reason: string | null
+  metadata: Json
 }
 
 export interface OpportunityWithRelations extends Opportunity {
@@ -508,10 +543,19 @@ export interface Database {
         Rel<'contacts_assigned_to_fkey', 'assigned_to', 'profiles'>,
       ]>
       companies: TableDef<Company>
+      leads: TableDef<Lead, [
+        Rel<'leads_assigned_to_fkey', 'assigned_to', 'profiles'>,
+        Rel<'leads_created_by_fkey', 'created_by', 'profiles'>,
+        Rel<'leads_company_id_fkey', 'company_id', 'companies'>,
+        Rel<'leads_contact_id_fkey', 'contact_id', 'contacts'>,
+        Rel<'leads_campaign_id_fkey', 'campaign_id', 'campaigns'>,
+        Rel<'leads_opportunity_id_fkey', 'opportunity_id', 'opportunities'>,
+      ]>
       opportunities: TableDef<Opportunity, [
         Rel<'opportunities_contact_id_fkey', 'contact_id', 'contacts'>,
         Rel<'opportunities_company_id_fkey', 'company_id', 'companies'>,
         Rel<'opportunities_assigned_to_fkey', 'assigned_to', 'profiles'>,
+        Rel<'opportunities_lead_id_fkey', 'lead_id', 'leads'>,
       ]>
       activities: TableDef<Activity, [Rel<'activities_created_by_fkey', 'created_by', 'profiles'>]>
       notes: TableDef<Note>
