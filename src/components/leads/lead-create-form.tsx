@@ -1,11 +1,10 @@
 'use client'
 
-// FASE 14E — Formulario conceptual de creación de lead.
-// NO persiste: sin Supabase, sin server actions. El submit arma un preview local.
+// FASE 14I — Creación real de lead en Supabase dev vía server action.
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { CheckCircle2, FlaskConical, RotateCcw } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Info, RotateCcw } from 'lucide-react'
 import { Input, Textarea } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
@@ -16,8 +15,7 @@ import {
   LEAD_PRIORITY_LABELS,
   LEAD_TEMPERATURE_LABELS,
 } from '@/domains/leads'
-import type { MockLead } from '@/domains/leads/mock-data'
-import { LeadCard } from './lead-card'
+import { createLeadAction } from '@/domains/leads/actions'
 
 interface FormState {
   title: string
@@ -56,14 +54,17 @@ function toOptions(labels: Record<string, string>) {
 export function LeadCreateForm() {
   const [form, setForm] = useState<FormState>(INITIAL_STATE)
   const [errors, setErrors] = useState<{ title?: string; email?: string }>({})
-  const [preview, setPreview] = useState<MockLead | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [createdLeadId, setCreatedLeadId] = useState<string | null>(null)
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    setSubmitError(null)
 
     const nextErrors: typeof errors = {}
     if (!form.title.trim()) nextErrors.title = 'El título es obligatorio.'
@@ -73,68 +74,72 @@ export function LeadCreateForm() {
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) return
 
-    const now = new Date().toISOString()
-    setPreview({
-      id: 'demo-preview',
-      title: form.title.trim(),
-      display_name: null,
-      lead_type: form.lead_type,
-      source: form.source,
-      status: 'open',
-      pipeline_stage: 'nuevo',
-      priority: form.priority,
-      temperature: form.temperature,
-      interest_area: form.interest_area.trim() || null,
-      next_action: form.next_action.trim() || null,
-      next_action_date: form.next_action_date || null,
-      assigned_to: 'demo-advisor',
-      created_at: now,
-      updated_at: now,
-      converted_at: null,
-      discarded_at: null,
-    })
+    setLoading(true)
+    try {
+      const result = await createLeadAction({
+        title: form.title,
+        lead_type: form.lead_type,
+        source: form.source,
+        interest_area: form.interest_area || undefined,
+        phone: form.phone || undefined,
+        email: form.email || undefined,
+        priority: form.priority,
+        temperature: form.temperature,
+        next_action: form.next_action || undefined,
+        next_action_date: form.next_action_date || undefined,
+        notes: form.notes || undefined,
+      })
+
+      if (!result.success) {
+        setSubmitError(result.error)
+        return
+      }
+
+      setCreatedLeadId(result.id)
+    } catch {
+      setSubmitError('No se pudo crear el lead. Intentá de nuevo.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   function reset() {
     setForm(INITIAL_STATE)
     setErrors({})
-    setPreview(null)
+    setSubmitError(null)
+    setCreatedLeadId(null)
   }
 
-  if (preview) {
+  if (createdLeadId) {
     return (
       <div className="space-y-4">
         <div className="flex items-start gap-2.5 rounded-xl border border-green-200 bg-green-50 p-3.5">
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
-          <p className="text-sm text-green-800">
-            <span className="font-semibold">Lead demo preparado.</span> La persistencia real se
-            implementará en una fase posterior.
-          </p>
-        </div>
-
-        <div className="max-w-sm">
-          <LeadCard lead={preview} />
-        </div>
-
-        {(form.phone || form.email || form.notes) && (
-          <div className="rounded-xl border border-gray-100 bg-white p-4 text-sm text-gray-600">
-            {form.phone && <p><span className="font-medium text-gray-700">Teléfono:</span> {form.phone}</p>}
-            {form.email && <p><span className="font-medium text-gray-700">Email:</span> {form.email}</p>}
-            {form.notes && <p className="mt-1"><span className="font-medium text-gray-700">Notas:</span> {form.notes}</p>}
+          <div className="text-sm text-green-800">
+            <p className="font-semibold">Lead creado en Supabase dev.</p>
+            <p className="mt-1">
+              ID: <span className="font-mono text-xs">{createdLeadId}</span>
+            </p>
           </div>
-        )}
+        </div>
 
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={reset}>
-            <RotateCcw className="h-4 w-4" />
-            Crear otro lead demo
-          </Button>
+          <Link
+            href={`/app/leads/${createdLeadId}`}
+            className="inline-flex h-9 items-center justify-center rounded-lg bg-[#1B3A6B] px-4 text-sm font-medium text-white transition-colors hover:bg-[#2A5298]"
+          >
+            Ver detalle del lead
+          </Link>
           <Link
             href="/app/leads"
             className="inline-flex h-9 items-center justify-center rounded-lg bg-gray-100 px-4 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-200"
           >
             Volver a Leads
           </Link>
+          <Button variant="outline" onClick={reset}>
+            <RotateCcw className="h-4 w-4" />
+            Crear otro lead
+          </Button>
         </div>
       </div>
     )
@@ -142,13 +147,20 @@ export function LeadCreateForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-      <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 p-3.5">
-        <FlaskConical className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-        <p className="text-sm text-amber-800">
-          <span className="font-semibold">Formulario conceptual.</span> Todavía no guarda datos
-          reales.
+      <div className="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 p-3.5">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+        <p className="text-sm text-blue-800">
+          Crear lead guardará el registro en Supabase dev. Acciones posteriores siguen
+          deshabilitadas.
         </p>
       </div>
+
+      {submitError && (
+        <div className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3.5">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+          <p className="text-sm text-red-800">{submitError}</p>
+        </div>
+      )}
 
       <Input
         label="Título *"
@@ -240,7 +252,9 @@ export function LeadCreateForm() {
       />
 
       <div className="flex flex-wrap gap-2">
-        <Button type="submit">Preparar lead demo</Button>
+        <Button type="submit" loading={loading} disabled={loading}>
+          Crear lead
+        </Button>
         <Link
           href="/app/leads"
           className="inline-flex h-9 items-center justify-center rounded-lg px-4 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100"

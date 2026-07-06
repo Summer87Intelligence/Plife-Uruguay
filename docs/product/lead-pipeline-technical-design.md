@@ -505,6 +505,30 @@ Detalle completo en `docs/product/leads-dev-seed-readonly-14hb.md`.
 
 ---
 
+## 14. FASE 14I — Real lead creation in dev
+
+Se habilitó la creación real de leads desde la UI en **Supabase dev** sin service role:
+
+| Pieza | Ubicación |
+|---|---|
+| Server action | `src/domains/leads/actions.ts` — `createLeadAction` |
+| Validación Zod | `src/domains/leads/validation.ts` |
+| Formulario | `src/components/leads/lead-create-form.tsx` |
+| Ruta | `src/app/app/leads/new/page.tsx` |
+| Tests unitarios | `tests/unit/leads.test.ts` |
+| Documentación | `docs/product/leads-create-action-14i.md` |
+
+Comportamiento:
+
+- **INSERT authenticated**: `createLeadAction` usa cliente server anon + sesión; RLS exige `created_by = auth.uid()` y `assigned_to = auth.uid()`.
+- **Campos controlados por server**: `created_by`, `assigned_to`, `status=open`, `pipeline_stage=nuevo`, defaults de tipo/origen/prioridad/temperatura.
+- **Sin service role**: no se usa `SUPABASE_SERVICE_ROLE_KEY`.
+- **Revalidación**: tras crear, `revalidatePath('/app/leads')` y `revalidatePath('/app/pipeline')`.
+- **Sin update/delete**: detalle, pipeline drag/drop, conversión, descarte y soft-delete siguen sin mutación real.
+- **Producción / Vercel**: no tocados.
+
+---
+
 ## Resumen de decisiones
 
 | Tema | Decisión |

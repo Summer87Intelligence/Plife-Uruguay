@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildLeadInsertRow,
+  CreateLeadInputSchema,
+  LEAD_CREATE_DEFAULTS,
+} from '@/domains/leads/validation'
+import {
   LEAD_PIPELINE_ORDER,
   LEAD_PIPELINE_STAGE_LABELS,
   TERMINAL_LEAD_STAGES,
@@ -45,6 +50,55 @@ function makeLead(overrides: Partial<LeadLike>): LeadLike {
 }
 
 const TODAY = new Date(2026, 6, 6) // 2026-07-06 local
+
+describe('CreateLeadInputSchema', () => {
+  it('accepts minimal valid input', () => {
+    const parsed = CreateLeadInputSchema.safeParse({ title: 'Lead mínimo' })
+    expect(parsed.success).toBe(true)
+    if (!parsed.success) return
+    expect(parsed.data.title).toBe('Lead mínimo')
+  })
+
+  it('rejects empty title', () => {
+    const parsed = CreateLeadInputSchema.safeParse({ title: '  ' })
+    expect(parsed.success).toBe(false)
+  })
+
+  it('rejects invalid email', () => {
+    const parsed = CreateLeadInputSchema.safeParse({
+      title: 'Lead con email',
+      email: 'no-es-email',
+    })
+    expect(parsed.success).toBe(false)
+  })
+
+  it('applies expected defaults in insert row', () => {
+    const parsed = CreateLeadInputSchema.parse({ title: 'Lead demo' })
+    const row = buildLeadInsertRow(parsed, 'user-abc')
+    expect(row).toMatchObject({
+      title: 'Lead demo',
+      lead_type: LEAD_CREATE_DEFAULTS.lead_type,
+      source: LEAD_CREATE_DEFAULTS.source,
+      priority: LEAD_CREATE_DEFAULTS.priority,
+      temperature: LEAD_CREATE_DEFAULTS.temperature,
+      status: 'open',
+      pipeline_stage: 'nuevo',
+      created_by: 'user-abc',
+      assigned_to: 'user-abc',
+    })
+  })
+
+  it('rejects server-controlled fields from client input', () => {
+    const parsed = CreateLeadInputSchema.safeParse({
+      title: 'Lead con stage',
+      pipeline_stage: 'convertido',
+      status: 'converted',
+      created_by: 'otro-user',
+      assigned_to: 'otro-user',
+    })
+    expect(parsed.success).toBe(false)
+  })
+})
 
 describe('labels', () => {
   it('has a Spanish label for every pipeline stage', () => {

@@ -4,8 +4,7 @@ import { ArrowLeft } from 'lucide-react'
 import { getProfile } from '@/lib/auth'
 import { LeadCreateForm } from '@/components/leads/lead-create-form'
 
-// FASE 14E — Alta conceptual de lead. Sin persistencia: la tabla `leads`
-// no está aplicada y no existen server actions para este módulo.
+// FASE 14I — Alta real de lead en Supabase dev (INSERT authenticated vía server action).
 
 export default async function NewLeadPage() {
   const profile = await getProfile()
@@ -23,7 +22,10 @@ export default async function NewLeadPage() {
         </Link>
         <h1 className="mt-2 text-xl font-bold text-gray-900">Nuevo lead</h1>
         <p className="mt-0.5 text-sm text-gray-500">
-          Registrá el interés inicial. No hace falta empresa ni contacto para empezar.
+          Registrá el interés inicial. La creación real está habilitada en entorno dev.
+        </p>
+        <p className="mt-1 text-sm text-gray-400">
+          Convertir, descartar o mover etapas en pipeline todavía no modifica datos.
         </p>
       </div>
 
