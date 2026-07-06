@@ -351,6 +351,27 @@ Se agregó la capa de dominio `src/domains/leads/` — **TypeScript puro, sin de
 
 ---
 
+## 9. FASE 14D — Mock UI
+
+Se creó la UI conceptual de Leads y Pipeline con **datos mock locales, sin Supabase**:
+
+| Pieza | Ubicación |
+|---|---|
+| Datos demo (10 leads "Lead Demo …" cubriendo las 8 etapas) | `src/domains/leads/mock-data.ts` |
+| Badges de etapa/prioridad/temperatura, card, listado con filtros, tablero, resumen de seguimiento | `src/components/leads/*` |
+| Página Leads (resumen + filtros + listado, CTA "Nuevo lead" deshabilitado hasta 14E) | `src/app/app/leads/page.tsx` |
+| Página Pipeline (tablero por etapas, sin drag & drop todavía) | `src/app/app/pipeline/page.tsx` |
+| Sidebar: ítems Leads y Pipeline agregados tras PLIFE Hoy | `src/components/layout/app-sidebar.tsx` |
+
+Alcance y límites:
+
+- **No modifica datos**: no hay queries ni inserts a Supabase para leads; las fechas demo se calculan en runtime para que "vencido/hoy" sigan siendo ilustrativas.
+- **Valida navegación y UX** del modelo Lead-first antes de aplicar el schema (14B sigue draft).
+- Ambas páginas requieren usuario autenticado (mismo patrón `getProfile()` del resto de `/app`) y muestran aviso visible de vista conceptual.
+- **Compatibilidad**: Contactos, Empresas y Oportunidades permanecen intactos en menú y funcionamiento; los componentes consumen los helpers de 14C sin lógica duplicada.
+
+---
+
 ## Resumen de decisiones
 
 | Tema | Decisión |

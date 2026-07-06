@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   Home, Users, Building2, TrendingUp, Radar, Megaphone,
   Bot, BookOpen, ShieldCheck, GraduationCap, BarChart3, Settings,
-  Route as RouteIcon, Database, Cpu,
+  Route as RouteIcon, Database, Cpu, Inbox, Columns3,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Avatar } from '@/components/ui/avatar'
@@ -16,11 +16,13 @@ import type { Profile } from '@/types/database'
 const icons = {
   Home, Users, Building2, TrendingUp, Radar, Megaphone,
   Bot, BookOpen, ShieldCheck, GraduationCap, BarChart3, Settings,
-  RouteIcon, Database, Cpu,
+  RouteIcon, Database, Cpu, Inbox, Columns3,
 }
 
 const navItems = [
   { href: '/app/hoy',            label: 'PLIFE Hoy',          icon: 'Home' },
+  { href: '/app/leads',          label: 'Leads',              icon: 'Inbox' },
+  { href: '/app/pipeline',       label: 'Pipeline',           icon: 'Columns3' },
   { href: '/app/contactos',      label: 'Contactos',          icon: 'Users' },
   { href: '/app/empresas',       label: 'Empresas',           icon: 'Building2' },
   { href: '/app/oportunidades',  label: 'Oportunidades',      icon: 'TrendingUp' },
