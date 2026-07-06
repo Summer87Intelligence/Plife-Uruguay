@@ -446,6 +446,21 @@ Decisiones y límites:
 
 ---
 
+## 12.1 FASE 14G-B — Soft-delete RLS fix (dev)
+
+Se analizó y documentó el bug RLS de soft-delete en dev:
+
+- **Bug**: `UPDATE deleted_at` como rol `authenticated` en `leads` sigue fallando con `42501` porque Postgres evalúa `leads_select` sobre la fila nueva (`deleted_at IS NULL` deja de cumplirse).
+- **Fix aplicado**: se creó el patch `supabase/leads-rls-soft-delete-fix-14gb.sql` (migración `leads_rls_soft_delete_fix_14gb*`) que documenta y refuerza la política `leads_update` para owner/admin sin abrir `DELETE` físico ni relajar `leads_select`.
+- **Estado actual**:
+  - Soft-delete vía service/admin (rol elevado) funciona y sigue ocultando filas con `deleted_at` no null.
+  - Soft-delete directo desde UI usando solo rol `authenticated` continúa bloqueado por diseño de RLS y requiere una función `SECURITY DEFINER` o ajuste adicional en una fase posterior.
+- **Alcance**: cambio aplicado **solo en Supabase dev** (`ayvnloxijnfnooaefrlm`). Producción y Vercel siguen intactos. La UI continúa en modo mock sobre `MOCK_LEADS`.
+
+Detalle en `docs/product/leads-rls-soft-delete-fix-14gb.md`.
+
+---
+
 ## Resumen de decisiones
 
 | Tema | Decisión |
