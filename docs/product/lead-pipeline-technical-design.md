@@ -372,6 +372,25 @@ Alcance y límites:
 
 ---
 
+## 10. FASE 14E — Mock lead creation form
+
+Se agregó el alta conceptual de leads, **sin persistencia**:
+
+| Pieza | Ubicación |
+|---|---|
+| Formulario client-side con estado local | `src/components/leads/lead-create-form.tsx` |
+| Ruta de alta (auth requerida, link de vuelta a Leads) | `src/app/app/leads/new/page.tsx` |
+| CTA "Nuevo lead" activado hacia `/app/leads/new` con etiqueta "Mock" | `src/app/app/leads/page.tsx` |
+
+Comportamiento:
+
+- **No persiste datos**: sin Supabase, sin server actions; el submit arma un preview local (`LeadCard`) con el mensaje "Lead demo preparado. La persistencia real se implementará en una fase posterior."
+- **Valida carga mínima**: `title` obligatorio; email con formato básico si se completa; próximo paso sin fecha permitido con ayuda contextual ("Más adelante PLIFE Hoy podrá usar la fecha para recordatorios.").
+- **Mantiene Lead-first**: no exige empresa ni contacto al inicio — solo título y clasificación progresiva (tipo, origen, prioridad, temperatura con defaults del schema 14B).
+- **Prepara la server action futura**: el shape del estado del form coincide con los campos de creación mínima definidos en §2; al implementar persistencia (post-aplicación del schema) solo se reemplaza el handler del submit.
+
+---
+
 ## Resumen de decisiones
 
 | Tema | Decisión |
