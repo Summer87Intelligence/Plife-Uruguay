@@ -164,7 +164,7 @@ La rama `feat/operational-readiness` tiene **17 commits locales sin push** que i
 3. **Drag & drop de pipeline: pendiente.** El tablero es read-only.
 4. **Tipos Supabase regenerados manualmente.** `src/types/database.ts` se editó a mano por falta de `SUPABASE_ACCESS_TOKEN`; regenerar con CLI autenticado cuando haya token.
 5. **Schema aplicado solo en dev, no en producción.** La aplicación a producción requiere seguir `leads-schema-apply-guide.md` con autorización explícita.
-6. **Inconsistencia menor de copy (no bloqueante).** `/app/leads` aún muestra badge "Mock" y texto "Creación y acciones siguen en modo mock", pese a que la creación real ya está habilitada (14I). Ajuste de texto recomendado.
+6. **Inconsistencia menor de copy — RESUELTO en FASE 14L-B.** `/app/leads` mostraba badge "Mock" y texto "Creación y acciones siguen en modo mock" pese a la creación real (14I). Corregido: badge "Dev", aviso "Creación real habilitada en Supabase dev. Conversión, descarte y movimientos de pipeline siguen deshabilitados." Sin cambios de lógica.
 7. **Feature no lista para `main`/producción.** El conjunto es coherente como rama feature en progreso, no como release productivo.
 8. **Smoke autenticado interactivo pendiente** (ver sección 8).
 
@@ -180,7 +180,7 @@ La rama `feat/operational-readiness` tiene **17 commits locales sin push** que i
   - cerrar conversión real, decisión sobre soft-delete y drag/drop;
   - regenerar tipos con CLI autenticado;
   - aplicar schema a producción con autorización y guía;
-  - completar smoke autenticado interactivo;
-  - corregir copy "Mock" de `/app/leads`.
+  - completar smoke autenticado interactivo.
+  - ~~corregir copy "Mock" de `/app/leads`~~ (resuelto en FASE 14L-B).
 
 > Esta auditoría no ejecutó push, merge, cambios en producción, Vercel, `.env` ni SQL nuevo. No se usó service role.

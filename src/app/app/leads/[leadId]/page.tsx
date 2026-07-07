@@ -5,8 +5,8 @@ import { getProfile } from '@/lib/auth'
 import { getLeadById } from '@/domains/leads/queries'
 import { LeadDetailView } from '@/components/leads/lead-detail-view'
 
-// FASE 14H — Detalle con lectura real desde Supabase dev (read-only).
-// Acciones, IA/compliance mock y conversión siguen sin mutar datos.
+// FASE 14L-B — Detalle con lectura y update operativo real desde Supabase dev.
+// IA/compliance mock, conversión y descarte siguen deshabilitados.
 
 export default async function LeadDetailPage({
   params,
