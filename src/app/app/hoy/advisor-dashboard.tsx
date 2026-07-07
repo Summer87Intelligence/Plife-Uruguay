@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { StatCard } from '@/components/ui/stat-card'
 import { GettingStartedCard } from '@/components/onboarding/getting-started-card'
 import { isDemoMode } from '@/lib/demo'
-import { AlertCircle, Calendar, TrendingUp, Building2, Bot, CheckCircle2, Megaphone, Clock } from 'lucide-react'
+import { AlertCircle, Calendar, TrendingUp, Building2, Plus, CheckCircle2, Megaphone, Clock } from 'lucide-react'
 import { SectionGuideCard } from '@/components/guidance/section-guide-card'
 import { FollowUpCenter } from '@/components/follow-up/follow-up-center'
 import type { FollowUpOpp } from '@/components/follow-up/follow-up-center'
@@ -46,8 +46,8 @@ export function AdvisorDashboard({
           <h1 className="text-xl font-bold text-gray-900">{greeting}, {profile.full_name.split(' ')[0]}</h1>
           <p className="text-sm text-gray-500 mt-0.5">Tu tablero de hoy: oportunidades, campañas y próximos pasos comerciales.</p>
         </div>
-        <Link href="/app/copiloto">
-          <Button><Bot className="h-4 w-4" />Preparar contacto con IA</Button>
+        <Link href="/app/leads/new">
+          <Button><Plus className="h-4 w-4" />Nuevo lead</Button>
         </Link>
       </div>
 
@@ -138,23 +138,23 @@ export function AdvisorDashboard({
           title="Cómo avanzar hoy"
           description="El sistema funciona mejor cuando hay datos cargados. Seguí estos pasos para activar el flujo comercial completo."
           steps={[
-            'Empresa — cargá una organización o cliente potencial',
-            'Contacto — asociá la persona clave dentro de esa empresa',
-            'Oportunidad — creá una cuando exista una conversación comercial concreta',
-            'Seguimiento — definí el próximo paso y una fecha',
+            'Lead — cargá un contacto o empresa potencial',
+            'Pipeline — hacé avanzar el lead por sus etapas',
+            'Propuesta — usá los motores para preparar un borrador',
+            'Campaña — coordiná el esfuerzo comercial por segmento',
             'Motores — usá el análisis para preparar el contacto o mensaje',
             'Dirección — revisá el foco del equipo con métricas',
           ]}
-          primaryActionLabel="Ver empresas"
-          primaryActionHref="/app/empresas"
-          nextStep="Siguiente: crear oportunidad"
+          primaryActionLabel="Nuevo lead"
+          primaryActionHref="/app/leads/new"
+          nextStep="Siguiente: ver pipeline"
         />
       ) : (
         <SectionGuideCard
           title="Flujo recomendado"
-          description="Trabajá desde empresas y contactos hacia oportunidades con próximo paso definido. Usá los Motores como apoyo para preparar seguimiento y Dirección para revisar foco."
-          primaryActionLabel="Ver oportunidades"
-          primaryActionHref="/app/oportunidades"
+          description="Trabajá desde Leads y el Pipeline hacia una Propuesta con próximo paso definido. Usá los Motores como apoyo para preparar la propuesta y Dirección para revisar foco."
+          primaryActionLabel="Ver pipeline"
+          primaryActionHref="/app/pipeline"
           secondaryActionLabel="Abrir Motores"
           secondaryActionHref="/app/ia"
           compact

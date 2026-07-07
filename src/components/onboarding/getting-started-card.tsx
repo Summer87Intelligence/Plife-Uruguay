@@ -1,31 +1,32 @@
 import Link from 'next/link'
 import type { Route } from 'next'
-import { Building2, Users, TrendingUp, Megaphone, ArrowRight, Compass } from 'lucide-react'
+import { Inbox, Columns3, FileText, Megaphone, ArrowRight, Compass } from 'lucide-react'
 
+// FASE 15G — Onboarding orientado al foco actual: Lead-first + Propuestas.
 const steps = [
   {
     n: 1,
-    icon: Building2,
-    title: 'Crear una empresa',
-    desc: 'La empresa es la base del seguimiento comercial.',
-    cta: 'Crear empresa',
-    href: '/app/empresas' as Route,
+    icon: Inbox,
+    title: 'Crear un lead',
+    desc: 'El lead es el punto de partida del trabajo comercial.',
+    cta: 'Nuevo lead',
+    href: '/app/leads/new' as Route,
   },
   {
     n: 2,
-    icon: Users,
-    title: 'Agregar un contacto',
-    desc: 'El contacto es la persona real con la que va a hablar el asesor.',
-    cta: 'Agregar contacto',
-    href: '/app/contactos' as Route,
+    icon: Columns3,
+    title: 'Avanzar el pipeline',
+    desc: 'Hacé avanzar el lead por sus etapas comerciales.',
+    cta: 'Ver pipeline',
+    href: '/app/pipeline' as Route,
   },
   {
     n: 3,
-    icon: TrendingUp,
-    title: 'Crear una oportunidad',
-    desc: 'La oportunidad representa una conversación comercial concreta.',
-    cta: 'Crear oportunidad',
-    href: '/app/oportunidades' as Route,
+    icon: FileText,
+    title: 'Preparar una propuesta',
+    desc: 'Usá los motores para armar un borrador conceptual.',
+    cta: 'Nueva propuesta',
+    href: '/app/propuestas/nueva' as Route,
   },
   {
     n: 4,
@@ -50,7 +51,7 @@ export function GettingStartedCard({ mode = 'empty' }: GettingStartedCardProps) 
       </div>
       <p className="text-xs text-gray-500 mb-4">
         {mode === 'demo'
-          ? 'Estás viendo datos de ejemplo. En uso real, el sistema empieza cargando una empresa, un contacto y una oportunidad.'
+          ? 'Estás viendo datos de ejemplo. En uso real, el sistema empieza cargando un lead y haciéndolo avanzar por el pipeline.'
           : 'Todavía no hay datos cargados. Empezá por estos pasos para activar el sistema.'}
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">

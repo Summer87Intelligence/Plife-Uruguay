@@ -12,6 +12,11 @@
 > detalle de campaña; cards "Crear desde" en `/app/propuestas`. El generador usa el
 > contexto de origen. CTA por-ítem en radar queda pendiente. Detalle en
 > [`proposals-contextual-entry-15f.md`](./proposals-contextual-entry-15f.md).
+>
+> **Resultado FASE 15G (ejecutada):** Propuestas queda en el menú principal simplificado
+> (8 secciones). El home `/app/hoy` ahora prioriza "Nuevo lead", "Ver pipeline" y
+> "Nueva propuesta". Detalle en
+> [`navigation-simplification-15g.md`](./navigation-simplification-15g.md).
 
 ---
 

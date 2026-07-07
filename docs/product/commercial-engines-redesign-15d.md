@@ -16,6 +16,12 @@
 > **Resultado FASE 15F (ejecutada):** las propuestas pueden nacer desde Lead, Campaña,
 > Radar u observación manual (prefill por query params + CTAs contextuales). Detalle en
 > [`proposals-contextual-entry-15f.md`](./proposals-contextual-entry-15f.md).
+>
+> **Resultado FASE 15G (ejecutada):** se simplificó el menú principal a 8 secciones
+> (PLIFE Hoy, Leads, Pipeline, Propuestas, Campañas, Motores, Dirección, Admin).
+> Empresas, Contactos, Oportunidades, Radar B2B, Copiloto, Conocimiento, Academia y
+> Estado del sistema se ocultaron del sidebar (rutas conservadas). Detalle en
+> [`navigation-simplification-15g.md`](./navigation-simplification-15g.md).
 
 ---
 

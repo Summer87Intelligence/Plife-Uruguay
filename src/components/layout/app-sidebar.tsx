@@ -19,24 +19,43 @@ const icons = {
   RouteIcon, Database, Cpu, Inbox, Columns3, FileText,
 }
 
+// FASE 15G — Navegación simplificada. El menú visible se reduce al foco actual
+// (Lead-first + Propuestas + Motores). Las rutas NO se borran: siguen accesibles
+// por URL directa y desde widgets/quick actions; solo se ocultan del sidebar.
+// El orden define el menú visible recomendado.
 const navItems = [
   { href: '/app/hoy',            label: 'PLIFE Hoy',          icon: 'Home' },
   { href: '/app/leads',          label: 'Leads',              icon: 'Inbox' },
   { href: '/app/pipeline',       label: 'Pipeline',           icon: 'Columns3' },
+  { href: '/app/propuestas',     label: 'Propuestas',         icon: 'FileText' },
+  { href: '/app/campanas',       label: 'Campañas',           icon: 'Megaphone' },
+  { href: '/app/ia',             label: 'Motores',            icon: 'Cpu' },
+  { href: '/app/direccion',      label: 'Dirección',          icon: 'BarChart3' },
+  { href: '/app/admin',          label: 'Admin',              icon: 'Settings' },
+  // --- Ocultas del menú principal (rutas conservadas) ---
   { href: '/app/contactos',      label: 'Contactos',          icon: 'Users' },
   { href: '/app/empresas',       label: 'Empresas',           icon: 'Building2' },
   { href: '/app/oportunidades',  label: 'Oportunidades',      icon: 'TrendingUp' },
   { href: '/app/radar-b2b',      label: 'Radar B2B',          icon: 'Radar' },
-  { href: '/app/campanas',       label: 'Campañas',           icon: 'Megaphone' },
   { href: '/app/copiloto',       label: 'Copiloto',           icon: 'Bot' },
   { href: '/app/conocimiento',   label: 'Conocimiento',       icon: 'BookOpen' },
   { href: '/app/academia',       label: 'Academia',           icon: 'GraduationCap' },
-  { href: '/app/direccion',      label: 'Dirección',          icon: 'BarChart3' },
-  { href: '/app/admin',          label: 'Admin',              icon: 'Settings' },
-  { href: '/app/ia',             label: 'Motores',            icon: 'Cpu' },
-  { href: '/app/propuestas',     label: 'Propuestas',         icon: 'FileText' },
   { href: '/app/admin/system',   label: 'Estado del sistema', icon: 'Database' },
 ] as const
+
+// FASE 15G — Ocultas del sidebar principal (siguen existiendo como rutas).
+// Empresas/Contactos/Radar/Copiloto/Academia/Conocimiento pasan a internas o futuras;
+// Oportunidades y Estado del sistema salen del menú para dejar el foco recomendado.
+const HIDDEN_FROM_NAV: string[] = [
+  '/app/contactos',
+  '/app/empresas',
+  '/app/oportunidades',
+  '/app/radar-b2b',
+  '/app/copiloto',
+  '/app/conocimiento',
+  '/app/academia',
+  '/app/admin/system',
+]
 
 // Rutas solo para admin (propietario del sistema)
 const ADMIN_ONLY: string[] = ['/app/admin']
@@ -50,12 +69,15 @@ interface AppSidebarProps {
 }
 
 function filterNavItems(profile: Profile) {
-  if (isInternalOpenAccessEnabled()) return [...navItems]
+  // La simplificación del menú aplica siempre, incluso en modo open-access.
+  const visible = navItems.filter(item => !HIDDEN_FROM_NAV.includes(item.href))
+
+  if (isInternalOpenAccessEnabled()) return visible
 
   const isAdmin = profile.role === 'admin'
   const canSeeDirection = ['admin', 'direccion'].includes(profile.role)
 
-  return navItems.filter(item => {
+  return visible.filter(item => {
     if (ADMIN_ONLY.includes(item.href)) return isAdmin
     if (DIRECTION_ALLOWED.includes(item.href)) return canSeeDirection
     return true
