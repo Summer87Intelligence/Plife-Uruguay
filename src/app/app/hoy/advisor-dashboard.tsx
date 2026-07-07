@@ -14,6 +14,8 @@ import type { FollowUpOpp } from '@/components/follow-up/follow-up-center'
 import type { Profile, Activity, Contact, Opportunity, Company, Campaign } from '@/types/database'
 
 interface AdvisorDashboardProps {
+  /** FASE 14K — foco Lead-first renderizado por el server (LeadTodayPanel). */
+  leadPanel?: React.ReactNode
   profile: Profile
   todayActivities: Partial<Activity>[]
   overdueActions: Partial<Contact>[]
@@ -28,7 +30,7 @@ interface AdvisorDashboardProps {
 }
 
 export function AdvisorDashboard({
-  profile, todayActivities, overdueActions, hotOpps, assignedCompanies,
+  leadPanel, profile, todayActivities, overdueActions, hotOpps, assignedCompanies,
   upcomingOpps, activeCampaigns, staleOpps, overdueOpps, todayOpps, noNextStepOpps,
 }: AdvisorDashboardProps) {
   const hour = new Date().getHours()
@@ -48,6 +50,15 @@ export function AdvisorDashboard({
           <Button><Bot className="h-4 w-4" />Preparar contacto con IA</Button>
         </Link>
       </div>
+
+      {leadPanel && (
+        <div className="space-y-1">
+          {leadPanel}
+          <p className="text-[11px] text-gray-400">
+            El nuevo foco Lead-first se muestra en paralelo al flujo vigente.
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Tareas hoy" value={todayActivities.length} icon={Calendar} color="blue" />

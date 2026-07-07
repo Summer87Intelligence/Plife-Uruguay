@@ -12,6 +12,8 @@ import type { FollowUpOpp } from '@/components/follow-up/follow-up-center'
 import type { Profile, Opportunity, OpportunityStage, Contact } from '@/types/database'
 
 interface DirectionDashboardProps {
+  /** FASE 14K — foco Lead-first renderizado por el server (LeadTodayPanel). */
+  leadPanel?: React.ReactNode
   metrics: {
     totalOpps: number
     totalCompanies: number
@@ -28,7 +30,7 @@ interface DirectionDashboardProps {
   dirNoNextStepOpps: Partial<Opportunity>[]
 }
 
-export function DirectionDashboard({ metrics, recentOpps, stageCounts, globalOverdue, abandonedOpps, dirOverdueOpps, dirTodayOpps, dirNoNextStepOpps }: DirectionDashboardProps) {
+export function DirectionDashboard({ leadPanel, metrics, recentOpps, stageCounts, globalOverdue, abandonedOpps, dirOverdueOpps, dirTodayOpps, dirNoNextStepOpps }: DirectionDashboardProps) {
   const isEmpty = metrics.totalCompanies === 0 && metrics.totalOpps === 0 && metrics.activeCampaigns === 0
   const isDemo = isDemoMode()
 
@@ -38,6 +40,15 @@ export function DirectionDashboard({ metrics, recentOpps, stageCounts, globalOve
         <h1 className="text-xl font-bold text-gray-900">Vista de Dirección</h1>
         <p className="text-sm text-gray-500 mt-0.5">Resumen del equipo: pipeline, alertas y acceso a herramientas de gestión.</p>
       </div>
+
+      {leadPanel && (
+        <div className="space-y-1">
+          {leadPanel}
+          <p className="text-[11px] text-gray-400">
+            El nuevo foco Lead-first se muestra en paralelo al flujo vigente.
+          </p>
+        </div>
+      )}
 
       {isDemo && (
         <Link href={'/app/demo' as Route} className="block">

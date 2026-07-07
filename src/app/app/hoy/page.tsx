@@ -3,7 +3,12 @@ import { getProfile } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { AdvisorDashboard } from './advisor-dashboard'
 import { DirectionDashboard } from './direction-dashboard'
+import { getLeads } from '@/domains/leads/queries'
+import { LeadTodayPanel } from '@/components/leads/lead-today-panel'
 import type { OpportunityStage } from '@/types/database'
+
+// FASE 14K — PLIFE Hoy suma el foco Lead-first con lectura real desde Supabase
+// dev, en paralelo al flujo vigente de oportunidades (sin mutaciones nuevas).
 
 export default async function HoyPage() {
   const profile = await getProfile()
@@ -12,6 +17,8 @@ export default async function HoyPage() {
   const supabase = await createClient()
   const today = new Date().toISOString().split('T')[0]
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+
+  const leadsPromise = getLeads()
 
   if (['admin', 'direccion'].includes(profile.role)) {
     const [
@@ -45,8 +52,11 @@ export default async function HoyPage() {
       stageCounts[opp.stage] = (stageCounts[opp.stage] ?? 0) + 1
     })
 
+    const leads = await leadsPromise
+
     return (
       <DirectionDashboard
+        leadPanel={<LeadTodayPanel leads={leads} />}
         metrics={{
           totalOpps: totalOpps ?? 0,
           totalCompanies: totalCompanies ?? 0,
@@ -89,8 +99,11 @@ export default async function HoyPage() {
     supabase.from('opportunities').select('id, title, stage, next_action, next_action_date').eq('assigned_to', profile.id).is('deleted_at', null).not('stage', 'in', '("cerrada_ganada","cerrada_perdida","dormida")').or('next_action.is.null,next_action_date.is.null').limit(10),
   ])
 
+  const leads = await leadsPromise
+
   return (
     <AdvisorDashboard
+      leadPanel={<LeadTodayPanel leads={leads} />}
       profile={profile}
       todayActivities={todayActivities ?? []}
       overdueActions={overdueActions ?? []}

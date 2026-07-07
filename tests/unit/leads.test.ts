@@ -7,6 +7,11 @@ import {
   updateLeadOperationalSchema,
 } from '@/domains/leads/validation'
 import {
+  getLeadDashboardBuckets,
+  getLeadDashboardSummary,
+  isLeadDashboardActive,
+} from '@/domains/leads/dashboard'
+import {
   LEAD_PIPELINE_ORDER,
   LEAD_PIPELINE_STAGE_LABELS,
   TERMINAL_LEAD_STAGES,
@@ -354,6 +359,108 @@ describe('conversion rules', () => {
   it('requires a title to convert', () => {
     const lead = makeLead({ pipeline_stage: 'interesado', title: '   ' })
     expect(getLeadConversionReadiness(lead).reasons).toContain('El lead no tiene título.')
+  })
+})
+
+describe('dashboard buckets (FASE 14K)', () => {
+  // TODAY = 2026-07-06 local (definido arriba)
+  const dashboardLeads: LeadLike[] = [
+    makeLead({ id: 'nuevo-1', pipeline_stage: 'nuevo', next_action_date: '2026-07-10' }),
+    makeLead({ id: 'vencido-1', pipeline_stage: 'contactado', next_action_date: '2026-07-01' }),
+    makeLead({ id: 'hoy-1', pipeline_stage: 'calificando', next_action_date: '2026-07-06' }),
+    makeLead({
+      id: 'sin-paso-1',
+      pipeline_stage: 'interesado',
+      next_action: null,
+      next_action_date: null,
+    }),
+    makeLead({
+      id: 'hot-1',
+      pipeline_stage: 'propuesta_reunion',
+      temperature: 'hot',
+      next_action_date: '2026-07-15',
+    }),
+    makeLead({ id: 'seg-1', pipeline_stage: 'seguimiento', next_action_date: '2026-07-20' }),
+    makeLead({
+      id: 'conv-1',
+      status: 'converted',
+      pipeline_stage: 'convertido',
+      temperature: 'hot',
+      next_action_date: '2026-07-01',
+    }),
+    makeLead({
+      id: 'desc-1',
+      status: 'discarded',
+      pipeline_stage: 'descartado',
+      next_action: null,
+    }),
+    makeLead({ id: 'arch-1', status: 'archived', next_action_date: '2026-07-06' }),
+  ]
+
+  it('counts totalActive excluding terminal leads', () => {
+    const summary = getLeadDashboardSummary(dashboardLeads, TODAY)
+    expect(summary.totalActive).toBe(6)
+  })
+
+  it('newLeads detects pipeline_stage nuevo', () => {
+    const buckets = getLeadDashboardBuckets(dashboardLeads, TODAY)
+    expect(buckets.newLeads.map((l) => l.id)).toEqual(['nuevo-1'])
+  })
+
+  it('overdueLeads detects past next_action_date', () => {
+    const buckets = getLeadDashboardBuckets(dashboardLeads, TODAY)
+    expect(buckets.overdueLeads.map((l) => l.id)).toEqual(['vencido-1'])
+  })
+
+  it('todayLeads detects next_action_date today', () => {
+    const buckets = getLeadDashboardBuckets(dashboardLeads, TODAY)
+    expect(buckets.todayLeads.map((l) => l.id)).toEqual(['hoy-1'])
+  })
+
+  it('missingNextStepLeads detects missing next step', () => {
+    const buckets = getLeadDashboardBuckets(dashboardLeads, TODAY)
+    expect(buckets.missingNextStepLeads.map((l) => l.id)).toEqual(['sin-paso-1'])
+  })
+
+  it('hotLeads detects temperature hot among active leads', () => {
+    const buckets = getLeadDashboardBuckets(dashboardLeads, TODAY)
+    expect(buckets.hotLeads.map((l) => l.id)).toEqual(['hot-1'])
+  })
+
+  it('followUpLeads detects pipeline_stage seguimiento', () => {
+    const buckets = getLeadDashboardBuckets(dashboardLeads, TODAY)
+    expect(buckets.followUpLeads.map((l) => l.id)).toEqual(['seg-1'])
+  })
+
+  it('converted/discarded/archived leads enter no bucket', () => {
+    const buckets = getLeadDashboardBuckets(dashboardLeads, TODAY)
+    const bucketIds = [
+      ...buckets.newLeads,
+      ...buckets.overdueLeads,
+      ...buckets.todayLeads,
+      ...buckets.missingNextStepLeads,
+      ...buckets.hotLeads,
+      ...buckets.followUpLeads,
+    ].map((l) => l.id)
+    expect(bucketIds).not.toContain('conv-1')
+    expect(bucketIds).not.toContain('desc-1')
+    expect(bucketIds).not.toContain('arch-1')
+    expect(isLeadDashboardActive(makeLead({ status: 'converted' }))).toBe(false)
+    expect(isLeadDashboardActive(makeLead({ status: 'discarded' }))).toBe(false)
+    expect(isLeadDashboardActive(makeLead({ status: 'archived' }))).toBe(false)
+  })
+
+  it('summary counts match bucket sizes', () => {
+    const summary = getLeadDashboardSummary(dashboardLeads, TODAY)
+    expect(summary).toEqual({
+      totalActive: 6,
+      newCount: 1,
+      overdueCount: 1,
+      todayCount: 1,
+      missingNextStepCount: 1,
+      hotCount: 1,
+      followUpCount: 1,
+    })
   })
 })
 

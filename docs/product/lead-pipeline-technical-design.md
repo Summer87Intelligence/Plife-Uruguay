@@ -555,6 +555,30 @@ Comportamiento:
 
 ---
 
+## 16. FASE 14K — PLIFE Hoy lead-first focus
+
+PLIFE Hoy (`/app/hoy`) empieza a leer leads reales de **Supabase dev** y muestra
+el panel "Foco de leads" como foco operativo diario:
+
+| Pieza | Ubicación |
+|---|---|
+| Helpers de agrupación | `src/domains/leads/dashboard.ts` — `getLeadDashboardBuckets`, `getLeadDashboardSummary`, `isLeadDashboardActive` |
+| Panel | `src/components/leads/lead-today-panel.tsx` (server component) |
+| Integración | `src/app/app/hoy/page.tsx` + prop `leadPanel` en `AdvisorDashboard` / `DirectionDashboard` |
+| Tests unitarios | `tests/unit/leads.test.ts` |
+| Documentación | `docs/product/leads-today-panel-14k.md` |
+
+Comportamiento:
+
+- **Lectura server-side**: `getLeads()` bajo RLS `leads_select`; el browser no consulta `/rest/v1/leads`.
+- **Buckets**: nuevos, vencidos, para hoy, sin próximo paso, calientes y en seguimiento — solo leads activos (`status=open`, etapa no terminal). Convertidos/descartados/archivados quedan fuera.
+- **Foco operativo diario**: counts + listas compactas (máx. 5) con etapa, temperatura, prioridad y próximo paso, linkeando a `/app/leads/[id]`.
+- **Sin mutaciones nuevas**: el panel solo navega; no hay cambio de etapa, soft-delete ni conversión desde Hoy; no se agregaron server actions.
+- **Compatibilidad con flujo vigente**: los dashboards de asesor y dirección conservan todas sus secciones (follow-up center de oportunidades incluido); el panel se muestra en paralelo con la nota "El nuevo foco Lead-first se muestra en paralelo al flujo vigente."
+- **Producción / Vercel**: no tocados.
+
+---
+
 ## Resumen de decisiones
 
 | Tema | Decisión |
