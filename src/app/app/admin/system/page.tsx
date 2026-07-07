@@ -22,7 +22,6 @@ export default async function SystemPage() {
     knowledgeResult,
     chunksResult,
     aiResult,
-    complianceResult,
   ] = await Promise.all([
     supabase.from('contacts').select('*', { count: 'exact', head: true }).is('deleted_at', null),
     supabase.from('companies').select('*', { count: 'exact', head: true }).is('deleted_at', null),
@@ -40,11 +39,6 @@ export default async function SystemPage() {
       .select('id, agent_name, risk_level, created_at, documents_used')
       .order('created_at', { ascending: false })
       .limit(5),
-    supabase
-      .from('compliance_reviews')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(5),
   ])
 
   // Try to count embedded chunks (requires knowledge-embeddings.sql)
@@ -58,16 +52,6 @@ export default async function SystemPage() {
   const recentAIInteractions = (aiResult.data ?? []).map(
     ({ id, agent_name, risk_level, created_at, documents_used }) => ({
       id, agent_name, risk_level, created_at, documents_used,
-    })
-  )
-
-  const recentComplianceReviews = (complianceResult.data ?? []).map(
-    ({ id, content_reviewed, risk_level, action, created_at }) => ({
-      id,
-      content_reviewed,
-      risk_level,
-      action,
-      created_at,
     })
   )
 
@@ -90,7 +74,6 @@ export default async function SystemPage() {
         embeddingsReady: !embErr,
       }}
       recentAIInteractions={recentAIInteractions}
-      recentComplianceReviews={recentComplianceReviews}
     />
   )
 }

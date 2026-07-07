@@ -33,7 +33,6 @@ test.describe('Demo — Recorrido guiado', () => {
       'Empresa priorizada',
       'Oportunidades',
       'Campañas',
-      'Compliance',
       'Copiloto IA',
       'Dirección',
     ]
@@ -122,36 +121,6 @@ test.describe('Demo — Recorrido guiado', () => {
 
   test('8. Volver a /app/demo desde Radar B2B', async ({ page }) => {
     await page.goto(ROUTES.radarB2B)
-    await page.goto(ROUTES.demo)
-    await expect(page).toHaveURL(/app\/demo/, { timeout: 8_000 })
-  })
-
-  test('9. Compliance → detecta mensaje riesgoso', async ({ page }) => {
-    await page.goto(ROUTES.demo)
-    await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {})
-
-    const btnCompliance = page.getByRole('link', { name: /Abrir Compliance/i })
-    await expect(btnCompliance).toBeVisible({ timeout: 8_000 })
-    await btnCompliance.click()
-
-    await expect(page).toHaveURL(/app\/compliance/, { timeout: 10_000 })
-    await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {})
-
-    const textarea = page.getByRole('textbox').first()
-    await expect(textarea).toBeVisible({ timeout: 10_000 })
-    await textarea.fill('Te aprueban seguro y no tiene riesgo.')
-
-    const submitBtn = page.getByRole('button', { name: /revisar/i })
-    await submitBtn.click()
-
-    await page.waitForTimeout(3_000)
-
-    const riskIndicator = page.getByText(/crítico|alto|bloqueado|revisión requerida/i).first()
-    await expect(riskIndicator).toBeVisible({ timeout: 10_000 })
-  })
-
-  test('10. Volver a /app/demo desde Compliance', async ({ page }) => {
-    await page.goto(ROUTES.compliance)
     await page.goto(ROUTES.demo)
     await expect(page).toHaveURL(/app\/demo/, { timeout: 8_000 })
   })

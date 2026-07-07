@@ -38,7 +38,6 @@ const categoryOptions = [
   { value: 'comercial', label: 'Material comercial' },
   { value: 'faq', label: 'Preguntas frecuentes' },
   { value: 'guion', label: 'Guiones aprobados' },
-  { value: 'compliance', label: 'Compliance / reglas' },
   { value: 'capacitacion', label: 'Capacitación' },
   { value: 'politica', label: 'Políticas internas' },
   { value: 'objeciones', label: 'Manejo de objeciones' },
@@ -69,7 +68,7 @@ export function KnowledgeView({ documents, contentMap, chunkCount, embeddedCount
   const [semanticMode, setSemanticMode] = useState<boolean | null>(null)
 
   const router = useRouter()
-  const canManage = ['admin', 'direccion', 'compliance', 'capacitacion'].includes(profile.role)
+  const canManage = ['admin', 'direccion', 'capacitacion'].includes(profile.role)
 
   const [form, setForm] = useState({ name: '', description: '', category: 'producto', content: '', tags: '' })
   const [loading, setLoading] = useState(false)

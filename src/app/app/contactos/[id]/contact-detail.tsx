@@ -187,7 +187,6 @@ export function ContactDetail({ contact, activities, opportunities, companies }:
           ...(opportunities.length > 0
             ? [{ label: 'Ver oportunidades', href: `/app/oportunidades?q=${encodeURIComponent(`${contact.first_name} ${contact.last_name}`)}`, icon: List }]
             : []),
-          { label: 'Revisar mensaje', href: '/app/compliance', icon: ShieldCheck },
         ]}
       />
 

@@ -48,8 +48,6 @@ export function CampaignAIDialog({ campaignId }: { campaignId: string }) {
     setTimeout(() => setSaved(false), 2500)
   }
 
-  const blocked = result?.compliance.action === 'bloqueado'
-
   return (
     <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setResult(null); setError(null); setActiveTask(null) } }}>
       <DialogTrigger asChild>
@@ -69,12 +67,11 @@ export function CampaignAIDialog({ campaignId }: { campaignId: string }) {
 
           {result && activeTask && (
             <div className="flex justify-end border-t border-gray-100 pt-3">
-              <Button onClick={save} loading={saving} disabled={blocked}>
+              <Button onClick={save} loading={saving}>
                 <Save className="h-4 w-4" /> {saved ? 'Guardado en la campaña' : 'Guardar en la campaña'}
               </Button>
             </div>
           )}
-          {blocked && <p className="text-xs text-red-600 text-right">Bloqueado por compliance. Ajustá el contenido antes de guardar.</p>}
         </div>
       </DialogContent>
     </Dialog>

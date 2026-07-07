@@ -9,8 +9,16 @@
 > **Resultado FASE 15B (ejecutada):** la remoción de OpenAI del punto 15B del plan
 > ya fue implementada. OpenAI fue eliminado por completo del código activo, config
 > y tests; los motores operan en modo determinístico interno. Detalle en
-> [`openai-removal-15b.md`](./openai-removal-15b.md). Pendientes: 15C (Compliance),
-> 15D+ (rediseño de motores) y definición de tecnología de generación/embeddings.
+> [`openai-removal-15b.md`](./openai-removal-15b.md).
+>
+> **Resultado FASE 15C (ejecutada):** Compliance fue eliminado como sección, menú,
+> ruta, agente/etapa de motores y flujo del producto. Se removió `runDeterministicCompliance`,
+> el agente `compliance_agent`, el campo `AIResult.compliance`, la ruta `/app/compliance`
+> y toda la copy/quick actions asociadas. Las tablas `compliance_*` siguen en Supabase
+> (no se aplicó SQL) y sus tipos quedan como espejo legado. Detalle en
+> [`compliance-removal-15c.md`](./compliance-removal-15c.md). Pendientes: 15D+
+> (rediseño de motores), futura "Validación comercial" y definición de tecnología
+> de generación/embeddings.
 
 ---
 

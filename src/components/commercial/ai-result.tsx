@@ -1,11 +1,7 @@
 'use client'
 import { useState } from 'react'
-import { Bot, Copy, CheckCircle, AlertTriangle, ShieldCheck, ShieldAlert, BookOpen, Save } from 'lucide-react'
+import { Bot, Copy, CheckCircle, AlertTriangle, BookOpen, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import {
-  RISK_LEVEL_LABELS, RISK_LEVEL_COLORS,
-  COMPLIANCE_ACTION_LABELS, COMPLIANCE_ACTION_COLORS,
-} from '@/lib/constants'
 import type { AIResult } from '@/domains/ai/types'
 
 interface AIResultPanelProps {
@@ -50,9 +46,6 @@ export function AIResultPanel({ result, loading, error, loadingLabel = 'El copil
 
   if (!result) return null
 
-  const { compliance } = result
-  const blocked = compliance.action === 'bloqueado'
-
   async function copy() {
     if (!result) return
     await navigator.clipboard.writeText(result.response)
@@ -73,13 +66,6 @@ export function AIResultPanel({ result, loading, error, loadingLabel = 'El copil
     <div className="space-y-3">
       {/* Status row */}
       <div className="flex flex-wrap items-center gap-2">
-        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${COMPLIANCE_ACTION_COLORS[compliance.action]}`}>
-          {compliance.action === 'aprobado' ? <ShieldCheck className="h-3 w-3" /> : <ShieldAlert className="h-3 w-3" />}
-          Compliance: {COMPLIANCE_ACTION_LABELS[compliance.action]}
-        </span>
-        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${RISK_LEVEL_COLORS[compliance.riskLevel]}`}>
-          Riesgo: {RISK_LEVEL_LABELS[compliance.riskLevel]}
-        </span>
         <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${result.knowledgeUsed ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-500'}`}>
           <BookOpen className="h-3 w-3" />
           {result.knowledgeUsed ? 'Con base validada' : 'Sin base validada'}
@@ -107,18 +93,6 @@ export function AIResultPanel({ result, loading, error, loadingLabel = 'El copil
         </div>
       )}
 
-      {/* Compliance reasons */}
-      {compliance.riskReasons.length > 0 && (
-        <div className="rounded-lg bg-orange-50 border border-orange-100 px-3 py-2">
-          <p className="text-xs font-medium text-orange-800 mb-1">Revisar antes de usar:</p>
-          <ul className="list-disc list-inside space-y-0.5">
-            {compliance.riskReasons.map((r, i) => (
-              <li key={i} className="text-xs text-orange-700">{r}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
       {/* Response */}
       <div className="rounded-xl border border-gray-100 bg-white">
         <div className="flex items-center justify-between border-b border-gray-50 px-4 py-2.5">
@@ -131,7 +105,7 @@ export function AIResultPanel({ result, loading, error, loadingLabel = 'El copil
               {copied ? 'Copiado' : 'Copiar'}
             </Button>
             {onSaveActivity && (
-              <Button variant="ghost" size="sm" onClick={save} loading={saving} disabled={blocked}>
+              <Button variant="ghost" size="sm" onClick={save} loading={saving}>
                 {saved ? <CheckCircle className="h-3.5 w-3.5 text-green-500" /> : <Save className="h-3.5 w-3.5" />}
                 {saved ? 'Guardado' : saveLabel}
               </Button>
@@ -140,16 +114,6 @@ export function AIResultPanel({ result, loading, error, loadingLabel = 'El copil
         </div>
         <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans leading-relaxed p-4">{result.response}</pre>
       </div>
-
-      {/* Suggested safer version */}
-      {compliance.suggestedVersion && (
-        <div className="rounded-xl border border-green-100 bg-green-50 px-4 py-3">
-          <p className="text-xs font-semibold text-green-800 mb-1 flex items-center gap-1">
-            <ShieldCheck className="h-3.5 w-3.5" /> Versión sugerida (compliance)
-          </p>
-          <p className="whitespace-pre-wrap text-sm text-green-900">{compliance.suggestedVersion}</p>
-        </div>
-      )}
 
       <p className="text-[11px] text-gray-400">
         Sugerencia generada por IA. Revisala y editala antes de usarla con un cliente. No reemplaza tu juicio profesional.

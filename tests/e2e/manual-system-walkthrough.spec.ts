@@ -240,56 +240,6 @@ test.describe('Manual system walkthrough @manual', () => {
     report(7, 'Radar B2B', hayRadar ? 'OK' : 'WARN',
       hayEmpresasEnRadar ? 'Empresa QA aparece en radar' : 'Empresa QA no visible aún')
 
-    // ── Paso 8: Compliance — mensaje seguro ────────────────────────────────
-    console.log('  Paso 8: Compliance — mensaje sin riesgo')
-    await gotoWithAuth(page, `${base}/app/compliance`)
-    await page.getByRole('heading', { name: /compliance/i }).isVisible({ timeout: 8_000 }).catch(() => {})
-    const hayCompliance = await page.getByRole('heading', { name: /compliance/i }).isVisible({ timeout: 3_000 }).catch(() => false)
-
-    // Use label (no accents) as primary, textarea as fallback
-    const tc = page.getByLabel('Mensaje a revisar')
-    const tcFb = page.locator('textarea').first()
-    const hayTc = await tc.isVisible({ timeout: 5_000 }).catch(() => false) || await tcFb.isVisible({ timeout: 2_000 }).catch(() => false)
-
-    if (hayTc) {
-      const target = await tc.isVisible({ timeout: 1_000 }).catch(() => false) ? tc : tcFb
-      await target.fill('Hola Martín, te gustaría contarte sobre nuestras soluciones de protección para equipos de trabajo.')
-      await page.getByRole('button', { name: /revisar mensaje/i }).click()
-      await page.waitForTimeout(3_000)
-      const ok = await page.getByText(/aprobado|sin claims riesgosos/i).isVisible({ timeout: 8_000 }).catch(() => false)
-      report(8, 'Compliance — mensaje seguro', hayCompliance && ok ? 'OK' : 'WARN',
-        ok ? 'Mensaje aprobado correctamente' : 'Resultado no visible (IA puede no estar configurada)')
-    } else {
-      report(8, 'Compliance — mensaje seguro', 'WARN', `Página cargó=${hayCompliance}, textarea no encontrado`)
-    }
-
-    // ── Paso 9: Compliance — mensaje riesgoso ─────────────────────────────
-    console.log('  Paso 9: Compliance — mensaje con riesgo')
-    await gotoWithAuth(page, `${base}/app/compliance`)
-    await page.getByRole('heading', { name: /compliance/i }).isVisible({ timeout: 8_000 }).catch(() => {})
-
-    const tr = page.getByLabel('Mensaje a revisar')
-    const trFb = page.locator('textarea').first()
-    const hayTr = await tr.isVisible({ timeout: 5_000 }).catch(() => false) || await trFb.isVisible({ timeout: 2_000 }).catch(() => false)
-
-    if (hayTr) {
-      const btnEjemplo = page.getByText('Probar con un mensaje riesgoso')
-      if (await btnEjemplo.isVisible({ timeout: 2_000 }).catch(() => false)) {
-        await btnEjemplo.click()
-        await page.waitForTimeout(300)
-      } else {
-        const target = await tr.isVisible({ timeout: 1_000 }).catch(() => false) ? tr : trFb
-        await target.fill('Te garantizo que vas a recuperar todo el dinero y te da rentabilidad garantizada.')
-      }
-      await page.getByRole('button', { name: /revisar mensaje/i }).click()
-      await page.waitForTimeout(3_000)
-      const riesgoso = await page.getByText(/bloqueado|revisi/i).isVisible({ timeout: 8_000 }).catch(() => false)
-      report(9, 'Compliance — mensaje riesgoso', riesgoso ? 'OK' : 'WARN',
-        riesgoso ? 'Riesgo detectado correctamente' : 'No detectó riesgo (revisar reglas)')
-    } else {
-      report(9, 'Compliance — mensaje riesgoso', 'SKIP', 'Textarea no encontrado')
-    }
-
     // ── Paso 10: Dirección ─────────────────────────────────────────────────
     console.log('  Paso 10: Dirección')
     await gotoWithAuth(page, `${base}/app/direccion`)
@@ -326,7 +276,6 @@ test.describe('Manual system walkthrough @manual', () => {
       { url: '/app/contactos',     heading: /contactos/i,  primary: 'registrar a las personas', fallback: 'habla el asesor',           section: 'Contactos' },
       { url: '/app/oportunidades', heading: /pipeline/i,   primary: 'conversaci',              fallback: 'comercial concreta',        section: 'Oportunidades' },
       { url: '/app/campanas',      heading: /campa/i,      primary: 'ordenar esfuerzos',       fallback: 'por segmento',              section: 'Campañas' },
-      { url: '/app/compliance',    heading: /compliance/i, primary: 'promesas riesgosas',      fallback: 'antes de enviarlo',         section: 'Compliance' },
       { url: '/app/direccion',     heading: /direcci/i,    primary: 'oportunidades y camp',    fallback: 'cargadas',                  section: 'Dirección' },
     ]
 
@@ -352,8 +301,7 @@ test.describe('Manual system walkthrough @manual', () => {
     console.log(`  ✓ Login y navegación             OK`)
     console.log(`  ✓ Módulos visitados              14`)
     console.log(`  ✓ Datos QA creados               empresa · contacto · oportunidad · campaña`)
-    console.log(`  ✓ Compliance verificado          seguro + riesgoso`)
-    console.log(`  ✓ Microcopy contextual           ${microcopyOK}/6 secciones`)
+    console.log(`  ✓ Microcopy contextual           ${microcopyOK}/5 secciones`)
     console.log(`\n  Datos creados con sufijo "QA" — eliminables desde Supabase o UI.`)
     console.log('══════════════════════════════════════════════════\n')
 

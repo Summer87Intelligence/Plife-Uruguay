@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { useState, useTransition } from 'react'
-import { ArrowLeft, Globe, Link2 as Linkedin, AtSign as Instagram, MapPin, Users, Plus, TrendingUp, Pencil, Target, UserCheck, AlertTriangle, Megaphone, CheckCircle2, ArrowRight, UserPlus, ShieldCheck, List, Calendar } from 'lucide-react'
+import { ArrowLeft, Globe, Link2 as Linkedin, AtSign as Instagram, MapPin, Users, Plus, TrendingUp, Pencil, Target, UserCheck, AlertTriangle, Megaphone, CheckCircle2, ArrowRight, UserPlus, List, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Select } from '@/components/ui/select'
@@ -176,7 +176,6 @@ export function CompanyDetail({ company, contacts, activities, opportunities, ca
           ...(opportunities.length > 0 || company.name
             ? [{ label: 'Ver oportunidades', href: `/app/oportunidades?q=${encodeURIComponent(company.name)}`, icon: List }]
             : []),
-          { label: 'Revisar mensaje', href: '/app/compliance', icon: ShieldCheck },
         ]}
       />
 

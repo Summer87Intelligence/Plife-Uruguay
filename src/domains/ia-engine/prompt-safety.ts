@@ -1,4 +1,4 @@
-/** Términos sensibles del dominio seguros — no bloquean, generan sugerencias de compliance. */
+/** Términos sensibles del dominio seguros — no bloquean, generan sugerencias de revisión comercial. */
 export const INSURANCE_RISK_TERMS = [
   'prima',
   'primas',

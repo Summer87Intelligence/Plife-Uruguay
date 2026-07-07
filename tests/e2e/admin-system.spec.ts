@@ -56,11 +56,9 @@ test.describe('Admin System /app/admin/system', () => {
     expect(content).not.toContain('service_role')
   })
 
-  test('últimas interacciones IA y revisiones compliance cargan', async ({ page }) => {
+  test('últimas interacciones IA cargan', async ({ page }) => {
     // Should show either records or "sin registros"
     const aiSection = page.getByText(/últimas.*interacciones|sin interacciones/i).first()
     await expect(aiSection).toBeVisible()
-    const complianceSection = page.getByText(/últimas.*revisiones|sin revisiones/i).first()
-    await expect(complianceSection).toBeVisible()
   })
 })

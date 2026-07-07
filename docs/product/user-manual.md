@@ -1,6 +1,8 @@
 # Manual de uso — PLIFE Growth OS
 
 > **Histórico (FASE 15B):** OpenAI fue removido del proyecto. Las menciones a OpenAI / GPT / `OPENAI_API_KEY` son registro histórico; los motores operan en modo determinístico interno.
+>
+> **Histórico (FASE 15C):** Compliance fue removido del producto (sección, menú, ruta y flujo). Las menciones a "Compliance" son registro histórico. Ver `docs/product/compliance-removal-15c.md`.
 
 **Versión:** FASE 12F  
 **Audiencia:** asesores comerciales, líderes comerciales, dirección y administración  

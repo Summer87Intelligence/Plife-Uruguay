@@ -3,7 +3,6 @@ import { createClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth'
 import { runAgent } from '@/lib/ai/agents'
 import { isAIConfigured, AI_NOT_CONFIGURED_MESSAGE } from '@/lib/ai/provider'
-import { reviewCommercialMessage, type ComplianceResult } from '@/lib/ai/compliance'
 import { getActiveKnowledgeContext } from '@/domains/knowledge/actions'
 import { addActivity } from '@/domains/contacts/actions'
 import { HELP_TYPES, CAMPAIGN_TASK_LABELS, type AIResult, type HelpType, type CampaignAITask } from '@/domains/ai/types'
@@ -103,15 +102,7 @@ export async function runCopilot(input: CopilotInput): Promise<{ data?: AIResult
       campaignId: input.campaignId,
     })
 
-    const compliance = await reviewCommercialMessage(supabase, {
-      content: result.response,
-      context: HELP_TYPES[input.helpType],
-      channel: 'copiloto',
-      userId: user.id,
-      aiInteractionId: result.interactionId ?? null,
-    })
-
-    return { data: { response: result.response, riskLevel: result.riskLevel, compliance, knowledgeUsed: result.knowledgeUsed, interactionId: result.interactionId, documentsUsed: result.documentsUsed, documentNames: result.documentNames } }
+    return { data: { response: result.response, riskLevel: result.riskLevel, knowledgeUsed: result.knowledgeUsed, interactionId: result.interactionId, documentsUsed: result.documentsUsed, documentNames: result.documentNames } }
   } catch (error) {
     return { error: error instanceof Error ? error.message : 'Error del copiloto IA' }
   }
@@ -155,15 +146,7 @@ export async function analyzeCompanyB2B(companyId: string): Promise<{ data?: AIR
       companyId,
     })
 
-    const compliance = await reviewCommercialMessage(supabase, {
-      content: result.response,
-      context: 'Análisis B2B',
-      channel: 'copiloto',
-      userId: user.id,
-      aiInteractionId: result.interactionId ?? null,
-    })
-
-    return { data: { response: result.response, riskLevel: result.riskLevel, compliance, knowledgeUsed: result.knowledgeUsed, interactionId: result.interactionId, documentsUsed: result.documentsUsed, documentNames: result.documentNames } }
+    return { data: { response: result.response, riskLevel: result.riskLevel, knowledgeUsed: result.knowledgeUsed, interactionId: result.interactionId, documentsUsed: result.documentsUsed, documentNames: result.documentNames } }
   } catch (error) {
     return { error: error instanceof Error ? error.message : 'Error del análisis IA' }
   }
@@ -207,36 +190,9 @@ export async function runCampaignAI(campaignId: string, task: CampaignAITask): P
       campaignId,
     })
 
-    const compliance = await reviewCommercialMessage(supabase, {
-      content: result.response,
-      context: `Campaña: ${CAMPAIGN_TASK_LABELS[task]}`,
-      channel: 'campaña',
-      userId: user.id,
-      aiInteractionId: result.interactionId ?? null,
-    })
-
-    return { data: { response: result.response, riskLevel: result.riskLevel, compliance, knowledgeUsed: result.knowledgeUsed, interactionId: result.interactionId, documentsUsed: result.documentsUsed, documentNames: result.documentNames } }
+    return { data: { response: result.response, riskLevel: result.riskLevel, knowledgeUsed: result.knowledgeUsed, interactionId: result.interactionId, documentsUsed: result.documentsUsed, documentNames: result.documentNames } }
   } catch (error) {
     return { error: error instanceof Error ? error.message : 'Error del agente de campañas' }
-  }
-}
-
-// ---- Deterministic compliance (works without AI) ----------------------------
-
-export async function checkCompliance(content: string, context?: string): Promise<{ data?: ComplianceResult; error?: string }> {
-  const user = await requireAuth()
-  if (!content.trim()) return { error: 'Ingresá un mensaje para revisar' }
-  const supabase = await createClient()
-  try {
-    const result = await reviewCommercialMessage(supabase, {
-      content,
-      context: context ?? 'Revisión manual',
-      channel: 'manual',
-      userId: user.id,
-    })
-    return { data: result }
-  } catch (error) {
-    return { error: error instanceof Error ? error.message : 'Error al revisar el mensaje' }
   }
 }
 

@@ -1,5 +1,7 @@
 # Flujo diario — PLIFE Growth OS
 
+> **Histórico (FASE 15C):** **Compliance fue removido del producto.** Las menciones a "Compliance" en este documento son históricas. Ver `docs/product/compliance-removal-15c.md`.
+
 Guía práctica para organizar el trabajo comercial día a día y, para líderes, la revisión semanal.
 
 ---

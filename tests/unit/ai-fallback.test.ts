@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { runDeterministicCompliance } from '@/lib/ai/compliance'
 import {
   AI_INTERNAL_MODE_MESSAGE,
   INTERNAL_ENGINE_MODEL,
@@ -41,11 +40,5 @@ describe('internal deterministic engines (no external provider)', () => {
     const a = await chatComplete({ system: 's', user: 'mismo input' })
     const b = await chatComplete({ system: 's', user: 'mismo input' })
     expect(a.content).toBe(b.content)
-  })
-
-  it('deterministic compliance still works without any provider', () => {
-    const result = runDeterministicCompliance('Esto te cubre todo.')
-    expect(result.riskLevel).toBe('critico')
-    expect(result.action).toBe('bloqueado')
   })
 })

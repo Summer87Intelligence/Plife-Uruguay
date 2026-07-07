@@ -30,7 +30,6 @@ const navItems = [
   { href: '/app/campanas',       label: 'Campañas',           icon: 'Megaphone' },
   { href: '/app/copiloto',       label: 'Copiloto IA',        icon: 'Bot' },
   { href: '/app/conocimiento',   label: 'Conocimiento',       icon: 'BookOpen' },
-  { href: '/app/compliance',     label: 'Compliance',         icon: 'ShieldCheck' },
   { href: '/app/academia',       label: 'Academia',           icon: 'GraduationCap' },
   { href: '/app/direccion',      label: 'Dirección',          icon: 'BarChart3' },
   { href: '/app/admin',          label: 'Admin',              icon: 'Settings' },

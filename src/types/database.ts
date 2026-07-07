@@ -11,6 +11,9 @@ export type ActivityType = 'llamada' | 'reunion' | 'mensaje' | 'email' | 'nota' 
 export type CampaignStatus = 'borrador' | 'activa' | 'pausada' | 'finalizada' | 'archivada'
 export type CampaignType = 'duenos_pymes' | 'empresas_familiares' | 'estudios_contables' | 'estudios_juridicos' | 'clinicas' | 'empresas_tech' | 'constructoras' | 'clubes_asociaciones' | 'profesionales_independientes' | 'ejecutivos' | 'reclutamiento_asesores' | 'general'
 export type DocumentStatus = 'activo' | 'inactivo' | 'en_revision' | 'archivado'
+// LEGADO: Compliance fue removido del producto en FASE 15C. Este tipo y las tablas
+// `compliance_rules` / `compliance_reviews` se conservan sólo como espejo del schema
+// remoto de Supabase (no se aplicó SQL). Ninguna pantalla ni motor los usa.
 export type ComplianceAction = 'aprobado' | 'bloqueado' | 'revision_requerida' | 'modificado'
 
 // --- Motor IA PLIFE (FASE 12O-B) -------------------------------------------
@@ -288,6 +291,8 @@ export interface AIInteraction {
   created_at: string
 }
 
+// LEGADO (FASE 15C): Compliance removido del producto. Tipo conservado sólo como
+// espejo del schema remoto de Supabase; sin uso en la aplicación.
 export interface ComplianceRule {
   id: string
   name: string

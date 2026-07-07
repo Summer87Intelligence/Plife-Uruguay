@@ -1,5 +1,7 @@
 # Glosario — PLIFE Growth OS
 
+> **Histórico (FASE 15C):** **Compliance fue removido del producto.** La entrada "Compliance" de este glosario es histórica. Ver `docs/product/compliance-removal-15c.md`.
+
 Definiciones simples para usuarios comerciales. No requieren conocimiento técnico.
 
 ---

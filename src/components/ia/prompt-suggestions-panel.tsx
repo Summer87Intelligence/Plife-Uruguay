@@ -14,7 +14,6 @@ const SUGGESTION_TYPE_LABELS: Record<string, string> = {
   validated_incomplete: 'Validación inconsistente',
   weak_output_format: 'Formato de salida',
   weak_constraints: 'Restricciones débiles',
-  compliance_limits: 'Compliance',
   human_review: 'Revisión humana',
   insurance_risk: 'Riesgo comercial',
   error: 'Error',

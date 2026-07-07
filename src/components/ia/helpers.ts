@@ -34,7 +34,6 @@ const CATEGORY_COLORS: Record<string, { bg: string; border: string; text: string
   diagnostico: { bg: 'bg-indigo-50', border: 'border-indigo-100', text: 'text-indigo-800', dot: 'bg-indigo-500' },
   oportunidades: { bg: 'bg-purple-50', border: 'border-purple-100', text: 'text-purple-800', dot: 'bg-purple-500' },
   mensajes: { bg: 'bg-emerald-50', border: 'border-emerald-100', text: 'text-emerald-800', dot: 'bg-emerald-500' },
-  compliance: { bg: 'bg-amber-50', border: 'border-amber-100', text: 'text-amber-800', dot: 'bg-amber-500' },
   direccion: { bg: 'bg-slate-50', border: 'border-slate-200', text: 'text-slate-800', dot: 'bg-slate-500' },
   seguimiento: { bg: 'bg-teal-50', border: 'border-teal-100', text: 'text-teal-800', dot: 'bg-teal-500' },
 }

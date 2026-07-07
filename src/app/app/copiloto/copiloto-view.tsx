@@ -92,11 +92,11 @@ export function CopilotoView({ aiConfigured, contacts, companies, opportunities,
         <p className="text-sm text-blue-800">
           {!aiConfigured ? (
             <>
-              <strong>IA avanzada no configurada.</strong> El copiloto estará disponible cuando el administrador active la integración. Mientras tanto, podés usar Compliance y la base de conocimiento.
+              <strong>IA avanzada no configurada.</strong> El copiloto estará disponible cuando el administrador active la integración. Mientras tanto, podés usar la base de conocimiento.
             </>
           ) : (
             <>
-              El copiloto <strong>nunca cotiza primas ni promete coberturas.</strong> Toda sugerencia pasa por compliance antes de mostrarse.
+              El copiloto <strong>nunca cotiza primas ni promete coberturas.</strong> Revisá cada sugerencia antes de usarla con un cliente.
             </>
           )}
         </p>

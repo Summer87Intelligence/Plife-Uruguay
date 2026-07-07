@@ -1,5 +1,7 @@
 # Guía rápida — Primer día usando PLIFE Growth OS
 
+> **Histórico (FASE 15C):** **Compliance fue removido del producto.** Las menciones a "Compliance" en este documento son históricas. Ver `docs/product/compliance-removal-15c.md`.
+
 Esta guía resume lo esencial para alguien que entra por primera vez. El sistema **empieza vacío**: el valor aparece cuando cargás empresa, contacto y oportunidad con seguimiento definido.
 
 ---

@@ -24,7 +24,6 @@ const PAGES = [
   { name: 'Empresas',      route: ROUTES.empresas },
   { name: 'Oportunidades', route: ROUTES.oportunidades },
   { name: 'Campañas',      route: ROUTES.campanas },
-  { name: 'Compliance',    route: ROUTES.compliance },
   { name: 'Copiloto',      route: ROUTES.copiloto },
   { name: 'Dirección',     route: ROUTES.direccion },
 ]

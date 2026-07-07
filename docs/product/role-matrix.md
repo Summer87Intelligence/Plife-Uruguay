@@ -1,6 +1,8 @@
 # Matriz de roles — PLIFE Growth OS
 
 > **Histórico (FASE 15B):** OpenAI fue removido del proyecto. Las menciones a OpenAI / GPT / `OPENAI_API_KEY` son registro histórico; los motores operan en modo determinístico interno.
+>
+> **Histórico (FASE 15C):** Compliance fue removido del producto (sección/menú/ruta). El rol `compliance` de la base ya no habilita accesos en la app. Ver `docs/product/compliance-removal-15c.md`.
 
 **Versión:** FASE 12G  
 **Última actualización:** 2026-07-01

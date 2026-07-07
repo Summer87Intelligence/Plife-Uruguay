@@ -4,7 +4,7 @@ import { getProfile } from '@/lib/auth'
 import { redirect, notFound } from 'next/navigation'
 import {
   Megaphone, Target, Users, MessageSquare, PhoneCall,
-  ShieldQuestion, Building2, TrendingUp, Clock, ShieldCheck, List,
+  ShieldQuestion, Building2, TrendingUp, Clock, List,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
@@ -115,7 +115,6 @@ export default async function CampanaDetailPage({ params }: { params: Promise<{ 
           ...(linkedOpportunities.length > 0
             ? [{ label: 'Ver oportunidades', href: `/app/oportunidades?q=${encodeURIComponent(campaign.name)}`, icon: List }]
             : [{ label: 'Ver pipeline', href: '/app/oportunidades', icon: List }]),
-          { label: 'Revisar mensaje', href: '/app/compliance', icon: ShieldCheck },
           { label: 'Volver a campañas', href: '/app/campanas', icon: Megaphone },
         ]}
       />

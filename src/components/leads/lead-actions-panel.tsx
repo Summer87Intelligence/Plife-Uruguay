@@ -1,4 +1,4 @@
-import { CheckCircle2, ArrowRightLeft, MessageSquare, Shield, TrendingUp, Trash2 } from 'lucide-react'
+import { CheckCircle2, ArrowRightLeft, MessageSquare, TrendingUp, Trash2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import type { MockLead } from '@/domains/leads/mock-data'
@@ -8,7 +8,6 @@ const MOCK_ACTIONS = [
   { id: 'contacted', label: 'Marcar contactado', icon: CheckCircle2 },
   { id: 'stage', label: 'Cambiar etapa', icon: ArrowRightLeft },
   { id: 'message', label: 'Preparar mensaje', icon: MessageSquare },
-  { id: 'compliance', label: 'Revisar compliance', icon: Shield },
   { id: 'discard', label: 'Descartar lead', icon: Trash2, variant: 'outline' as const },
 ]
 

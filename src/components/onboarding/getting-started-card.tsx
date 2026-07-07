@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { Route } from 'next'
-import { Building2, Users, TrendingUp, Megaphone, ShieldCheck, ArrowRight, Compass } from 'lucide-react'
+import { Building2, Users, TrendingUp, Megaphone, ArrowRight, Compass } from 'lucide-react'
 
 const steps = [
   {
@@ -35,14 +35,6 @@ const steps = [
     cta: 'Ver campañas',
     href: '/app/campanas' as Route,
   },
-  {
-    n: 5,
-    icon: ShieldCheck,
-    title: 'Revisar mensajes con Compliance',
-    desc: 'Antes de enviar un mensaje, revisá que no prometa algo riesgoso.',
-    cta: 'Revisar mensaje',
-    href: '/app/compliance' as Route,
-  },
 ]
 
 interface GettingStartedCardProps {
@@ -61,7 +53,7 @@ export function GettingStartedCard({ mode = 'empty' }: GettingStartedCardProps) 
           ? 'Estás viendo datos de ejemplo. En uso real, el sistema empieza cargando una empresa, un contacto y una oportunidad.'
           : 'Todavía no hay datos cargados. Empezá por estos pasos para activar el sistema.'}
       </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {steps.map(step => {
           const Icon = step.icon
           return (

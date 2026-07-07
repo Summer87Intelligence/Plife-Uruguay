@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { useState } from 'react'
-import { Plus, AlertTriangle, Calendar, Pencil, Trophy, CircleX, UserCircle, Megaphone, Building2, ShieldCheck, List } from 'lucide-react'
+import { Plus, AlertTriangle, Calendar, Pencil, Trophy, CircleX, UserCircle, Megaphone, Building2, List } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Select } from '@/components/ui/select'
@@ -235,7 +235,6 @@ export function OpportunityDetail({ opportunity, activities, advisors, campaign,
           ...(campaign
             ? [{ label: 'Ver campaña', href: `/app/campanas/${campaign.id}`, icon: Megaphone }]
             : []),
-          { label: 'Revisar mensaje', href: '/app/compliance', icon: ShieldCheck },
           { label: 'Ir al pipeline', href: '/app/oportunidades', icon: List },
         ]}
       />

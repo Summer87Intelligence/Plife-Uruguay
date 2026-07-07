@@ -7,7 +7,6 @@ const SIDEBAR_LINKS = [
   'Oportunidades',
   'Campañas',
   'Motor IA',
-  'Compliance',
   'Dirección',
   'Admin',
 ] as const

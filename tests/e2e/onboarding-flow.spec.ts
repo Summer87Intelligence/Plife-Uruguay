@@ -17,7 +17,7 @@ test.describe('Onboarding — flujo de primeros pasos', () => {
     ).toBeVisible({ timeout: 10_000 })
   })
 
-  test('2. Los 5 pasos del flujo operativo están visibles', async ({ page }) => {
+  test('2. Los 4 pasos del flujo operativo están visibles', async ({ page }) => {
     await page.goto(ROUTES.hoy)
     await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {})
 
@@ -25,7 +25,6 @@ test.describe('Onboarding — flujo de primeros pasos', () => {
     await expect(page.getByText('Agregar un contacto').first()).toBeVisible({ timeout: 8_000 })
     await expect(page.getByText('Crear una oportunidad').first()).toBeVisible({ timeout: 8_000 })
     await expect(page.getByText('Crear o revisar campañas').first()).toBeVisible({ timeout: 8_000 })
-    await expect(page.getByText('Revisar mensajes con Compliance').first()).toBeVisible({ timeout: 8_000 })
   })
 
   test('3. Click en "Crear empresa" navega a /app/empresas', async ({ page }) => {
@@ -58,13 +57,4 @@ test.describe('Onboarding — flujo de primeros pasos', () => {
     await expect(page).toHaveURL(/app\/oportunidades/, { timeout: 10_000 })
   })
 
-  test('6. Click en "Revisar mensaje" navega a /app/compliance', async ({ page }) => {
-    await page.goto(ROUTES.hoy)
-    await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {})
-
-    const link = page.getByRole('link', { name: /Revisar mensaje/i }).first()
-    await expect(link).toBeVisible({ timeout: 10_000 })
-    await link.click()
-    await expect(page).toHaveURL(/app\/compliance/, { timeout: 10_000 })
-  })
 })

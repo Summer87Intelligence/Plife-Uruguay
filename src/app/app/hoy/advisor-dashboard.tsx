@@ -77,8 +77,6 @@ export function AdvisorDashboard({
             <Link href="/app/oportunidades" className="text-xs text-[#1B3A6B] hover:underline">Ver oportunidades</Link>
             <span className="text-gray-300">·</span>
             <Link href="/app/campanas" className="text-xs text-[#1B3A6B] hover:underline">Revisar campañas</Link>
-            <span className="text-gray-300">·</span>
-            <Link href="/app/compliance" className="text-xs text-[#1B3A6B] hover:underline">Revisar Compliance</Link>
           </div>
         </div>
         {isEmpty ? (

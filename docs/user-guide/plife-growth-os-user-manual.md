@@ -1,5 +1,7 @@
 # Manual de uso — PLIFE Growth OS
 
+> **Histórico (FASE 15C):** **Compliance fue removido del producto.** Ya no existe la sección/menú Compliance ni la ruta `/app/compliance`. Las menciones a "Compliance" en este documento son históricas y no reflejan el producto actual. Ver `docs/product/compliance-removal-15c.md`.
+
 Guía completa para usuarios comerciales que entran por primera vez. Explica qué es el sistema, cómo empezar desde cero y cómo usar cada sección en el día a día.
 
 > **Importante:** PLIFE Growth OS ordena el trabajo comercial. No reemplaza sistemas oficiales de MAPFRE, no calcula pólizas ni automatiza ventas.

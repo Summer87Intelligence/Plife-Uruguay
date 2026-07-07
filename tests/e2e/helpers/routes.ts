@@ -8,7 +8,6 @@ export const ROUTES = {
   oportunidades: '/app/oportunidades',
   campanas: '/app/campanas',
   copiloto: '/app/copiloto',
-  compliance: '/app/compliance',
   conocimiento: '/app/conocimiento',
   direccion: '/app/direccion',
   admin: '/app/admin',

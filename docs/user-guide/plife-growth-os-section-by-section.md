@@ -1,5 +1,7 @@
 # Guía por sección — PLIFE Growth OS
 
+> **Histórico (FASE 15C):** **Compliance fue removido del producto.** Ya no existe la sección/menú Compliance ni la ruta `/app/compliance`. Las menciones a "Compliance" en este documento son históricas. Ver `docs/product/compliance-removal-15c.md`.
+
 Referencia rápida pantalla por pantalla. Pensada para consulta diaria o para alimentar NotebookLM.
 
 ---

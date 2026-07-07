@@ -12,7 +12,6 @@ const ROUTE_LIST = [
   { path: ROUTES.oportunidades,  label: '/app/oportunidades' },
   { path: ROUTES.campanas,       label: '/app/campanas' },
   { path: ROUTES.copiloto,       label: '/app/copiloto' },
-  { path: ROUTES.compliance,     label: '/app/compliance' },
   { path: ROUTES.conocimiento,   label: '/app/conocimiento' },
   { path: ROUTES.direccion,      label: '/app/direccion' },
   { path: ROUTES.admin,          label: '/app/admin' },

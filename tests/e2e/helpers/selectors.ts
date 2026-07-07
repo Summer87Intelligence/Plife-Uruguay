@@ -16,10 +16,6 @@ export const SEL = {
   // Radar B2B
   radarHeading: /Radar B2B/i,
 
-  // Compliance
-  complianceInput: /mensaje|ingresá el mensaje/i,
-  complianceSubmit: /revisar|analizar/i,
-
   // Knowledge
   knowledgeHeading: /base de conocimiento|documentos/i,
 

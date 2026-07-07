@@ -183,7 +183,7 @@ export function CompanyForm({ onSuccess, onCancel, mode = 'create', companyId, i
           </div>
           <Input label="Instagram" value={form.instagram_url} onChange={e => set('instagram_url', e.target.value)} placeholder="https://instagram.com/..." />
           <Input label="Fuente del dato" value={form.source} onChange={e => set('source', e.target.value)} placeholder="Referido, LinkedIn, evento..." />
-          <Textarea label="Riesgos u observaciones" value={form.risk_notes} onChange={e => set('risk_notes', e.target.value)} rows={2} placeholder="Aspectos comerciales o de compliance a tener en cuenta..." />
+          <Textarea label="Riesgos u observaciones" value={form.risk_notes} onChange={e => set('risk_notes', e.target.value)} rows={2} placeholder="Aspectos comerciales a tener en cuenta..." />
           <Textarea label="Notas internas" value={form.notes} onChange={e => set('notes', e.target.value)} rows={2} placeholder="Contexto adicional para el equipo..." />
         </div>
       </details>

@@ -7,7 +7,6 @@ import { LeadOperationalEditForm } from './lead-operational-edit-form'
 import { LeadTimelineMock } from './lead-timeline-mock'
 import { LeadActionsPanel } from './lead-actions-panel'
 import { LeadAIAssistantMock } from './lead-ai-assistant-mock'
-import { LeadComplianceMock } from './lead-compliance-mock'
 
 interface LeadDetailViewProps {
   lead: MockLead
@@ -48,7 +47,6 @@ export function LeadDetailView({ lead, dataSource = 'mock' }: LeadDetailViewProp
         </div>
         <div className="space-y-5">
           <LeadActionsPanel lead={lead} />
-          <LeadComplianceMock />
         </div>
       </div>
     </div>
