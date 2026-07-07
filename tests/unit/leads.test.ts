@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildLeadInsertRow,
+  buildLeadOperationalUpdate,
   CreateLeadInputSchema,
   LEAD_CREATE_DEFAULTS,
+  updateLeadOperationalSchema,
 } from '@/domains/leads/validation'
 import {
   LEAD_PIPELINE_ORDER,
@@ -97,6 +99,115 @@ describe('CreateLeadInputSchema', () => {
       assigned_to: 'otro-user',
     })
     expect(parsed.success).toBe(false)
+  })
+})
+
+describe('updateLeadOperationalSchema', () => {
+  const VALID_LEAD_ID = '28d0fc3b-a814-42b7-9d21-e0180fed2be4'
+  const baseUpdate = {
+    lead_id: VALID_LEAD_ID,
+    pipeline_stage: 'contactado',
+    priority: 'medium',
+    temperature: 'warm',
+  }
+
+  it('accepts a minimal valid update', () => {
+    const parsed = updateLeadOperationalSchema.safeParse(baseUpdate)
+    expect(parsed.success).toBe(true)
+    if (!parsed.success) return
+    expect(parsed.data.lead_id).toBe(VALID_LEAD_ID)
+    expect(parsed.data.pipeline_stage).toBe('contactado')
+  })
+
+  it('rejects an invalid lead_id', () => {
+    const parsed = updateLeadOperationalSchema.safeParse({
+      ...baseUpdate,
+      lead_id: 'no-es-uuid',
+    })
+    expect(parsed.success).toBe(false)
+  })
+
+  it('rejects an invalid pipeline_stage', () => {
+    const parsed = updateLeadOperationalSchema.safeParse({
+      ...baseUpdate,
+      pipeline_stage: 'etapa_inexistente',
+    })
+    expect(parsed.success).toBe(false)
+  })
+
+  it('rejects terminal stages (convertido/descartado)', () => {
+    for (const stage of ['convertido', 'descartado']) {
+      const parsed = updateLeadOperationalSchema.safeParse({
+        ...baseUpdate,
+        pipeline_stage: stage,
+      })
+      expect(parsed.success).toBe(false)
+    }
+  })
+
+  it('rejects status from client input', () => {
+    const parsed = updateLeadOperationalSchema.safeParse({
+      ...baseUpdate,
+      status: 'converted',
+    })
+    expect(parsed.success).toBe(false)
+  })
+
+  it('rejects deleted_at and other system fields from client input', () => {
+    for (const field of [
+      { deleted_at: '2026-07-07T00:00:00Z' },
+      { converted_at: '2026-07-07T00:00:00Z' },
+      { discarded_at: '2026-07-07T00:00:00Z' },
+      { assigned_to: 'otro-user' },
+      { created_by: 'otro-user' },
+      { opportunity_id: VALID_LEAD_ID },
+      { company_id: VALID_LEAD_ID },
+      { contact_id: VALID_LEAD_ID },
+    ]) {
+      const parsed = updateLeadOperationalSchema.safeParse({ ...baseUpdate, ...field })
+      expect(parsed.success).toBe(false)
+    }
+  })
+
+  it('trims next_action and notes', () => {
+    const parsed = updateLeadOperationalSchema.parse({
+      ...baseUpdate,
+      next_action: '  Llamar mañana  ',
+      notes: '  Nota con espacios  ',
+    })
+    expect(parsed.next_action).toBe('Llamar mañana')
+    expect(parsed.notes).toBe('Nota con espacios')
+  })
+
+  it('maps empty optional fields to null in the update payload', () => {
+    const parsed = updateLeadOperationalSchema.parse(baseUpdate)
+    const payload = buildLeadOperationalUpdate(parsed)
+    expect(payload).toEqual({
+      pipeline_stage: 'contactado',
+      priority: 'medium',
+      temperature: 'warm',
+      next_action: null,
+      next_action_date: null,
+      notes: null,
+    })
+  })
+
+  it('never includes system fields in the update payload', () => {
+    const parsed = updateLeadOperationalSchema.parse({
+      ...baseUpdate,
+      next_action: 'Llamar',
+      next_action_date: '2026-07-09',
+      notes: 'Nota',
+    })
+    const payload = buildLeadOperationalUpdate(parsed)
+    expect(Object.keys(payload).sort()).toEqual([
+      'next_action',
+      'next_action_date',
+      'notes',
+      'pipeline_stage',
+      'priority',
+      'temperature',
+    ])
   })
 })
 

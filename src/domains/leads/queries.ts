@@ -10,7 +10,7 @@ import type {
 } from './types'
 
 const LEAD_COLUMNS =
-  'id, title, display_name, lead_type, source, status, pipeline_stage, priority, temperature, interest_area, phone, email, next_action, next_action_date, assigned_to, created_at, updated_at, converted_at, discarded_at' as const
+  'id, title, display_name, lead_type, source, status, pipeline_stage, priority, temperature, interest_area, phone, email, next_action, next_action_date, notes, assigned_to, created_at, updated_at, converted_at, discarded_at' as const
 
 type LeadQueryRow = {
   id: string
@@ -27,6 +27,7 @@ type LeadQueryRow = {
   email: string | null
   next_action: string | null
   next_action_date: string | null
+  notes: string | null
   assigned_to: string | null
   created_at: string
   updated_at: string
@@ -50,6 +51,7 @@ function toMockLead(row: LeadQueryRow): MockLead {
     email: row.email,
     next_action: row.next_action,
     next_action_date: row.next_action_date,
+    notes: row.notes,
     assigned_to: row.assigned_to,
     created_at: row.created_at,
     updated_at: row.updated_at,

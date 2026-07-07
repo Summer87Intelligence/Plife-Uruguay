@@ -3,6 +3,7 @@ import type { MockLead } from '@/domains/leads/mock-data'
 import { LeadDetailHeader } from './lead-detail-header'
 import { LeadDetailSummary } from './lead-detail-summary'
 import { LeadNextActionPanel } from './lead-next-action-panel'
+import { LeadOperationalEditForm } from './lead-operational-edit-form'
 import { LeadTimelineMock } from './lead-timeline-mock'
 import { LeadActionsPanel } from './lead-actions-panel'
 import { LeadAIAssistantMock } from './lead-ai-assistant-mock'
@@ -19,7 +20,7 @@ export function LeadDetailView({ lead, dataSource = 'mock' }: LeadDetailViewProp
     dataSource === 'dev-readonly'
       ? {
           title: 'Detalle conectado a Supabase dev.',
-          body: 'Acciones todavía no modifican datos.',
+          body: 'Los campos operativos son editables; convertir, descartar y eliminar siguen deshabilitados.',
         }
       : {
           title: 'Detalle conceptual con datos demo.',
@@ -41,6 +42,7 @@ export function LeadDetailView({ lead, dataSource = 'mock' }: LeadDetailViewProp
         <div className="lg:col-span-2 space-y-5">
           <LeadDetailSummary lead={lead} />
           <LeadNextActionPanel lead={lead} />
+          {dataSource === 'dev-readonly' && <LeadOperationalEditForm lead={lead} />}
           <LeadTimelineMock lead={lead} />
           <LeadAIAssistantMock lead={lead} />
         </div>

@@ -9,6 +9,7 @@ export interface MockLead extends LeadLike {
   interest_area: string | null
   phone?: string | null
   email?: string | null
+  notes?: string | null
 }
 
 function dateKey(daysFromToday: number): string {

@@ -529,6 +529,32 @@ Comportamiento:
 
 ---
 
+## 15. FASE 14J — Operational lead updates
+
+Se habilitó la edición real de campos operativos desde el detalle del lead en **Supabase dev**:
+
+| Pieza | Ubicación |
+|---|---|
+| Server action | `src/domains/leads/actions.ts` — `updateLeadOperationalAction` |
+| Validación Zod | `src/domains/leads/validation.ts` — `updateLeadOperationalSchema` + `buildLeadOperationalUpdate` |
+| Formulario | `src/components/leads/lead-operational-edit-form.tsx` |
+| Integración | `src/components/leads/lead-detail-view.tsx` (debajo del panel de próximo paso, solo con datos dev) |
+| Lectura de `notes` | `src/domains/leads/queries.ts` (prefill del formulario) |
+| Tests unitarios | `tests/unit/leads.test.ts` |
+| Documentación | `docs/product/leads-operational-update-14j.md` |
+
+Comportamiento:
+
+- **Campos editables**: `pipeline_stage` (solo etapas activas), `priority`, `temperature`, `next_action`, `next_action_date`, `notes`. Opcionales vacíos limpian la columna.
+- **Campos bloqueados**: `.strict()` rechaza `status`, `deleted_at`, `created_by`, `assigned_to`, `converted_at`, `discarded_at`, `opportunity_id`, `company_id`, `contact_id`. El payload de UPDATE solo contiene las 6 columnas operativas.
+- **Etapas terminales**: `convertido`/`descartado` se rechazan en el schema y no aparecen en el select; se manejarán por los flujos de conversión/descarte.
+- **RLS**: política `leads_update` (`authenticated`) — admin/dirección, asignado o creador. El action filtra `deleted_at IS NULL` y verifica filas afectadas con `select('id')`.
+- **Revalidación**: `/app/leads`, `/app/pipeline` y `/app/leads/[leadId]` — un cambio de etapa desde el detalle se refleja en el pipeline sin drag/drop.
+- **Sin conectar**: conversión real, descarte, soft-delete (NO-GO), DELETE físico, drag/drop, service role.
+- **Producción / Vercel**: no tocados.
+
+---
+
 ## Resumen de decisiones
 
 | Tema | Decisión |
