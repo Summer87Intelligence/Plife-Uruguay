@@ -1,5 +1,7 @@
 # Plan de Implementación Motor IA PLIFE — FASE 12O-B a 12O-H
 
+> **Histórico (FASE 15B):** OpenAI fue removido del proyecto. Las menciones a OpenAI / GPT / `OPENAI_API_KEY` son registro histórico; los motores operan en modo determinístico interno.
+
 ## Contexto
 
 - Rama: `feat/plife-ai-engine`

@@ -8,7 +8,6 @@ const FORBIDDEN = [
   { term: 'ICP',            pattern: /\bICP\b/ },
   { term: 'embedding',      pattern: /\bembedding\b/i },
   { term: 'fallback',       pattern: /\bfallback\b/i },
-  { term: 'OPENAI_API_KEY', pattern: /OPENAI_API_KEY/ },
   { term: 'SQL pendiente',  pattern: /SQL pendiente/i },
   { term: 'RLS',            pattern: /\bRLS\b/ },
   { term: 'GRANT',          pattern: /\bGRANT\b/ },

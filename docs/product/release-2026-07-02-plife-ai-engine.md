@@ -1,4 +1,6 @@
 # Release — PLIFE AI Engine
+
+> **Histórico (FASE 15B):** OpenAI fue removido del proyecto. Las menciones a OpenAI / GPT / `OPENAI_API_KEY` son registro histórico; los motores operan en modo determinístico interno.
 **Fecha:** 2026-07-02  
 **Versión:** Motor IA PLIFE v1.0 (modo simulado)  
 **PR:** [#1 feat: add PLIFE AI engine](https://github.com/Summer87Intelligence/Plife-Uruguay/pull/1)  

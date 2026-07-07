@@ -1,11 +1,9 @@
-// Hybrid compliance engine.
-// Layer 1 (always, no AI): deterministic rules from `compliance_rules` + built-in
-// patterns covering forbidden insurance claims.
-// Layer 2 (optional, AI): for ambiguous messages at 'medio' risk only. AI can raise
-// risk but NEVER lower a deterministic 'critico' or 'alto' result.
+// Deterministic compliance engine.
+// Reglas determinísticas de `compliance_rules` + patrones built-in que cubren
+// afirmaciones prohibidas para seguros. No usa ningún proveedor externo de IA
+// (la capa de refinamiento con OpenAI fue removida en FASE 15B).
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database, RiskLevel, ComplianceAction, ComplianceRule } from '@/types/database'
-import { chatComplete, isAIConfigured } from '@/lib/ai/provider'
 
 export interface ComplianceResult {
   riskLevel: RiskLevel
@@ -127,10 +125,8 @@ export interface ReviewInput {
   aiInteractionId?: string | null
 }
 
-// Runs the deterministic engine, optionally refines with AI for 'medio' risk,
-// persists a `compliance_reviews` row and returns the final result.
-// AI second layer: only if OPENAI_API_KEY is configured and deterministic risk is 'medio'.
-// AI can only raise risk, never lower 'alto' or 'critico'.
+// Corre el motor determinístico, persiste una fila en `compliance_reviews` y
+// devuelve el resultado. Totalmente determinístico: sin proveedor externo de IA.
 export async function reviewCommercialMessage(
   supabase: SupabaseClient<Database>,
   input: ReviewInput
@@ -140,36 +136,7 @@ export async function reviewCommercialMessage(
     .select('*')
     .eq('is_active', true)
 
-  let result = runDeterministicCompliance(input.content, rules ?? [])
-
-  // Layer 2: AI refinement for ambiguous 'medio' risk cases.
-  if (result.riskLevel === 'medio' && isAIConfigured()) {
-    try {
-      const aiRes = await chatComplete({
-        system: `Sos un revisor de compliance para seguros de vida en Uruguay (PLIFE/MAPFRE).
-Evaluá si el siguiente mensaje comercial contiene afirmaciones riesgosas: promesas de cobertura, garantías, negación de riesgo, promesas de aprobación, comparaciones de inversión.
-Respondé SOLO con esta línea exacta: Nivel de riesgo: bajo|medio|alto|critico`,
-        user: `Mensaje:\n${input.content.slice(0, 1000)}`,
-        temperature: 0.1,
-        maxTokens: 60,
-      })
-      const match = aiRes.content.match(/nivel de riesgo:\s*(bajo|medio|alto|critico)/i)
-      if (match) {
-        const aiRisk = match[1].toLowerCase() as RiskLevel
-        // AI may only raise, not lower
-        if (RISK_RANK[aiRisk] > RISK_RANK[result.riskLevel]) {
-          result = {
-            ...result,
-            riskLevel: aiRisk,
-            action: actionForRisk(aiRisk),
-            riskReasons: [...result.riskReasons, `(IA: riesgo ${aiRisk} detectado)`],
-          }
-        }
-      }
-    } catch {
-      // AI failure is silently ignored — deterministic result stands.
-    }
-  }
+  const result = runDeterministicCompliance(input.content, rules ?? [])
 
   await supabase.from('compliance_reviews').insert({
     ai_interaction_id: input.aiInteractionId ?? null,

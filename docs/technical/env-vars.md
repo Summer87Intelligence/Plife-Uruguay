@@ -35,20 +35,12 @@
 
 ---
 
-## OPENAI_API_KEY
+## OPENAI_API_KEY — REMOVIDA (FASE 15B)
 
-| Campo       | Valor                                        |
-|-------------|----------------------------------------------|
-| Requerida   | No — la app funciona sin IA si falta          |
-| Exposición  | Solo servidor (sin prefijo `NEXT_PUBLIC_`)    |
-| Entornos    | Local (opcional) · Staging · Producción      |
-| Formato     | `sk-...`                                     |
-
-**Descripción:** Clave de API de OpenAI. Usada exclusivamente en Server Actions y Route Handlers para el Copiloto IA (`/app/copiloto`). **Nunca llega al navegador.**
-
-**Riesgo si falta:** Las funciones de IA devuelven error controlado. El resto de la app funciona normalmente. El módulo de Copiloto muestra estado "IA no configurada".
-
-**Riesgo si se expone:** Gasto no controlado en la cuenta de OpenAI. Rotar inmediatamente si se filtra.
+> **Histórico / removido en FASE 15B.** El proyecto **no usa OpenAI** ni ningún
+> proveedor externo de IA. Esta variable **ya no se requiere ni se lee** por el código.
+> Los motores operan en **modo determinístico interno**. No configurar esta variable
+> en ningún entorno.
 
 ---
 
@@ -91,8 +83,7 @@
 NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
 
-# OpenAI (opcional — activa el Copiloto IA)
-OPENAI_API_KEY=sk-...
+# (OpenAI removido en FASE 15B — no se requiere ninguna clave de proveedor de IA)
 
 # App URL (recomendada)
 NEXT_PUBLIC_APP_URL=http://localhost:3000
@@ -111,6 +102,6 @@ NEXT_PUBLIC_DEMO_MODE=false
 |-------------------------------|-----------|-----------|------------|
 | NEXT_PUBLIC_SUPABASE_URL      | Requerida | Requerida | Requerida  |
 | NEXT_PUBLIC_SUPABASE_ANON_KEY | Requerida | Requerida | Requerida  |
-| OPENAI_API_KEY                | Opcional  | Requerida | Requerida  |
+| ~~OPENAI_API_KEY~~ (removida 15B) | — | — | — |
 | NEXT_PUBLIC_APP_URL           | Opcional  | Requerida | Requerida  |
 | NEXT_PUBLIC_DEMO_MODE         | false     | true      | false      |

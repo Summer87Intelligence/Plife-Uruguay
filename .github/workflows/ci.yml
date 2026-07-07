@@ -29,7 +29,8 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          # Build does not call OpenAI; placeholders satisfy Next.js env reads if any.
+          # Motores en modo determinístico interno (sin proveedor externo, 15B).
+          # Placeholders satisfy Next.js env reads if any.
           NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
 

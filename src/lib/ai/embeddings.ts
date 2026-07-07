@@ -1,47 +1,32 @@
 // Embedding generation + semantic search. Server-side only.
-// Degrades gracefully when OPENAI_API_KEY is absent:
-//   generateEmbedding → returns null
-//   indexDocumentChunks → success with fallback=true (chunks stored without embedding)
-//   searchKnowledgeSemantic → falls back to plain-text search
+// OpenAI fue removido en FASE 15B. No se generan embeddings vía proveedor externo.
+// Comportamiento actual (sin proveedor):
+//   generateEmbedding → devuelve null (búsqueda semántica real queda pendiente)
+//   indexDocumentChunks → success con fallback=true (chunks guardados sin embedding)
+//   searchKnowledgeSemantic → usa siempre búsqueda por texto (ilike)
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
-import { isAIConfigured } from '@/lib/ai/provider'
 
-const EMBEDDING_MODEL = 'text-embedding-3-small'
-const MAX_INPUT_CHARS = 8000
-
-export async function generateEmbedding(text: string): Promise<number[] | null> {
-  if (!isAIConfigured()) return null
-  try {
-    const res = await fetch('https://api.openai.com/v1/embeddings', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({ model: EMBEDDING_MODEL, input: text.slice(0, MAX_INPUT_CHARS) }),
-    })
-    if (!res.ok) return null
-    const data = await res.json()
-    return data.data?.[0]?.embedding ?? null
-  } catch {
-    return null
-  }
+// PENDIENTE: la búsqueda semántica real requiere una tecnología de embeddings
+// aún no definida. Hasta entonces devolvemos null (sin llamadas externas).
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function generateEmbedding(_text: string): Promise<number[] | null> {
+  return null
 }
 
 export interface IndexResult {
   success: boolean
   chunksIndexed: number
   chunksSkipped: number
-  /** true when AI key is absent — chunks exist but have no embeddings yet */
+  /** true: sin proveedor de embeddings — los chunks existen pero no se indexan */
   fallback: boolean
   error?: string
 }
 
-// Generates embeddings for every chunk of a document that doesn't have one yet.
-// Chunks that already have an embedding are skipped (idempotent).
-// Requires knowledge-embeddings.sql to have been applied in Supabase.
+// Sin proveedor de embeddings (OpenAI removido en 15B) no se generan vectores.
+// Se conserva la firma pública: valida que existan chunks y devuelve fallback=true
+// (los chunks quedan almacenados sin embedding hasta definir una tecnología).
 export async function indexDocumentChunks(
   supabase: SupabaseClient<Database>,
   documentId: string
@@ -63,26 +48,8 @@ export async function indexDocumentChunks(
     return { success: false, chunksIndexed: 0, chunksSkipped: 0, fallback: false, error: 'Sin chunks para indexar. Creá el documento con contenido.' }
   }
 
-  if (!isAIConfigured()) {
-    return { success: true, chunksIndexed: 0, chunksSkipped: chunks.length, fallback: true }
-  }
-
-  let indexed = 0
-  let skipped = 0
-
-  for (const chunk of chunks) {
-    if (chunk.embedding != null) { skipped++; continue }
-    const embedding = await generateEmbedding(chunk.content)
-    if (embedding) {
-      const { error: updErr } = await supabase
-        .from('knowledge_chunks')
-        .update({ embedding } as never)
-        .eq('id', chunk.id)
-      if (!updErr) indexed++
-    }
-  }
-
-  return { success: true, chunksIndexed: indexed, chunksSkipped: skipped, fallback: false }
+  // Modo determinístico interno: no hay generación de embeddings.
+  return { success: true, chunksIndexed: 0, chunksSkipped: chunks.length, fallback: true }
 }
 
 // Like indexDocumentChunks but clears all existing embeddings first (force reindex).
@@ -111,39 +78,17 @@ export interface SemanticSearchResult {
   usedSemantic: boolean
 }
 
-// Semantic search. With AI key: embed query → pgvector cosine similarity.
-// Without AI key or if search returns 0 results: plain-text ilike fallback.
+// Búsqueda de conocimiento. Sin proveedor de embeddings (15B) se usa siempre
+// búsqueda por texto (ilike). La búsqueda semántica real queda pendiente de
+// definir una tecnología de embeddings.
 export async function searchKnowledgeSemantic(
   supabase: SupabaseClient<Database>,
   query: string,
   options: { matchCount?: number; threshold?: number } = {}
 ): Promise<SemanticSearchResult> {
-  const { matchCount = 5, threshold = 0.6 } = options
+  const { matchCount = 5 } = options
 
-  if (isAIConfigured()) {
-    const embedding = await generateEmbedding(query)
-    if (embedding) {
-      const { data } = await supabase.rpc('search_knowledge', {
-        query_embedding: embedding,
-        match_threshold: threshold,
-        match_count: matchCount,
-      })
-      if (data && data.length > 0) {
-        return {
-          chunks: data.map(r => ({
-            id: r.id,
-            document_id: r.document_id,
-            document_name: r.document_name,
-            content: r.content,
-            similarity: r.similarity,
-          })),
-          usedSemantic: true,
-        }
-      }
-    }
-  }
-
-  // Text fallback
+  // Text fallback (único modo disponible sin proveedor de embeddings)
   const q = query.slice(0, 100)
   const { data: chunkRows } = await supabase
     .from('knowledge_chunks')

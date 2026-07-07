@@ -1,5 +1,7 @@
 # Notas de versión — PLIFE Growth OS
 
+> **Histórico (FASE 15B):** OpenAI fue removido del proyecto. Las menciones a OpenAI / GPT / `OPENAI_API_KEY` son registro histórico; los motores operan en modo determinístico interno.
+
 Historial de cambios relevantes para usuarios, administración y QA.
 
 ---

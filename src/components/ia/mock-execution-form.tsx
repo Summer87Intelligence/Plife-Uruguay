@@ -74,7 +74,7 @@ export function MockExecutionForm({ profiles, defaultProfileId }: MockExecutionF
         <div>
           <p className="text-sm font-semibold text-gray-900">Ejecutar prueba del Motor IA</p>
           <p className="text-xs text-gray-500 mt-1">
-            Esta ejecución usa modo simulado. No consume OpenAI y no genera recomendaciones finales.
+            Esta ejecución usa modo simulado interno (sin proveedor externo) y no genera recomendaciones finales.
           </p>
         </div>
 

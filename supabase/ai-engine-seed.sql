@@ -1,4 +1,9 @@
 -- =============================================================================
+-- HISTÓRICO — OpenAI removido en FASE 15B.
+-- Los valores 'openai' / 'gpt-4o-mini' de este seed son registro histórico.
+-- La app YA NO usa OpenAI (motores en modo determinístico interno). No se aplica
+-- este seed ni ningún cambio a Supabase desde esta fase.
+-- =============================================================================
 -- PLIFE Growth OS — MOTOR IA: SEED INICIAL (FASE 12O-B)
 -- =============================================================================
 -- Carga los datos base del Motor IA PLIFE:

@@ -167,14 +167,14 @@ export function SystemView({
             <div className="h-4 w-px bg-gray-200" />
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4 text-gray-400" />
-              <span className="text-sm text-gray-600">IA (OpenAI)</span>
+              <span className="text-sm text-gray-600">Motores internos</span>
               {isAIConfigured ? (
                 <span className="inline-flex items-center rounded-full bg-green-100 text-green-800 px-2.5 py-0.5 text-xs font-medium">
-                  Configurada
+                  Modo determinístico
                 </span>
               ) : (
                 <span className="inline-flex items-center rounded-full bg-red-100 text-red-700 px-2.5 py-0.5 text-xs font-medium">
-                  Sin configurar
+                  No disponible
                 </span>
               )}
             </div>

@@ -1,5 +1,7 @@
 # Pendientes y decisiones conocidas
 
+> **Histórico (FASE 15B):** OpenAI fue removido del proyecto. Las menciones a OpenAI / GPT / `OPENAI_API_KEY` son registro histórico; los motores operan en modo determinístico interno.
+
 **Versión:** FASE 12F  
 **Última actualización:** 2026-07-01
 

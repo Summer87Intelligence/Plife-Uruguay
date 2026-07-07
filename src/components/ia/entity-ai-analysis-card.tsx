@@ -59,7 +59,7 @@ export function EntityAIAnalysisCard({
             <p className="text-sm font-semibold text-gray-900">Análisis IA comercial</p>
             <p className="text-xs text-gray-500 mt-1">
               Ejecutá el Motor IA PLIFE en modo simulado para generar una lectura comercial por etapas.
-              No consume OpenAI y requiere revisión humana.
+              Opera en modo determinístico interno (sin proveedor externo) y requiere revisión humana.
             </p>
           </div>
         </div>

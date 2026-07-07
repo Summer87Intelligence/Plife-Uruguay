@@ -6,6 +6,12 @@
 **Naturaleza:** documento de auditoría y diseño. **No implementa cambios de código.**
 **Restricciones:** no main · no PR #4 · no merge · no push (salvo autorización) · no Supabase · no Vercel · no `.env` · sin cambios destructivos sin reporte previo.
 
+> **Resultado FASE 15B (ejecutada):** la remoción de OpenAI del punto 15B del plan
+> ya fue implementada. OpenAI fue eliminado por completo del código activo, config
+> y tests; los motores operan en modo determinístico interno. Detalle en
+> [`openai-removal-15b.md`](./openai-removal-15b.md). Pendientes: 15C (Compliance),
+> 15D+ (rediseño de motores) y definición de tecnología de generación/embeddings.
+
 ---
 
 ## 1. Resumen ejecutivo

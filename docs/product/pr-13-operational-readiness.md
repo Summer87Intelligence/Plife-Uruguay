@@ -1,5 +1,7 @@
 # PR — PLIFE Operational Readiness
 
+> **Histórico (FASE 15B):** OpenAI fue removido del proyecto. Las menciones a OpenAI / GPT / `OPENAI_API_KEY` son registro histórico; los motores operan en modo determinístico interno.
+
 **Branch:** `main` (local, sin push)  
 **Base:** `origin/main`  
 **Fecha de preparación:** 2026-07-03  

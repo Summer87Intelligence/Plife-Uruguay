@@ -55,9 +55,9 @@ test.describe('Compliance', () => {
     }
   })
 
-  test('funciona sin OPENAI_API_KEY (capa determinística)', async ({ page }) => {
-    // This is implicitly tested — deterministic layer doesn't need AI.
-    // The test above proves it by completing without error.
+  test('funciona en modo determinístico (sin proveedor externo)', async ({ page }) => {
+    // FASE 15B: la capa determinística no requiere ningún proveedor externo.
+    // El test anterior lo prueba al completar sin error.
     const textarea = page.getByRole('textbox').first()
     await textarea.fill(HIGH_RISK_MESSAGE)
     const submitBtn = page.getByRole('button', { name: /revisar|analizar|verificar/i })

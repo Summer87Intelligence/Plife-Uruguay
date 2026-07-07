@@ -1,24 +1,30 @@
 // AI provider abstraction. Server-side only.
-// Decouples the rest of the app from the concrete LLM vendor (currently OpenAI).
-// If OPENAI_API_KEY is absent, every call fails in a controlled way and the UI
-// can render an "IA no configurada" state without crashing.
+// OpenAI fue removido en FASE 15B. El proyecto NO usa ningún proveedor externo.
+// Los motores operan en modo determinístico interno hasta definir proveedor/tecnología.
+// Ninguna función llama a APIs externas ni depende de claves de proveedor.
 
-export const AI_NOT_CONFIGURED_MESSAGE =
-  'IA no configurada. Agregá OPENAI_API_KEY para activar el copiloto.'
+export const AI_INTERNAL_MODE_MESSAGE =
+  'Motores internos en modo determinístico hasta definir proveedor/tecnología.'
 
+// Alias retrocompatible: se mantiene para no romper imports existentes.
+export const AI_NOT_CONFIGURED_MESSAGE = AI_INTERNAL_MODE_MESSAGE
+
+// Identificador del "modelo" interno. No corresponde a ningún proveedor externo.
+export const INTERNAL_ENGINE_MODEL = 'internal-deterministic'
+
+// Se conserva la clase por compatibilidad de imports. En el modo determinístico
+// interno no se lanza en el flujo normal (los motores no fallan por falta de proveedor).
 export class AINotConfiguredError extends Error {
   constructor() {
-    super(AI_NOT_CONFIGURED_MESSAGE)
+    super(AI_INTERNAL_MODE_MESSAGE)
     this.name = 'AINotConfiguredError'
   }
 }
 
+// Los motores internos están siempre disponibles en modo determinístico.
+// No requieren ninguna clave ni proveedor externo.
 export function isAIConfigured(): boolean {
-  const key = process.env.OPENAI_API_KEY?.trim()
-  // Treat empty values and the .env.local placeholder as "not configured" so the
-  // UI shows a clean "IA no configurada" state instead of a provider auth error.
-  if (!key || key === 'your-openai-key-here') return false
-  return key.startsWith('sk-')
+  return true
 }
 
 export interface ChatRequest {
@@ -35,47 +41,37 @@ export interface ChatResult {
   tokensUsed: number | null
 }
 
-const DEFAULT_MODEL = 'gpt-4o-mini'
-
-// Performs a single chat completion. Throws AINotConfiguredError when there is no
-// key, or a generic controlled Error on transport/API failures.
+// Completion determinística y libre de proveedor. NUNCA llama a una API externa.
+// Devuelve una respuesta estructurada y segura que deja explícito que el motor
+// opera en modo interno hasta definir una tecnología de generación.
+// La firma pública se mantiene para no romper a los consumidores (runAgent, etc.).
 export async function chatComplete(req: ChatRequest): Promise<ChatResult> {
-  if (!isAIConfigured()) {
-    throw new AINotConfiguredError()
+  return {
+    content: buildDeterministicResponse(req),
+    model: INTERNAL_ENGINE_MODEL,
+    tokensUsed: null,
   }
+}
 
-  const model = req.model || DEFAULT_MODEL
+function buildDeterministicResponse(req: ChatRequest): string {
+  const intent = firstMeaningfulLine(req.user) || firstMeaningfulLine(req.system)
+  return [
+    '[Motor interno — modo determinístico]',
+    '',
+    AI_INTERNAL_MODE_MESSAGE,
+    '',
+    intent ? `Contexto recibido: ${intent}` : 'Sin contexto adicional provisto.',
+    '',
+    'Este motor todavía no está conectado a una tecnología de generación.',
+    'No inventa datos, precios ni condiciones. Requiere revisión humana del asesor.',
+  ].join('\n')
+}
 
-  let response: Response
-  try {
-    response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model,
-        temperature: req.temperature ?? 0.5,
-        max_tokens: req.maxTokens ?? 1200,
-        messages: [
-          { role: 'system', content: req.system },
-          { role: 'user', content: req.user },
-        ],
-      }),
-    })
-  } catch {
-    throw new Error('No se pudo conectar con el proveedor de IA. Intentá nuevamente.')
-  }
-
-  if (!response.ok) {
-    // Avoid leaking raw provider errors / keys to the UI.
-    throw new Error('El proveedor de IA devolvió un error. Revisá la configuración e intentá nuevamente.')
-  }
-
-  const data = await response.json()
-  const content: string = data.choices?.[0]?.message?.content ?? ''
-  const tokensUsed: number | null = data.usage?.total_tokens ?? null
-
-  return { content, model, tokensUsed }
+function firstMeaningfulLine(text: string): string {
+  const line = text
+    .split('\n')
+    .map((l) => l.trim())
+    .find((l) => l.length > 0)
+  if (!line) return ''
+  return line.length > 160 ? `${line.slice(0, 157)}…` : line
 }

@@ -1,3 +1,9 @@
+-- HISTÓRICO — OpenAI removido en FASE 15B.
+-- La columna embedding (1536 dims, originalmente pensada para text-embedding-3-small
+-- de OpenAI) queda como registro histórico. La app YA NO genera embeddings vía
+-- proveedor externo; la búsqueda de conocimiento usa texto (ilike). La búsqueda
+-- semántica real queda pendiente de definir una tecnología. Sin cambios a Supabase.
+--
 -- FASE 8: Semantic knowledge base (pgvector)
 -- Run this in Supabase SQL Editor (once) before deploying FASE 8.
 -- Idempotent: safe to re-run.
