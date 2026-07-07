@@ -1,12 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { getProfile } from '@/lib/auth'
+import { isInternalOpenAccessEnabled } from '@/lib/internal-open-access'
 import { redirect } from 'next/navigation'
 import { AdminView } from './admin-view'
 
 export default async function AdminPage() {
   const profile = await getProfile()
   if (!profile) redirect('/login')
-  if (profile.role !== 'admin') redirect('/app/hoy')
+  if (!isInternalOpenAccessEnabled() && profile.role !== 'admin') redirect('/app/hoy')
 
   const supabase = await createClient()
 

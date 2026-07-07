@@ -7,6 +7,8 @@ import { Users, Building2, TrendingUp, Megaphone, AlertCircle, Clock, Route as R
 import { OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS, PIPELINE_STAGES } from '@/lib/constants'
 import { formatRelativeDate } from '@/lib/utils'
 import { isDemoMode } from '@/lib/demo'
+import { FollowUpCenter } from '@/components/follow-up/follow-up-center'
+import type { FollowUpOpp } from '@/components/follow-up/follow-up-center'
 import type { Profile, Opportunity, OpportunityStage, Contact } from '@/types/database'
 
 interface DirectionDashboardProps {
@@ -21,9 +23,12 @@ interface DirectionDashboardProps {
   globalOverdue: Partial<Contact>[]
   abandonedOpps: Partial<Opportunity>[]
   profile: Profile
+  dirOverdueOpps: Partial<Opportunity>[]
+  dirTodayOpps: Partial<Opportunity>[]
+  dirNoNextStepOpps: Partial<Opportunity>[]
 }
 
-export function DirectionDashboard({ metrics, recentOpps, stageCounts, globalOverdue, abandonedOpps }: DirectionDashboardProps) {
+export function DirectionDashboard({ metrics, recentOpps, stageCounts, globalOverdue, abandonedOpps, dirOverdueOpps, dirTodayOpps, dirNoNextStepOpps }: DirectionDashboardProps) {
   const isEmpty = metrics.totalCompanies === 0 && metrics.totalOpps === 0 && metrics.activeCampaigns === 0
   const isDemo = isDemoMode()
 
@@ -57,6 +62,13 @@ export function DirectionDashboard({ metrics, recentOpps, stageCounts, globalOve
       {(isEmpty || (!isEmpty && isDemo)) && (
         <GettingStartedCard mode={isEmpty ? 'empty' : 'demo'} />
       )}
+
+      <FollowUpCenter
+        overdue={dirOverdueOpps as FollowUpOpp[]}
+        today={dirTodayOpps as FollowUpOpp[]}
+        missingNextStep={dirNoNextStepOpps as FollowUpOpp[]}
+        stalled={abandonedOpps as FollowUpOpp[]}
+      />
 
       {/* Alertas del equipo */}
       {(globalOverdue.length > 0 || abandonedOpps.length > 0) && (

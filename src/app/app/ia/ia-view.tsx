@@ -11,6 +11,7 @@ import type { IAEngineProps, MainTab } from '@/components/ia/types'
 import { getActiveProfile, getLatestRun } from '@/components/ia/helpers'
 import { ProfileSelector } from '@/components/ia/profile-selector'
 import { DashboardTab } from '@/components/ia/tab-dashboard'
+import { SectionGuideCard } from '@/components/guidance/section-guide-card'
 import { ConfiguracionTab } from '@/components/ia/tab-configuracion'
 import { PromptsTab } from '@/components/ia/tab-prompts'
 import { CategoriasTab } from '@/components/ia/tab-categorias'
@@ -93,6 +94,18 @@ export function IAView({
           )}
         </CardContent>
       </Card>
+
+      <SectionGuideCard
+        title="Cómo usar el Motor IA"
+        description="Usá el motor para preparar seguimiento, mensajes y lectura comercial. Los outputs siempre requieren revisión humana antes de usarse. No define primas, coberturas ni reemplaza condiciones MAPFRE."
+        steps={[
+          'Revisá el perfil comercial PLIFE activo',
+          'Verificá que los prompts estén validados',
+          'Ejecutá el análisis desde la empresa u oportunidad',
+          'Revisá los outputs antes de usarlos',
+        ]}
+        nextStep="Siempre con revisión humana"
+      />
 
       {schemaNotApplied && (
         <div className="flex items-start gap-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-4">

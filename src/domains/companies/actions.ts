@@ -2,6 +2,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { queryCompanyDuplicates } from '@/domains/duplicates/company-duplicate-check'
+import type { CompanyDuplicateMatch } from '@/domains/duplicates/types'
 import type { CompanyB2BStatus, Company } from '@/types/database'
 
 const CompanySchema = z.object({
@@ -27,13 +29,52 @@ const CompanySchema = z.object({
 
 export type CompanyFormData = z.infer<typeof CompanySchema>
 
-export async function createCompany(data: CompanyFormData) {
+export type CreateCompanyResult =
+  | { data: Company }
+  | { error: string }
+  | { duplicates: CompanyDuplicateMatch[] }
+
+export async function checkCompanyDuplicates(
+  data: CompanyFormData,
+  excludeId?: string
+): Promise<{ duplicates: CompanyDuplicateMatch[] }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { duplicates: [] }
+
+  const parsed = CompanySchema.safeParse(data)
+  if (!parsed.success) return { duplicates: [] }
+
+  const duplicates = await queryCompanyDuplicates(supabase, {
+    name: parsed.data.name,
+    website: parsed.data.website || null,
+    linkedin_url: parsed.data.linkedin_url || null,
+    instagram_url: parsed.data.instagram_url || null,
+    excludeId,
+  })
+  return { duplicates }
+}
+
+export async function createCompany(
+  data: CompanyFormData,
+  options?: { confirmDuplicates?: boolean }
+): Promise<CreateCompanyResult> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'No autenticado' }
 
   const parsed = CompanySchema.safeParse(data)
   if (!parsed.success) return { error: parsed.error.issues[0].message }
+
+  const duplicates = await queryCompanyDuplicates(supabase, {
+    name: parsed.data.name,
+    website: parsed.data.website || null,
+    linkedin_url: parsed.data.linkedin_url || null,
+    instagram_url: parsed.data.instagram_url || null,
+  })
+  if (duplicates.length > 0 && !options?.confirmDuplicates) {
+    return { duplicates }
+  }
 
   const clean = {
     ...parsed.data,
