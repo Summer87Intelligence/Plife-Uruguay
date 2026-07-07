@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { generateMockProposal, type ProposalInput } from '@/domains/proposals'
+import {
+  generateMockProposal,
+  parseProposalPrefill,
+  type ProposalInput,
+} from '@/domains/proposals'
 import { COMMERCIAL_ENGINES } from '@/domains/intelligence-engines'
 
 // FASE 15E — Flujo mock "Nueva propuesta". Determinístico, sin OpenAI, sin Compliance,
@@ -86,5 +90,77 @@ describe('generateMockProposal (FASE 15E)', () => {
     const a = generateMockProposal(MIN_INPUT)
     const b = generateMockProposal(MIN_INPUT)
     expect(JSON.stringify(a)).toBe(JSON.stringify(b))
+  })
+})
+
+describe('generateMockProposal — contextual sources (FASE 15F)', () => {
+  it('uses source_context from a lead in the draft', () => {
+    const draft = generateMockProposal({
+      ...MIN_INPUT,
+      source: 'lead',
+      source_id: 'lead-123',
+      source_title: 'Lead Demo',
+      source_context: 'Etapa: Interesado. Próximo paso: llamar.',
+    })
+    expect(draft.summary).toContain('Lead Demo')
+    const diag = draft.engineContributions.find((c) => c.engineId === 'diagnostico')!
+    expect(diag.outputs.join(' ')).toContain('Etapa: Interesado')
+  })
+
+  it('adjusts questions when coming from a campaign', () => {
+    const draft = generateMockProposal({ ...MIN_INPUT, source: 'campaign', source_title: 'Campaña Pymes' })
+    expect(draft.questionsToAsk.join(' ')).toMatch(/segmento de la campaña/i)
+    expect(draft.summary).toContain('Campaña Pymes')
+  })
+
+  it('uses prudent niche/market language when coming from radar', () => {
+    const draft = generateMockProposal({ ...MIN_INPUT, source: 'radar', source_title: 'Empresa X' })
+    const market = draft.marketAngles.join(' ')
+    expect(market).toMatch(/nicho a explorar|Hipótesis a validar/i)
+    // No afirma la señal del radar como un hecho.
+    expect(market.toLowerCase()).not.toContain('confirmado')
+  })
+
+  it('manual source does not add an origin phrase', () => {
+    const draft = generateMockProposal({ ...MIN_INPUT, source: 'manual', source_title: '' })
+    expect(draft.summary).not.toContain('Parte de')
+  })
+
+  it('still generates output with default/manual input', () => {
+    const draft = generateMockProposal(BARE_INPUT)
+    expect(draft.engineContributions).toHaveLength(6)
+    expect(draft.nextSteps.length).toBeGreaterThan(0)
+  })
+})
+
+describe('parseProposalPrefill (FASE 15F)', () => {
+  it('parses valid source and target_type', () => {
+    const prefill = parseProposalPrefill({ source: 'lead', target_type: 'company' })
+    expect(prefill.source).toBe('lead')
+    expect(prefill.target_type).toBe('company')
+  })
+
+  it('ignores invalid enum values', () => {
+    const prefill = parseProposalPrefill({ source: 'hacker', target_type: 'evil' })
+    expect(prefill.source).toBeUndefined()
+    expect(prefill.target_type).toBeUndefined()
+  })
+
+  it('maps source_title to title and context to source_context', () => {
+    const prefill = parseProposalPrefill({
+      source_title: 'Lead Demo',
+      context: 'Interés por seguro',
+      source_id: 'abc',
+    })
+    expect(prefill.title).toBe('Lead Demo')
+    expect(prefill.source_title).toBe('Lead Demo')
+    expect(prefill.context).toBe('Interés por seguro')
+    expect(prefill.source_context).toBe('Interés por seguro')
+    expect(prefill.source_id).toBe('abc')
+  })
+
+  it('handles array query params by taking the first value', () => {
+    const prefill = parseProposalPrefill({ source: ['campaign', 'lead'] })
+    expect(prefill.source).toBe('campaign')
   })
 })

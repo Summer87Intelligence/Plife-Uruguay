@@ -21,3 +21,4 @@ export {
   DRAFT_SECTION_LABELS,
 } from './proposal-flow'
 export { generateMockProposal } from './mock-generator'
+export { parseProposalPrefill } from './prefill'

@@ -12,6 +12,10 @@
 > `proposal-create-form` y `proposal-draft-view`, ítem de sidebar **Propuestas** y CTA
 > "Crear nueva propuesta" desde `/app/ia`. Sin persistencia, sin server actions, sin
 > OpenAI, sin Compliance. Detalle en [`proposals-mock-flow-15e.md`](./proposals-mock-flow-15e.md).
+>
+> **Resultado FASE 15F (ejecutada):** las propuestas pueden nacer desde Lead, Campaña,
+> Radar u observación manual (prefill por query params + CTAs contextuales). Detalle en
+> [`proposals-contextual-entry-15f.md`](./proposals-contextual-entry-15f.md).
 
 ---
 

@@ -4,7 +4,7 @@ import { getProfile } from '@/lib/auth'
 import { redirect, notFound } from 'next/navigation'
 import {
   Megaphone, Target, Users, MessageSquare, PhoneCall,
-  ShieldQuestion, Building2, TrendingUp, Clock, List,
+  ShieldQuestion, Building2, TrendingUp, Clock, List, FileText,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
@@ -115,6 +115,7 @@ export default async function CampanaDetailPage({ params }: { params: Promise<{ 
           ...(linkedOpportunities.length > 0
             ? [{ label: 'Ver oportunidades', href: `/app/oportunidades?q=${encodeURIComponent(campaign.name)}`, icon: List }]
             : [{ label: 'Ver pipeline', href: '/app/oportunidades', icon: List }]),
+          { label: 'Crear propuesta', href: buildCampaignProposalHref(campaign), icon: FileText },
           { label: 'Volver a campañas', href: '/app/campanas', icon: Megaphone },
         ]}
       />
@@ -263,6 +264,28 @@ export default async function CampanaDetailPage({ params }: { params: Promise<{ 
       </div>
     </div>
   )
+}
+
+// FASE 15F — Link a nueva propuesta con contexto de la campaña (sin persistencia).
+function buildCampaignProposalHref(campaign: {
+  id: string
+  name: string
+  target_segment: string | null
+  objective: string | null
+}): string {
+  const contextParts = [
+    campaign.target_segment ? `Segmento: ${campaign.target_segment}` : null,
+    campaign.objective ? `Objetivo: ${campaign.objective}` : null,
+  ].filter((p): p is string => Boolean(p))
+  const params = new URLSearchParams({
+    source: 'campaign',
+    source_id: campaign.id,
+    source_title: campaign.name,
+    target_type: 'segment',
+  })
+  if (contextParts.length > 0) params.set('context', contextParts.join('. ') + '.')
+  if (campaign.target_segment) params.set('target_description', campaign.target_segment)
+  return `/app/propuestas/nueva?${params.toString()}`
 }
 
 function Field({ label, value, placeholder }: { label: string; value: string | null; placeholder: string }) {

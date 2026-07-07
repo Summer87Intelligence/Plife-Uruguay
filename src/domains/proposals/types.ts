@@ -20,6 +20,10 @@ export interface ProposalInput {
   target_type: ProposalTargetType
   target_description: string
   source: ProposalSource
+  /** Contexto de origen (opcional). Solo referencia local; no se consulta a Supabase. */
+  source_id?: string
+  source_title?: string
+  source_context?: string
   objective: string
   known_problem: string
   desired_outcome: string

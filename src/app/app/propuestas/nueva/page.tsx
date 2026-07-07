@@ -3,12 +3,20 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { getProfile } from '@/lib/auth'
 import { ProposalCreateForm } from '@/components/proposals/proposal-create-form'
+import { parseProposalPrefill } from '@/domains/proposals'
 
 // FASE 15E — Nueva propuesta (mock/determinístico, sin persistencia ni server action).
+// FASE 15F — Prefill contextual por query params (source/lead/campaign/radar).
 
-export default async function NuevaPropuestaPage() {
+export default async function NuevaPropuestaPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
   const profile = await getProfile()
   if (!profile) redirect('/login')
+
+  const prefill = parseProposalPrefill(await searchParams)
 
   return (
     <div className="space-y-5">
@@ -27,7 +35,7 @@ export default async function NuevaPropuestaPage() {
         </p>
       </div>
 
-      <ProposalCreateForm />
+      <ProposalCreateForm initial={prefill} />
     </div>
   )
 }

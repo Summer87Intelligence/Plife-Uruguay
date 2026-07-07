@@ -1,11 +1,63 @@
 import { getEngine } from '@/domains/intelligence-engines'
-import { HEDGE, HUMAN_REVIEW_NOTE, TARGET_TYPE_LABELS } from './constants'
+import { HEDGE, HUMAN_REVIEW_NOTE, SOURCE_LABELS, TARGET_TYPE_LABELS } from './constants'
 import { PROPOSAL_ENGINE_SEQUENCE } from './proposal-flow'
 import type { EngineContribution, ProposalDraft, ProposalInput } from './types'
 
 function clean(value: string | undefined, fallback: string): string {
   const v = (value ?? '').trim()
   return v.length > 0 ? v : fallback
+}
+
+// Frase de origen para el resumen. Solo describe de dónde parte la idea; no afirma datos.
+function describeOrigin(input: ProposalInput): string {
+  if (input.source === 'manual') return ''
+  const label = SOURCE_LABELS[input.source]
+  const title = (input.source_title ?? '').trim()
+  return title ? ` Parte de ${label}: "${title}".` : ` Parte de ${label}.`
+}
+
+// Pregunta específica según el origen, para enfocar el diagnóstico.
+function sourceQuestion(input: ProposalInput): string | null {
+  switch (input.source) {
+    case 'lead':
+      return '¿Qué interés concreto mostró el lead y qué falta para avanzar?'
+    case 'campaign':
+      return '¿Qué segmento de la campaña encaja mejor con esta propuesta?'
+    case 'radar':
+      return '¿Qué señal del radar sugiere potencial y qué habría que confirmar?'
+    case 'market_observation':
+      return '¿Qué observación de mercado motiva esto y qué la respalda?'
+    default:
+      return null
+  }
+}
+
+// Ángulo de mercado prudente según el origen (hipótesis, no hechos).
+function sourceMarketAngle(input: ProposalInput): string | null {
+  switch (input.source) {
+    case 'radar':
+      return `${HEDGE.hypothesis}: el radar sugiere un nicho a explorar; validar tamaño y demanda real.`
+    case 'campaign':
+      return `${HEDGE.angle}: reutilizar el segmento de la campaña como público inicial a confirmar.`
+    default:
+      return null
+  }
+}
+
+// Primer próximo paso según el origen.
+function sourceNextStep(input: ProposalInput): string | null {
+  switch (input.source) {
+    case 'lead':
+      return 'Revisar el historial del lead antes de contactar con la propuesta.'
+    case 'campaign':
+      return 'Alinear la propuesta con el mensaje y segmento de la campaña.'
+    case 'radar':
+      return 'Confirmar la señal del radar con datos internos antes de invertir esfuerzo.'
+    case 'market_observation':
+      return 'Contrastar la observación de mercado con casos internos.'
+    default:
+      return null
+  }
 }
 
 function describeAudience(input: ProposalInput): string {
@@ -28,6 +80,8 @@ export function generateMockProposal(input: ProposalInput): ProposalDraft {
   const problem = clean(input.known_problem, 'problema por confirmar con el cliente')
   const outcome = clean(input.desired_outcome, 'resultado comercial por definir')
   const audience = describeAudience(input)
+  const sourceContext = clean(input.source_context, '')
+  const originPhrase = describeOrigin(input)
 
   const contributions: EngineContribution[] = PROPOSAL_ENGINE_SEQUENCE.map((engineId) => {
     const engine = getEngine(engineId)
@@ -44,6 +98,9 @@ export function generateMockProposal(input: ProposalInput): ProposalDraft {
         outputs = [
           `Necesidad declarada: ${objective}.`,
           `Problema conocido: ${problem}.`,
+          ...(sourceContext
+            ? [`Contexto de origen (${SOURCE_LABELS[input.source]}): ${sourceContext}.`]
+            : []),
           `${HEDGE.questions}: validar supuestos de contexto antes de avanzar.`,
         ]
         break
@@ -115,11 +172,18 @@ export function generateMockProposal(input: ProposalInput): ProposalDraft {
   const byId = (id: EngineContributionId) =>
     contributions.find((c) => c.engineId === id)!
 
+  const extraQuestion = sourceQuestion(input)
+  const extraAngle = sourceMarketAngle(input)
+  const extraStep = sourceNextStep(input)
+
   return {
     title: focus,
     summary:
-      `${HEDGE.initialOffer} para "${focus}": ${objective}. ` +
-      `Basada en el contexto "${context}". ${HUMAN_REVIEW_NOTE}`,
+      `${HEDGE.initialOffer} para "${focus}": ${objective}.` +
+      originPhrase +
+      ` Basada en el contexto "${context}".` +
+      (sourceContext ? ` Origen: ${sourceContext}.` : '') +
+      ` ${HUMAN_REVIEW_NOTE}`,
     targetAudience: audience,
     problem: `${problem} (${HEDGE.hypothesis} con el cliente).`,
     opportunity: `${HEDGE.hypothesis}: alcanzar "${outcome}" atendiendo el problema declarado.`,
@@ -128,13 +192,18 @@ export function generateMockProposal(input: ProposalInput): ProposalDraft {
       'con una versión base y variantes por perfil. Sin condiciones ni precios definidos.',
     differentiators: byId('mercado').outputs,
     questionsToAsk: [
+      ...(extraQuestion ? [extraQuestion] : []),
       ...byId('diagnostico').questions,
       ...byId('mercado').questions.slice(0, 2),
     ],
-    marketAngles: byId('mercado').outputs,
+    marketAngles: [
+      ...(extraAngle ? [extraAngle] : []),
+      ...byId('mercado').outputs,
+    ],
     productIdeas: byId('producto').outputs,
     commercialStrategy: byId('comercial').outputs,
     nextSteps: [
+      ...(extraStep ? [extraStep] : []),
       'Confirmar el público objetivo y el problema con una conversación de diagnóstico.',
       'Relevar competencia y nicho real antes de fijar el diferencial.',
       'Ajustar la propuesta inicial y definir la variante adecuada.',

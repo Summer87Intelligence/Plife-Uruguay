@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, RotateCcw } from 'lucide-react'
+import { Sparkles, RotateCcw, Link as LinkIcon } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input, Textarea } from '@/components/ui/input'
@@ -10,6 +10,7 @@ import {
   generateMockProposal,
   TARGET_TYPE_OPTIONS,
   SOURCE_OPTIONS,
+  SOURCE_LABELS,
   type ProposalDraft,
   type ProposalInput,
   type ProposalSource,
@@ -29,8 +30,12 @@ const EMPTY: ProposalInput = {
   notes: '',
 }
 
-export function ProposalCreateForm() {
-  const [input, setInput] = useState<ProposalInput>(EMPTY)
+interface ProposalCreateFormProps {
+  initial?: Partial<ProposalInput>
+}
+
+export function ProposalCreateForm({ initial }: ProposalCreateFormProps) {
+  const [input, setInput] = useState<ProposalInput>({ ...EMPTY, ...initial })
   const [error, setError] = useState<string | null>(null)
   const [draft, setDraft] = useState<ProposalDraft | null>(null)
 
@@ -78,9 +83,20 @@ export function ProposalCreateForm() {
     )
   }
 
+  const hasOrigin = input.source !== 'manual' || Boolean(input.source_id)
+
   return (
     <Card className="border-gray-100">
       <CardContent className="p-5">
+        {hasOrigin && (
+          <div className="mb-4 flex items-start gap-2 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2">
+            <LinkIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue-500" />
+            <p className="text-xs text-blue-800">
+              Origen: <span className="font-medium">{SOURCE_LABELS[input.source]}</span>
+              {input.source_title ? ` — “${input.source_title}”` : ''}. Podés ajustar los campos antes de generar.
+            </p>
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
             label="Título de la propuesta *"

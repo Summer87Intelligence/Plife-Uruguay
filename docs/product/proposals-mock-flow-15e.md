@@ -6,6 +6,13 @@
 **Naturaleza:** cambio de código (dominio + UI + tests + docs).
 **Restricciones respetadas:** no main · no PR #4 · no merge · no push · no Supabase remoto · no Vercel · no `.env` · no SQL · sin OpenAI · sin proveedor externo · sin reintroducir Compliance · **sin persistencia real** · **sin server actions**.
 
+> **Resultado FASE 15F (ejecutada):** el flujo ahora puede partir de un contexto de
+> origen (lead / campaña / radar / manual) vía query params y prefill del formulario.
+> CTA "Crear propuesta desde este lead" en el detalle de lead y "Crear propuesta" en el
+> detalle de campaña; cards "Crear desde" en `/app/propuestas`. El generador usa el
+> contexto de origen. CTA por-ítem en radar queda pendiente. Detalle en
+> [`proposals-contextual-entry-15f.md`](./proposals-contextual-entry-15f.md).
+
 ---
 
 ## 1. Objetivo
