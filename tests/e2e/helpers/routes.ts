@@ -9,6 +9,8 @@ export const ROUTES = {
   campanas: '/app/campanas',
   copiloto: '/app/copiloto',
   conocimiento: '/app/conocimiento',
+  propuestas: '/app/propuestas',
+  propuestasNueva: '/app/propuestas/nueva',
   direccion: '/app/direccion',
   admin: '/app/admin',
   adminSystem: '/app/admin/system',

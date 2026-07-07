@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import {
   Cpu, Tag, Layers, LayoutDashboard, Settings, FileText, Activity,
   AlertCircle, AlertTriangle,
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { StatCard } from '@/components/ui/stat-card'
 import type { IAEngineProps, MainTab } from '@/components/ia/types'
 import { getActiveProfile, getLatestRun } from '@/components/ia/helpers'
@@ -57,16 +59,24 @@ export function IAView({
       {/* Hero — Motores (presentación comercial) */}
       <Card className="border-gray-100 shadow-sm">
         <CardContent className="p-6">
-          <div className="flex items-start gap-3">
-            <div className="h-11 w-11 rounded-xl bg-[#1B3A6B] flex items-center justify-center shrink-0">
-              <Cpu className="h-5 w-5 text-white" />
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="h-11 w-11 rounded-xl bg-[#1B3A6B] flex items-center justify-center shrink-0">
+                <Cpu className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Motores</h1>
+                <p className="text-sm text-gray-500 mt-0.5 max-w-2xl">
+                  Usá los motores para ordenar una idea, detectar un nicho y preparar una propuesta comercial.
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Motores</h1>
-              <p className="text-sm text-gray-500 mt-0.5 max-w-2xl">
-                Sistema de motores comerciales para crear propuestas, detectar nichos y preparar estrategias.
-              </p>
-            </div>
+            <Button asChild className="shrink-0">
+              <Link href="/app/propuestas/nueva">
+                <FileText className="h-4 w-4" />
+                Crear nueva propuesta
+              </Link>
+            </Button>
           </div>
         </CardContent>
       </Card>

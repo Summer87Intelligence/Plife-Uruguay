@@ -6,6 +6,13 @@
 **Naturaleza:** cambio de código (UI + dominio conceptual + tests + docs).
 **Restricciones respetadas:** no main · no `feat/operational-readiness-13` · no PR #4 · no merge · no push · no Supabase remoto · no Vercel · no `.env` · no SQL · sin proveedor externo · sin reintroducir OpenAI · sin reintroducir Compliance · sin persistencia nueva de propuestas/productos.
 
+> **Resultado FASE 15E (ejecutada):** se implementó el flujo mock "Nueva propuesta".
+> Nuevo dominio `src/domains/proposals/` con `generateMockProposal` (determinístico,
+> usa los 6 motores), rutas `/app/propuestas` y `/app/propuestas/nueva`, componentes
+> `proposal-create-form` y `proposal-draft-view`, ítem de sidebar **Propuestas** y CTA
+> "Crear nueva propuesta" desde `/app/ia`. Sin persistencia, sin server actions, sin
+> OpenAI, sin Compliance. Detalle en [`proposals-mock-flow-15e.md`](./proposals-mock-flow-15e.md).
+
 ---
 
 ## 1. Decisión

@@ -13,6 +13,8 @@ const ROUTE_LIST = [
   { path: ROUTES.campanas,       label: '/app/campanas' },
   { path: ROUTES.copiloto,       label: '/app/copiloto' },
   { path: ROUTES.conocimiento,   label: '/app/conocimiento' },
+  { path: ROUTES.propuestas,     label: '/app/propuestas' },
+  { path: ROUTES.propuestasNueva, label: '/app/propuestas/nueva' },
   { path: ROUTES.direccion,      label: '/app/direccion' },
   { path: ROUTES.admin,          label: '/app/admin' },
   { path: ROUTES.adminSystem,    label: '/app/admin/system' },
