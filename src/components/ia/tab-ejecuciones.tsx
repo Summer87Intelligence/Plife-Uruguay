@@ -29,7 +29,7 @@ export function EjecucionesTab({
         <EmptyState
           icon={Activity}
           title="Sin ejecuciones"
-          description="Todavía no hay ejecuciones del Motor IA."
+          description="Todavía no hay ejecuciones de los Motores."
         />
       ) : (
         <Card>

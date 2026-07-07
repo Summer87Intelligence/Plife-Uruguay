@@ -102,7 +102,7 @@ function buildStageOutput(
     categoryLine.trim(),
     LIMITS_BLOCK,
     '',
-    'Modo: ejecución mock del Motor IA PLIFE — determinístico interno, sin proveedor ni fuentes externas.',
+    'Modo: ejecución mock de los Motores PLIFE — determinístico interno, sin proveedor ni fuentes externas.',
   ].filter(Boolean).join('\n')
 }
 

@@ -37,7 +37,7 @@ export function CategoriasTab({ categories, prompts }: CategoriasTabProps) {
         <EmptyState
           icon={Tag}
           title="Sin categorías"
-          description="Las categorías clasifican los prompts comerciales del Motor IA PLIFE."
+          description="Las categorías clasifican los prompts comerciales del motor de prompts PLIFE."
           action={<Button size="sm" onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4" />Crear primera categoría</Button>}
         />
       ) : (

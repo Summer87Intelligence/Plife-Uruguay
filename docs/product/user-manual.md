@@ -3,6 +3,8 @@
 > **Histórico (FASE 15B):** OpenAI fue removido del proyecto. Las menciones a OpenAI / GPT / `OPENAI_API_KEY` son registro histórico; los motores operan en modo determinístico interno.
 >
 > **Histórico (FASE 15C):** Compliance fue removido del producto (sección, menú, ruta y flujo). Las menciones a "Compliance" son registro histórico. Ver `docs/product/compliance-removal-15c.md`.
+>
+> **Actualización (FASE 15D):** La sección **"Motor IA"** se renombró a **"Motores"** (motores comerciales) y **"Copiloto IA"** aparece como **"Copiloto"**. Las menciones previas reflejan la denominación anterior. Ver `docs/product/commercial-engines-redesign-15d.md`.
 
 **Versión:** FASE 12F  
 **Audiencia:** asesores comerciales, líderes comerciales, dirección y administración  

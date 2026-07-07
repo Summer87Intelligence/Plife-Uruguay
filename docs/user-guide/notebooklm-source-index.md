@@ -1,6 +1,8 @@
 # Fuentes recomendadas para NotebookLM — PLIFE Growth OS
 
 > **Histórico (FASE 15C):** **Compliance fue removido del producto.** Las menciones a "Compliance" (incluida la captura `18-compliance.png`) son históricas y no reflejan el producto actual. Ver `docs/product/compliance-removal-15c.md`.
+>
+> **Actualización (FASE 15D):** La sección **"Motor IA"** se renombró a **"Motores"** (motores comerciales) y **"Copiloto IA"** aparece como **"Copiloto"**. Las menciones previas reflejan la denominación anterior. Ver `docs/product/commercial-engines-redesign-15d.md`.
 
 Este índice ordena los materiales para cargar en [NotebookLM](https://notebooklm.google.com) y generar guías, audios o capacitaciones a partir del manual oficial.
 

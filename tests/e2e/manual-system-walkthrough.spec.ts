@@ -250,14 +250,14 @@ test.describe('Manual system walkthrough @manual', () => {
     report(10, 'Dirección', hayDireccion && hayKPIs ? 'OK' : 'WARN',
       hayPipeline ? 'Vista con KPIs y pipeline visible' : 'Vista cargada pero sin datos aún')
 
-    // ── Paso 11: Copiloto IA ───────────────────────────────────────────────
-    console.log('  Paso 11: Copiloto IA')
+    // ── Paso 11: Copiloto ──────────────────────────────────────────────────
+    console.log('  Paso 11: Copiloto')
     await gotoWithAuth(page, `${base}/app/copiloto`)
 
     const hayCopiloto = await page.getByRole('heading', { name: /copiloto/i }).isVisible({ timeout: 5_000 }).catch(() => false)
       || await page.locator('h1, h2').filter({ hasText: /copiloto/i }).isVisible({ timeout: 3_000 }).catch(() => false)
-    report(11, 'Copiloto IA', hayCopiloto ? 'OK' : 'WARN',
-      hayCopiloto ? 'Copiloto IA cargó' : 'Encabezado de copiloto no encontrado')
+    report(11, 'Copiloto', hayCopiloto ? 'OK' : 'WARN',
+      hayCopiloto ? 'Copiloto cargó' : 'Encabezado de copiloto no encontrado')
 
     // ── Paso 12: PLIFE Hoy — estado post-datos ─────────────────────────────
     console.log('  Paso 12: PLIFE Hoy — verificar estado post-datos')

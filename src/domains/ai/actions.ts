@@ -212,7 +212,7 @@ export async function saveAIAsActivity(input: {
     opportunity_id: input.opportunityId,
     type: 'nota',
     title: input.title,
-    description: 'Generado con Copiloto IA (sugerencia revisada por el asesor)',
+    description: 'Generado con Copiloto (sugerencia revisada por el asesor)',
     outcome: input.content,
     is_completed: true,
   })

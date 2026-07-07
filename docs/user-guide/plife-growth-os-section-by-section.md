@@ -1,6 +1,8 @@
 # Guía por sección — PLIFE Growth OS
 
 > **Histórico (FASE 15C):** **Compliance fue removido del producto.** Ya no existe la sección/menú Compliance ni la ruta `/app/compliance`. Las menciones a "Compliance" en este documento son históricas. Ver `docs/product/compliance-removal-15c.md`.
+>
+> **Actualización (FASE 15D):** La sección **"Motor IA"** se renombró a **"Motores"** (motores comerciales) y **"Copiloto IA"** aparece como **"Copiloto"**. Las menciones previas reflejan la denominación anterior. Ver `docs/product/commercial-engines-redesign-15d.md`.
 
 Referencia rápida pantalla por pantalla. Pensada para consulta diaria o para alimentar NotebookLM.
 

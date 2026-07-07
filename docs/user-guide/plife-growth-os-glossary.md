@@ -1,6 +1,8 @@
 # Glosario — PLIFE Growth OS
 
 > **Histórico (FASE 15C):** **Compliance fue removido del producto.** La entrada "Compliance" de este glosario es histórica. Ver `docs/product/compliance-removal-15c.md`.
+>
+> **Actualización (FASE 15D):** La sección **"Motor IA"** se renombró a **"Motores"** (motores comerciales) y **"Copiloto IA"** aparece como **"Copiloto"**. Las menciones previas reflejan la denominación anterior. Ver `docs/product/commercial-engines-redesign-15d.md`.
 
 Definiciones simples para usuarios comerciales. No requieren conocimiento técnico.
 

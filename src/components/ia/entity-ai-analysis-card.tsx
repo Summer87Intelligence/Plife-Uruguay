@@ -43,7 +43,7 @@ export function EntityAIAnalysisCard({
         setError(result.error)
         return
       }
-      setSuccess('Análisis simulado completado. Revisá los resultados en Motor IA.')
+      setSuccess('Análisis simulado completado. Revisá los resultados en Motores.')
       router.refresh()
     })
   }
@@ -56,9 +56,9 @@ export function EntityAIAnalysisCard({
             <Cpu className="h-4 w-4 text-[#1B3A6B]" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-gray-900">Análisis IA comercial</p>
+            <p className="text-sm font-semibold text-gray-900">Análisis comercial</p>
             <p className="text-xs text-gray-500 mt-1">
-              Ejecutá el Motor IA PLIFE en modo simulado para generar una lectura comercial por etapas.
+              Ejecutá los Motores PLIFE en modo simulado para generar una lectura comercial por etapas.
               Opera en modo determinístico interno (sin proveedor externo) y requiere revisión humana.
             </p>
           </div>
@@ -90,7 +90,7 @@ export function EntityAIAnalysisCard({
             Ejecutar análisis IA
           </Button>
           <Link href="/app/ia" className="text-xs text-[#1B3A6B] hover:underline">
-            Ver en Motor IA
+            Ver en Motores
           </Link>
         </div>
 

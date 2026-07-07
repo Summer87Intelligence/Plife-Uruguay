@@ -158,7 +158,7 @@ export const NAV_ITEMS = [
   { href: '/app/oportunidades', label: 'Oportunidades', icon: 'TrendingUp' },
   { href: '/app/radar-b2b', label: 'Radar B2B', icon: 'Radar' },
   { href: '/app/campanas', label: 'Campañas', icon: 'Megaphone' },
-  { href: '/app/copiloto', label: 'Copiloto IA', icon: 'Bot' },
+  { href: '/app/copiloto', label: 'Copiloto', icon: 'Bot' },
   { href: '/app/conocimiento', label: 'Conocimiento', icon: 'BookOpen' },
   { href: '/app/academia', label: 'Academia', icon: 'GraduationCap' },
   { href: '/app/direccion', label: 'Dirección', icon: 'BarChart3' },

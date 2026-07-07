@@ -142,7 +142,7 @@ export function AdvisorDashboard({
             'Contacto — asociá la persona clave dentro de esa empresa',
             'Oportunidad — creá una cuando exista una conversación comercial concreta',
             'Seguimiento — definí el próximo paso y una fecha',
-            'Motor IA — usá el análisis para preparar el contacto o mensaje',
+            'Motores — usá el análisis para preparar el contacto o mensaje',
             'Dirección — revisá el foco del equipo con métricas',
           ]}
           primaryActionLabel="Ver empresas"
@@ -152,10 +152,10 @@ export function AdvisorDashboard({
       ) : (
         <SectionGuideCard
           title="Flujo recomendado"
-          description="Trabajá desde empresas y contactos hacia oportunidades con próximo paso definido. Usá Motor IA como apoyo para preparar seguimiento y Dirección para revisar foco."
+          description="Trabajá desde empresas y contactos hacia oportunidades con próximo paso definido. Usá los Motores como apoyo para preparar seguimiento y Dirección para revisar foco."
           primaryActionLabel="Ver oportunidades"
           primaryActionHref="/app/oportunidades"
-          secondaryActionLabel="Abrir Motor IA"
+          secondaryActionLabel="Abrir Motores"
           secondaryActionHref="/app/ia"
           compact
         />

@@ -16,9 +16,17 @@
 > el agente `compliance_agent`, el campo `AIResult.compliance`, la ruta `/app/compliance`
 > y toda la copy/quick actions asociadas. Las tablas `compliance_*` siguen en Supabase
 > (no se aplicó SQL) y sus tipos quedan como espejo legado. Detalle en
-> [`compliance-removal-15c.md`](./compliance-removal-15c.md). Pendientes: 15D+
-> (rediseño de motores), futura "Validación comercial" y definición de tecnología
-> de generación/embeddings.
+> [`compliance-removal-15c.md`](./compliance-removal-15c.md).
+>
+> **Resultado FASE 15D (ejecutada):** la sección visible "Motor IA/Copiloto IA" pasó a
+> llamarse **Motores**. Se creó el dominio `src/domains/intelligence-engines/` con los
+> 6 motores comerciales (Diagnóstico, Mercado, Producto, Comercial, Dirección,
+> Aprendizaje/Biblioteca) en modo determinístico interno, y se rediseñó `/app/ia`
+> (ruta técnica heredada) para presentar qué hacen los motores, los disponibles, el
+> flujo recomendado y un ejemplo de uso. "Propuestas" queda como concepto futuro
+> (FASE 15E). Detalle en [`commercial-engines-redesign-15d.md`](./commercial-engines-redesign-15d.md).
+> Pendientes: 15E+ (flujo de propuesta nueva), futura "Validación comercial" y
+> definición de tecnología de generación/embeddings.
 
 ---
 

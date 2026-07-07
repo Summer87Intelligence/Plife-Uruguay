@@ -28,12 +28,12 @@ const navItems = [
   { href: '/app/oportunidades',  label: 'Oportunidades',      icon: 'TrendingUp' },
   { href: '/app/radar-b2b',      label: 'Radar B2B',          icon: 'Radar' },
   { href: '/app/campanas',       label: 'Campañas',           icon: 'Megaphone' },
-  { href: '/app/copiloto',       label: 'Copiloto IA',        icon: 'Bot' },
+  { href: '/app/copiloto',       label: 'Copiloto',           icon: 'Bot' },
   { href: '/app/conocimiento',   label: 'Conocimiento',       icon: 'BookOpen' },
   { href: '/app/academia',       label: 'Academia',           icon: 'GraduationCap' },
   { href: '/app/direccion',      label: 'Dirección',          icon: 'BarChart3' },
   { href: '/app/admin',          label: 'Admin',              icon: 'Settings' },
-  { href: '/app/ia',             label: 'Motor IA',           icon: 'Cpu' },
+  { href: '/app/ia',             label: 'Motores',            icon: 'Cpu' },
   { href: '/app/admin/system',   label: 'Estado del sistema', icon: 'Database' },
 ] as const
 

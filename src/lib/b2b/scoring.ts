@@ -174,9 +174,9 @@ export function calcularScoreB2B(company: Company): B2BScoreResult {
   } else if (company.b2b_status === 'priorizada') {
     proximoPaso = 'Coordinar primera reunión de diagnóstico'
   } else if (company.b2b_status === 'asignada') {
-    proximoPaso = 'Preparar el primer contacto con el Copiloto IA'
+    proximoPaso = 'Preparar el primer contacto con el Copiloto'
   } else if (company.b2b_status === 'contactada' || company.b2b_status === 'reunion_agendada') {
-    proximoPaso = 'Preparar la reunión de diagnóstico con el Copiloto IA'
+    proximoPaso = 'Preparar la reunión de diagnóstico con el Copiloto'
   } else if (company.b2b_status === 'en_negociacion') {
     proximoPaso = 'Avanzar propuesta y coordinar cierre'
   } else {

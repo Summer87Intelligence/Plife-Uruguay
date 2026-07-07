@@ -16,7 +16,7 @@ export type DocumentStatus = 'activo' | 'inactivo' | 'en_revision' | 'archivado'
 // remoto de Supabase (no se aplicó SQL). Ninguna pantalla ni motor los usa.
 export type ComplianceAction = 'aprobado' | 'bloqueado' | 'revision_requerida' | 'modificado'
 
-// --- Motor IA PLIFE (FASE 12O-B) -------------------------------------------
+// --- Motor de prompts PLIFE (FASE 12O-B) -----------------------------------
 export type AIPromptStatus = 'draft' | 'validated' | 'archived'
 export type AIExecutionEntityType = 'company' | 'contact' | 'opportunity' | 'campaign'
 export type AIExecutionRunStatus = 'queued' | 'running' | 'completed' | 'completed_with_errors' | 'failed'
@@ -392,7 +392,7 @@ export interface ObjectionItem {
   created_by: string | null
 }
 
-// --- Motor IA PLIFE (FASE 12O-B) -------------------------------------------
+// --- Motor de prompts PLIFE (FASE 12O-B) -----------------------------------
 
 export interface AIStage {
   id: string
@@ -575,7 +575,7 @@ export interface Database {
       training_modules: TableDef<TrainingModule>
       roleplay_sessions: TableDef<RoleplaySession>
       objections_library: TableDef<ObjectionItem>
-      // Motor IA PLIFE (FASE 12O-B)
+      // Motor de prompts PLIFE (FASE 12O-B)
       ai_stages: TableDef<AIStage>
       ai_categories: TableDef<AICategory>
       ai_prompts: TableDef<AIPrompt, [
@@ -627,7 +627,7 @@ export interface Database {
       campaign_type: CampaignType
       document_status: DocumentStatus
       compliance_action: ComplianceAction
-      // Motor IA PLIFE (FASE 12O-B)
+      // Motor de prompts PLIFE (FASE 12O-B)
       ai_prompt_status: AIPromptStatus
       ai_execution_entity_type: AIExecutionEntityType
       ai_execution_run_status: AIExecutionRunStatus

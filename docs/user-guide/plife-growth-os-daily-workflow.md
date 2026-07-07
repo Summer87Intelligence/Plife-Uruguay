@@ -1,6 +1,8 @@
 # Flujo diario — PLIFE Growth OS
 
 > **Histórico (FASE 15C):** **Compliance fue removido del producto.** Las menciones a "Compliance" en este documento son históricas. Ver `docs/product/compliance-removal-15c.md`.
+>
+> **Actualización (FASE 15D):** La sección **"Motor IA"** se renombró a **"Motores"** (motores comerciales) y **"Copiloto IA"** aparece como **"Copiloto"**. Las menciones previas reflejan la denominación anterior. Ver `docs/product/commercial-engines-redesign-15d.md`.
 
 Guía práctica para organizar el trabajo comercial día a día y, para líderes, la revisión semanal.
 

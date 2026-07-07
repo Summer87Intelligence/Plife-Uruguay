@@ -17,6 +17,7 @@ import { PromptsTab } from '@/components/ia/tab-prompts'
 import { CategoriasTab } from '@/components/ia/tab-categorias'
 import { PerfilesTab } from '@/components/ia/tab-perfiles'
 import { EjecucionesTab } from '@/components/ia/tab-ejecuciones'
+import { CommercialEnginesOverview } from '@/components/ia/commercial-engines-overview'
 
 interface IAViewProps extends IAEngineProps {
   schemaNotApplied?: boolean
@@ -53,18 +54,45 @@ export function IAView({
 
   return (
     <div className="space-y-6">
-      {/* Hero card */}
+      {/* Hero — Motores (presentación comercial) */}
+      <Card className="border-gray-100 shadow-sm">
+        <CardContent className="p-6">
+          <div className="flex items-start gap-3">
+            <div className="h-11 w-11 rounded-xl bg-[#1B3A6B] flex items-center justify-center shrink-0">
+              <Cpu className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Motores</h1>
+              <p className="text-sm text-gray-500 mt-0.5 max-w-2xl">
+                Sistema de motores comerciales para crear propuestas, detectar nichos y preparar estrategias.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Motores comerciales: qué hacen, disponibles, flujo y ejemplo */}
+      <CommercialEnginesOverview />
+
+      {/* Divisor: configuración técnica del motor de prompts */}
+      <div className="flex items-center gap-3 pt-2">
+        <div className="h-px flex-1 bg-gray-100" />
+        <span className="text-[11px] font-medium uppercase tracking-wide text-gray-400">Configuración técnica</span>
+        <div className="h-px flex-1 bg-gray-100" />
+      </div>
+
+      {/* Config técnica: motor de prompts PLIFE (avanzado, ruta heredada /app/ia) */}
       <Card className="border-gray-100 shadow-sm">
         <CardContent className="p-6 space-y-5">
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
             <div className="flex items-start gap-3">
-              <div className="h-11 w-11 rounded-xl bg-[#1B3A6B] flex items-center justify-center shrink-0">
-                <Cpu className="h-5 w-5 text-white" />
+              <div className="h-11 w-11 rounded-xl bg-gray-100 flex items-center justify-center shrink-0">
+                <Cpu className="h-5 w-5 text-gray-500" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Motor IA PLIFE</h1>
+                <h2 className="text-lg font-bold text-gray-900">Motor de prompts PLIFE</h2>
                 <p className="text-sm text-gray-500 mt-0.5 max-w-xl">
-                  Motor de asistencia comercial con prompts, perfiles y ejecución por etapas.
+                  Configuración avanzada: prompts, perfiles y ejecución por etapas (modo determinístico interno). Ruta técnica heredada.
                 </p>
               </div>
             </div>
@@ -96,8 +124,8 @@ export function IAView({
       </Card>
 
       <SectionGuideCard
-        title="Cómo usar el Motor IA"
-        description="Usá el motor para preparar seguimiento, mensajes y lectura comercial. Los outputs siempre requieren revisión humana antes de usarse. No define primas, coberturas ni reemplaza condiciones MAPFRE."
+        title="Cómo usar el motor de prompts"
+        description="Usá el motor de prompts para preparar seguimiento, mensajes y lectura comercial. Los outputs siempre requieren revisión humana antes de usarse. No define primas, coberturas ni reemplaza condiciones MAPFRE."
         steps={[
           'Revisá el perfil comercial PLIFE activo',
           'Verificá que los prompts estén validados',
@@ -111,7 +139,7 @@ export function IAView({
         <div className="flex items-start gap-3 rounded-xl border border-orange-200 bg-orange-50 px-4 py-4">
           <AlertTriangle className="h-5 w-5 text-orange-500 shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-orange-800">Schema del Motor IA no aplicado</p>
+            <p className="text-sm font-semibold text-orange-800">Schema del motor de prompts no aplicado</p>
             <p className="text-sm text-orange-700 mt-0.5">
               Las tablas del motor IA no existen en la base de datos.
               Ejecutar FASE 12O-D antes de usar esta pantalla.

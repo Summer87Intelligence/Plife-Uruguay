@@ -107,7 +107,7 @@ export function ContactDetail({ contact, activities, opportunities, companies }:
               { id: 'resumir', label: 'Resumir notas', run: () => runCopilot({ helpType: 'resumir_notas', contactId: contact.id }) },
               { id: 'proximo', label: 'Próximo paso', run: () => runCopilot({ helpType: 'proximo_paso', contactId: contact.id }) },
             ]}
-            onSaveActivity={async (content) => { await saveAIAsActivity({ title: 'Copiloto IA', content, contactId: contact.id }); router.refresh() }}
+            onSaveActivity={async (content) => { await saveAIAsActivity({ title: 'Copiloto', content, contactId: contact.id }); router.refresh() }}
           />
           <Dialog open={editOpen} onOpenChange={setEditOpen}>
             <DialogTrigger asChild>

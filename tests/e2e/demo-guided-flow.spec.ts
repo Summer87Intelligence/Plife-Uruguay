@@ -33,7 +33,7 @@ test.describe('Demo — Recorrido guiado', () => {
       'Empresa priorizada',
       'Oportunidades',
       'Campañas',
-      'Copiloto IA',
+      'Copiloto',
       'Dirección',
     ]
 

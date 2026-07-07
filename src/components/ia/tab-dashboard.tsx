@@ -113,7 +113,7 @@ export function DashboardTab({
             <EmptyState
               icon={Activity}
               title="Sin ejecuciones"
-              description="Todavía no hay ejecuciones del Motor IA PLIFE."
+              description="Todavía no hay ejecuciones de los Motores PLIFE."
             />
           ) : (
             <div className="overflow-x-auto">

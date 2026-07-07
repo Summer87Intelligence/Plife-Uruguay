@@ -3,7 +3,7 @@ import { login, hasCredentials } from './helpers/auth'
 import { ROUTES } from './helpers/routes'
 import { SEL } from './helpers/selectors'
 
-test.describe('Copiloto IA', () => {
+test.describe('Copiloto', () => {
   test.beforeEach(async ({ page }) => {
     test.skip(!hasCredentials(), 'Requiere E2E_USER_EMAIL y E2E_USER_PASSWORD en .env.test')
     await login(page)

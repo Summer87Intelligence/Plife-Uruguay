@@ -155,7 +155,7 @@ export function OpportunityDetail({ opportunity, activities, advisors, campaign,
               { id: 'seguimiento', label: 'Generar seguimiento', run: () => runCopilot({ helpType: 'seguimiento', opportunityId: opportunity.id }) },
               { id: 'objecion', label: 'Responder objeción', run: () => runCopilot({ helpType: 'objecion', opportunityId: opportunity.id }) },
             ]}
-            onSaveActivity={async (content) => { await saveAIAsActivity({ title: 'Copiloto IA', content, opportunityId: opportunity.id }); router.refresh() }}
+            onSaveActivity={async (content) => { await saveAIAsActivity({ title: 'Copiloto', content, opportunityId: opportunity.id }); router.refresh() }}
           />
           <Dialog open={editOpen} onOpenChange={setEditOpen}>
             <DialogTrigger asChild>
