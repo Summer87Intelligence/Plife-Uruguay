@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { SectionGuideCard } from '@/components/guidance/section-guide-card'
+import { GettingStartedCard } from '@/components/onboarding/getting-started-card'
 import { StatCard } from '@/components/ui/stat-card'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Users, Building2, TrendingUp, Megaphone, Activity, Target, AlertCircle, Clock } from 'lucide-react'
@@ -29,6 +30,12 @@ interface DireccionViewProps {
 
 export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOpps, focusMetrics }: DireccionViewProps) {
   const maxStageCount = Math.max(...PIPELINE_STAGES.map(s => stageCounts[s] ?? 0), 1)
+  const totalPipelineLeads = PIPELINE_STAGES.reduce((sum, stage) => sum + (stageCounts[stage] ?? 0), 0)
+  const isCommerciallyEmpty =
+    metrics.totalOpps === 0 &&
+    metrics.totalContacts === 0 &&
+    metrics.totalCompanies === 0 &&
+    metrics.activeCampaigns === 0
 
   return (
     <div className="space-y-6">
@@ -66,6 +73,8 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
         </div>
       )}
 
+      {isCommerciallyEmpty && <GettingStartedCard />}
+
       {/* KPIs principales */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Oportunidades totales" value={metrics.totalOpps} icon={TrendingUp} color="blue" />
@@ -76,6 +85,7 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pipeline por etapa */}
+        {totalPipelineLeads > 0 ? (
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -104,6 +114,22 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
             </div>
           </CardContent>
         </Card>
+        ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Pipeline comercial</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-500 text-center py-6">
+              Todavía no hay oportunidades ni leads en seguimiento. Empezá cargando un lead desde{' '}
+              <Link href="/app/leads/new" className="text-[#1B3A6B] hover:underline">
+                Leads
+              </Link>
+              .
+            </p>
+          </CardContent>
+        </Card>
+        )}
 
         {/* Actividad reciente */}
         <Card>

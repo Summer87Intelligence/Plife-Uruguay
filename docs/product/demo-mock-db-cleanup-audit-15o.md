@@ -707,3 +707,19 @@ Incluyó el dataset alternativo `22222222/33333333/44444444/55555555-*` (aprobad
 - `npm run type-check` — OK
 - `npm run test:unit` — 169 tests OK
 - `npm run build` — OK (24 rutas)
+
+---
+
+## FASE 15R — Validación con base limpia
+
+**Fecha:** 2026-07-08  
+**Documento:** `docs/product/empty-state-and-manual-load-15r.md`  
+**Commit:** (ver hash en reporte 15R)
+
+Tras 15Q (base comercial 0 activos), se validaron empty states en las 8 secciones visibles, se corrigió copy/layout en Hoy, Dirección, Propuestas y Admin, y se cargó **1 lead + 1 propuesta** controlados para verificar el flujo lead-first sin reintroducir demo.
+
+- Empty states: OK (sin datos inventados, CTAs reales).
+- Lead de validación: `e77676c9-a4b4-44e7-a4df-c9500cb4b389`.
+- Propuesta vinculada: `d22f5fad-5bcf-468f-9f7c-fb774543f1b7`.
+- E2E UI completo: pendiente (login timeout Playwright).
+- QA: type-check, 170 unit tests, build OK.

@@ -41,4 +41,13 @@ describe('UI anti-demo (FASE 15P)', () => {
     expect(source).not.toContain('Recorrido demo')
     expect(source).not.toContain("href: '/app/demo'")
   })
+
+  it('lead create flow avoids dev-facing Supabase copy (FASE 15R)', () => {
+    const form = readSrc('components/leads/lead-create-form.tsx')
+    const page = readSrc('app/app/leads/new/page.tsx')
+    const panel = readSrc('components/leads/lead-today-panel.tsx')
+    expect(form.toLowerCase()).not.toContain('supabase dev')
+    expect(page.toLowerCase()).not.toContain('supabase dev')
+    expect(panel.toLowerCase()).not.toContain('supabase dev')
+  })
 })

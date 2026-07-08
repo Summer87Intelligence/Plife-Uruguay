@@ -1,6 +1,6 @@
 'use client'
 
-// FASE 14I — Creación real de lead en Supabase dev vía server action.
+// FASE 14I — Creación real de lead vía server action.
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -116,7 +116,7 @@ export function LeadCreateForm() {
         <div className="flex items-start gap-2.5 rounded-xl border border-green-200 bg-green-50 p-3.5">
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
           <div className="text-sm text-green-800">
-            <p className="font-semibold">Lead creado en Supabase dev.</p>
+            <p className="font-semibold">Lead registrado correctamente.</p>
             <p className="mt-1">
               ID: <span className="font-mono text-xs">{createdLeadId}</span>
             </p>
@@ -150,8 +150,8 @@ export function LeadCreateForm() {
       <div className="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 p-3.5">
         <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
         <p className="text-sm text-blue-800">
-          Crear lead guardará el registro en Supabase dev. Acciones posteriores siguen
-          deshabilitadas.
+          Al guardar, el lead queda disponible en Leads, Pipeline y PLIFE Hoy para priorizar y
+          hacer seguimiento.
         </p>
       </div>
 

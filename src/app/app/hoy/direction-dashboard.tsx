@@ -11,10 +11,12 @@ interface DirectionDashboardProps {
     activeCampaigns: number
     activeAdvisors: number
   }
+  activeLeadCount?: number
 }
 
-export function DirectionDashboard({ leadPanel, metrics }: DirectionDashboardProps) {
-  const isEmpty = metrics.activeCampaigns === 0
+export function DirectionDashboard({ leadPanel, metrics, activeLeadCount = 0 }: DirectionDashboardProps) {
+  const isEmpty =
+    activeLeadCount === 0 && metrics.activeCampaigns === 0 && metrics.activeAdvisors <= 1
 
   return (
     <div className="space-y-6">

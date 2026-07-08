@@ -1,5 +1,5 @@
 // FASE 14K — Foco operativo Lead-first en PLIFE Hoy.
-// Server component de solo lectura: agrupa leads reales de Supabase dev y
+// Server component de solo lectura: agrupa leads reales y
 // linkea al detalle. Ninguna acción muta datos desde acá.
 
 import Link from 'next/link'
@@ -125,7 +125,7 @@ export function LeadTodayPanel({ leads }: { leads: MockLead[] }) {
         </Link>
       </div>
       <p className="mb-3 text-xs text-gray-400">
-        Lectura desde Supabase dev. Las acciones se gestionan desde el detalle del lead.
+        Priorizá contactos comerciales por vencimiento, temperatura y próximo paso.
       </p>
 
       {summary.totalActive === 0 ? (

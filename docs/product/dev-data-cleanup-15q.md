@@ -153,3 +153,17 @@ Base comercial vacía / oculta, lista para carga manual real:
 | No `.env` modificado | ✓ |
 | No push | ✓ |
 | OpenAI / Compliance no reintroducidos | ✓ |
+
+---
+
+## FASE 15R — Validación con base limpia
+
+**Fecha:** 2026-07-08  
+**Documento detallado:** `docs/product/empty-state-and-manual-load-15r.md`
+
+Tras la limpieza 15Q, se validaron empty states con base comercial vacía y se cargó data controlada mínima:
+
+- **Lead activo:** `e77676c9-a4b4-44e7-a4df-c9500cb4b389` — “Lead inicial de validación”.
+- **Propuesta activa:** `d22f5fad-5bcf-468f-9f7c-fb774543f1b7` — “Propuesta inicial de validación” (`source=lead`).
+- UI: empty states en Hoy, Dirección, Propuestas, Admin; copy anti-demo en crear lead.
+- QA 15R: type-check OK, 170 unit tests OK, build OK.

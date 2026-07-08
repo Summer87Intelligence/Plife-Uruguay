@@ -12,6 +12,7 @@ interface AdvisorDashboardProps {
   profile: Profile
   todayActivities: Partial<Activity>[]
   activeCampaigns: Partial<Campaign>[]
+  activeLeadCount?: number
 }
 
 export function AdvisorDashboard({
@@ -19,11 +20,13 @@ export function AdvisorDashboard({
   profile,
   todayActivities,
   activeCampaigns,
+  activeLeadCount = 0,
 }: AdvisorDashboardProps) {
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Buenos días' : hour < 18 ? 'Buenas tardes' : 'Buenas noches'
 
-  const isEmpty = todayActivities.length === 0 && activeCampaigns.length === 0
+  const isEmpty =
+    activeLeadCount === 0 && todayActivities.length === 0 && activeCampaigns.length === 0
 
   return (
     <div className="space-y-6">

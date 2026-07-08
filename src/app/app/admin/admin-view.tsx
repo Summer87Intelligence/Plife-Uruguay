@@ -116,6 +116,11 @@ export function AdminView({ users, teams, prompts }: AdminViewProps) {
             <CardTitle>Agentes IA activos ({prompts.length})</CardTitle>
           </CardHeader>
           <CardContent>
+            {prompts.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-8">
+                No hay agentes IA configurados. La configuración de motores está en Motores.
+              </p>
+            ) : (
             <ul className="divide-y divide-gray-50">
               {prompts.map(prompt => (
                 <li key={prompt.id} className="py-3">
@@ -133,6 +138,7 @@ export function AdminView({ users, teams, prompts }: AdminViewProps) {
                 </li>
               ))}
             </ul>
+            )}
           </CardContent>
         </Card>
       )}

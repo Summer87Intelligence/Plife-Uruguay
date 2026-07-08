@@ -28,6 +28,7 @@ export default async function HoyPage() {
           activeCampaigns: activeCampaigns ?? 0,
           activeAdvisors: activeAdvisors ?? 0,
         }}
+        activeLeadCount={leads.length}
       />
     )
   }
@@ -50,6 +51,7 @@ export default async function HoyPage() {
       profile={profile}
       todayActivities={todayActivities ?? []}
       activeCampaigns={activeCampaigns ?? []}
+      activeLeadCount={leads.length}
     />
   )
 }

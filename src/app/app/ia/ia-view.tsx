@@ -151,8 +151,8 @@ export function IAView({
           <div>
             <p className="text-sm font-semibold text-orange-800">Schema del motor de prompts no aplicado</p>
             <p className="text-sm text-orange-700 mt-0.5">
-              Las tablas del motor IA no existen en la base de datos.
-              Ejecutar FASE 12O-D antes de usar esta pantalla.
+              Las tablas del motor IA no existen en la base de datos. Contactá al administrador
+              del sistema para aplicar la configuración pendiente.
             </p>
           </div>
         </div>

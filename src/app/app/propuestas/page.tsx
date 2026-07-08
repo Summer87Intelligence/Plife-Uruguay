@@ -3,6 +3,7 @@ import Link from 'next/link'
 import type { Route } from 'next'
 import { FileText, Plus, Info, Inbox, Megaphone, Radar, PenLine } from 'lucide-react'
 import { getProfile } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { PROPOSALS_SECTION, PROPOSAL_STATUS_LABELS, SOURCE_LABELS } from '@/domains/proposals'
@@ -49,7 +50,21 @@ export default async function PropuestasPage() {
   const profile = await getProfile()
   if (!profile) redirect('/login')
 
-  const proposals = await getProposals()
+  const supabase = await createClient()
+  const [proposals, { count: leadCount }, { count: campaignCount }] = await Promise.all([
+    getProposals(),
+    supabase.from('leads').select('*', { count: 'exact', head: true }).is('deleted_at', null),
+    supabase.from('campaigns').select('*', { count: 'exact', head: true }).is('deleted_at', null),
+  ])
+
+  const hasLeads = (leadCount ?? 0) > 0
+  const hasCampaigns = (campaignCount ?? 0) > 0
+  const createFromItems = CREATE_FROM.filter((item) => {
+    if (item.href.includes('source=lead')) return hasLeads
+    if (item.href.includes('source=campaign')) return hasCampaigns
+    if (item.href.includes('source=radar')) return false
+    return true
+  })
 
   return (
     <div className="space-y-5">
@@ -75,10 +90,16 @@ export default async function PropuestasPage() {
       </div>
 
       {/* Crear desde */}
+      {createFromItems.length > 0 && (
       <section className="space-y-2">
         <p className="text-sm font-semibold text-gray-700">Crear desde</p>
+        {!hasLeads && !hasCampaigns && (
+          <p className="text-xs text-gray-500">
+            Cuando cargues leads o campañas, podrás iniciar propuestas con ese contexto.
+          </p>
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {CREATE_FROM.map((item) => {
+          {createFromItems.map((item) => {
             const Icon = item.icon
             return (
               <Link key={item.label} href={item.href as Route}>
@@ -96,6 +117,7 @@ export default async function PropuestasPage() {
           })}
         </div>
       </section>
+      )}
 
       {proposals.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
