@@ -329,3 +329,32 @@ Esto se incorpora **desde la FASE 15J** (SQL draft), no como parche posterior.
 - **Sin persistencia todavía.** Este documento no crea tablas ni ejecuta SQL.
 - **Sin server actions todavía.** Se diseñan para 15L, no se crean aquí.
 - **No main · no PR #4 · no push · no Supabase remoto · no `.env` · no Vercel.**
+
+---
+
+## 10. FASE 15J — SQL draft generado
+
+> Ejecutada el 2026-07-08. Convierte este diseño en un SQL revisable **no aplicado**.
+
+- **Ubicación:** `supabase/migrations/drafts/20260708_proposals_persistence_draft.sql`.
+- **Estado:** **DRAFT — no aplicado** (ni dev ni remoto; no se usó la CLI de Supabase).
+- **Guía de revisión:** `docs/product/proposals-sql-draft-review-15j.md`.
+
+### Decisiones relevantes
+
+- **Enums como TEXT + CHECK** (no tipos nativos Postgres): consistente con este diseño y con
+  `leads-schema-draft.sql` / `ai-engine-schema.sql`. Se descartaron `proposal_status` /
+  `proposal_source` nativos.
+- **FKs de responsables → `profiles(id)`** (no `auth.users`): `profiles.id == auth.uid()`;
+  mantiene integridad con el resto del schema y con los helpers de rol.
+- **`created_by` NOT NULL** (toda propuesta tiene autor), sin `ON DELETE SET NULL`;
+  `assigned_to` nullable con `ON DELETE SET NULL`.
+- **Fix de soft-delete incorporado de origen**: `deleted_at IS NULL` solo en SELECT, nunca en
+  el `WITH CHECK` del UPDATE — evita el error `42501` (ref. leads 14G-B).
+- **Sin conexión a `opportunities`** (queda para 15O). **Sin Compliance. Sin proveedor de IA.**
+
+### Pendientes antes de ejecutar (FASE 15K)
+
+Ver checklist completo en `proposals-sql-draft-review-15j.md` §6: confirmar proyecto dev,
+existencia de helpers de rol y de tablas `profiles`/`leads`/`campaigns`, literal de rol
+`lider_comercial`, smoke test de RLS/soft-delete y generación de tipos TS.
