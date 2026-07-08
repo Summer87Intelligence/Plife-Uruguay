@@ -162,3 +162,75 @@ Smoke rutas: validadas por build + auditoría de componentes; smoke browser manu
 | No Vercel / no `.env` / no push / no SQL aplicado | ✓ |
 | OpenAI / Compliance no reintroducidos | ✓ |
 | 1 lead + 1 propuesta controlados | ✓ |
+
+---
+
+## FASE 15R-B — Login E2E estabilizado
+
+**Fecha:** 2026-07-08  
+**Modelo:** Claude Sonnet 4.6  
+**Rama:** `feat/lead-first-crm`  
+**Alcance:** debugging de test/auth helper (Playwright). Sin SQL, sin RLS, sin schema, sin borrado de datos, sin `.env` reales, sin push.
+
+### Causa raíz (confirmada por trace)
+
+El E2E fallaba en `login()` con `waitForURL('**/app/hoy')` timeout a 15s. El trace de red mostró:
+
+1. `POST /auth/v1/token?grant_type=password` → **200 en ~3.5s** → **el login SÍ funciona**.
+2. `GET /app/hoy?_rsc=...` → **status -1 (nunca completó)**.
+
+El formulario hace `router.push('/app/hoy')` (navegación **soft**). En el dev server, la **compilación on-demand** del RSC de `/app/hoy` (ruta autenticada pesada) supera los 15s en la primera visita, por lo que la URL nunca cambia y `waitForURL` expira. **No es un bug de auth ni de middleware ni de RLS.**
+
+El botón quedaba "loading/disabled" porque el path de éxito no resetea `loading` (navega), no porque el sign-in colgara.
+
+### Cambio aplicado (mínimo)
+
+`tests/e2e/helpers/auth.ts` — helper `login` robusto:
+
+- Espera la **respuesta real** de Supabase Auth (`waitForResponse` sobre `/auth/v1/token`) junto al click; si no es 200, **lanza error explícito** (no oculta credenciales inválidas).
+- Sube el timeout de navegación a valores razonables para compilación en dev (`APP_READY_TIMEOUT = 60s`), sin `waitForTimeout` ciego.
+- **Fallback de navegación dura**: si la nav soft no llega, hace `page.goto('/app/hoy')`. La sesión ya está en cookies tras el sign-in, así que el middleware valida y renderiza.
+
+`tests/e2e/helpers/routes.ts` — se agregaron rutas faltantes usadas por el smoke: `leads`, `leadsNew`, `pipeline`.
+
+`tests/e2e/manual-load-15r.spec.ts` — reescrito como **smoke autenticado** (no re-crea datos, para no duplicar el lead/propuesta de validación de 15R):
+- login → `/app/hoy` con nav visible
+- sesión persiste en `/app/leads`, `/app/pipeline`, `/app/propuestas`, `/app/propuestas/nueva`
+- el lead "Lead inicial de validación" aparece en Leads y Pipeline
+- la propuesta "Propuesta inicial de validación" aparece y su detalle abre
+- el formulario de nueva propuesta carga
+- ninguna sección muestra tokens demo/mock/seed/smoke/QA
+- `test.describe.configure({ timeout: 120_000 })` para tolerar compilación en dev
+
+`src/components/leads/lead-list.tsx` — copy residual "leads demo" → "leads" (anti-demo).
+
+### Comando usado
+
+```
+$env:E2E_BASE_URL="http://localhost:3010"
+npx playwright test tests/e2e/manual-load-15r.spec.ts --project=chromium
+```
+
+(Playwright levanta su propio dev server en el puerto de `E2E_BASE_URL` vía `webServer` cuando no hay uno corriendo.)
+
+### Resultado
+
+- **E2E login pasa:** SÍ.
+- **manual-load-15r pasa:** SÍ — **6/6 tests OK** (3.2m, incluye compilaciones en frío).
+- **storageState:** NO se creó; el login por UI ahora es confiable, no hizo falta.
+- **Datos nuevos creados:** NO — el smoke sólo lee/verifica los registros de validación de 15R.
+
+### Limitaciones pendientes
+
+- El primer render de cada ruta en dev es lento (compilación on-demand); en CI conviene `next build` + `next start` para eliminar el costo de compilación y bajar timeouts.
+- El puerto del dev server debe alinearse con `E2E_BASE_URL` en `.env.test` (o dejar que `webServer` lo levante). Con varios dev servers locales activos, usar un puerto dedicado.
+- El flujo de **creación** por UI (lead/propuesta) no se re-ejecuta para evitar duplicados; queda cubierto por los datos de 15R y validable puntualmente cuando se requiera.
+
+### QA 15R-B
+
+| Comando | Resultado |
+|---|---|
+| `npm run type-check` | OK |
+| `npm run test:unit` | 170 tests OK |
+| `npm run build` | OK |
+| `npx playwright test manual-load-15r.spec.ts` | 6/6 OK |

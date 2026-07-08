@@ -80,7 +80,7 @@ export function LeadList({ leads }: { leads: MockLead[] }) {
         </select>
 
         <span className="ml-auto text-xs text-gray-400">
-          {filtered.length} de {leads.length} leads demo
+          {filtered.length} de {leads.length} leads
         </span>
       </div>
 

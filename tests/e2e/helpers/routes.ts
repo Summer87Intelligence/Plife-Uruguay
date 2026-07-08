@@ -1,6 +1,9 @@
 export const ROUTES = {
   login: '/login',
   hoy: '/app/hoy',
+  leads: '/app/leads',
+  leadsNew: '/app/leads/new',
+  pipeline: '/app/pipeline',
   demo: '/app/demo',
   radarB2B: '/app/radar-b2b',
   empresas: '/app/empresas',

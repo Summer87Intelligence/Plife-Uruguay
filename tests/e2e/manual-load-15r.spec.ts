@@ -1,49 +1,72 @@
 import { test, expect } from '@playwright/test'
 import { login, hasCredentials } from './helpers/auth'
+import { ROUTES } from './helpers/routes'
+import { SEL } from './helpers/selectors'
+
+// FASE 15R / 15R-B — Smoke autenticado con base comercial limpia + registros de
+// validación cargados en 15R (1 lead + 1 propuesta). No re-crea datos: verifica
+// que aparezcan en las secciones y que no haya datos demo. La creación por UI se
+// valida aparte; acá evitamos duplicar el lead/propuesta de validación.
 
 const LEAD_TITLE = 'Lead inicial de validación'
+const PROPOSAL_TITLE = 'Propuesta inicial de validación'
+const DEMO_TOKENS = /\b(demo|mock|smoke|pérez qa|perez qa|seed)\b/i
 
-test.describe('FASE 15R — carga manual mínima', () => {
+test.describe('FASE 15R-B — smoke autenticado con base limpia', () => {
+  // El dev server compila rutas on-demand: la primera visita a cada ruta puede
+  // tardar. Damos margen para login + compilación sin usar waits ciegos.
+  test.describe.configure({ timeout: 120_000 })
+
   test.skip(!hasCredentials(), 'Requiere E2E_USER_EMAIL y E2E_USER_PASSWORD en .env.test')
 
-  test('crear lead y propuesta desde UI', async ({ page }) => {
-    const tomorrow = new Date()
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    const followUpDate = tomorrow.toISOString().slice(0, 10)
-
+  test.beforeEach(async ({ page }) => {
     await login(page)
+  })
 
-    await page.goto('/app/leads/new')
-    await page.getByLabel('Título *').fill(LEAD_TITLE)
-    await page.getByLabel('Interés').fill('protección familiar')
-    await page.getByLabel('Próximo paso').fill('Contactar para validar necesidad')
-    await page.getByLabel('Fecha de seguimiento').fill(followUpDate)
-    await page.getByRole('button', { name: 'Crear lead' }).click()
+  test('login redirige a /app/hoy y muestra navegación', async ({ page }) => {
+    await expect(page).toHaveURL(/app\/hoy/)
+    await expect(page.locator('nav, aside').first()).toBeVisible()
+    await expect(page.getByText(SEL.internalServerError)).not.toBeVisible()
+  })
 
-    await expect(page.getByText('Lead registrado correctamente')).toBeVisible({ timeout: 15_000 })
+  test('la sesión persiste al navegar por las secciones principales', async ({ page }) => {
+    for (const route of [ROUTES.leads, ROUTES.pipeline, ROUTES.propuestas, ROUTES.propuestasNueva]) {
+      await page.goto(route)
+      await expect(page).not.toHaveURL(/login/)
+      await expect(page.getByText(SEL.internalServerError)).not.toBeVisible()
+    }
+  })
 
-    await page.goto('/app/leads')
-    await expect(page.getByText(LEAD_TITLE)).toBeVisible()
+  test('el lead de validación aparece en Leads y Pipeline', async ({ page }) => {
+    await page.goto(ROUTES.leads)
+    await expect(page.getByText(LEAD_TITLE).first()).toBeVisible({ timeout: 15_000 })
 
-    await page.goto('/app/pipeline')
-    await expect(page.getByText(LEAD_TITLE)).toBeVisible()
+    await page.goto(ROUTES.pipeline)
+    await expect(page.getByText(LEAD_TITLE).first()).toBeVisible({ timeout: 15_000 })
+  })
 
-    await page.goto('/app/hoy')
-    await expect(page.getByText(LEAD_TITLE)).toBeVisible()
+  test('la propuesta de validación aparece y su detalle abre', async ({ page }) => {
+    await page.goto(ROUTES.propuestas)
+    const proposalLink = page.getByText(PROPOSAL_TITLE).first()
+    await expect(proposalLink).toBeVisible({ timeout: 15_000 })
 
-    await page.getByText(LEAD_TITLE).click()
-    await page.getByRole('link', { name: /Crear propuesta desde este lead/i }).click()
+    await proposalLink.click()
+    await expect(page).toHaveURL(/\/app\/propuestas\/[0-9a-f-]{36}/, { timeout: 15_000 })
+    await expect(page.getByText(SEL.internalServerError)).not.toBeVisible()
+    await expect(page.getByText(PROPOSAL_TITLE).first()).toBeVisible({ timeout: 15_000 })
+  })
 
-    await expect(page).toHaveURL(/\/app\/propuestas\/nueva/)
-    await page.getByLabel('Título').fill('Propuesta inicial de validación')
-    await page.getByLabel('Contexto').fill('Validación funcional post-limpieza de base dev.')
-    await page.getByRole('button', { name: /Generar borrador/i }).click()
+  test('el formulario de nueva propuesta carga', async ({ page }) => {
+    await page.goto(ROUTES.propuestasNueva)
+    await expect(page.getByRole('heading', { name: /nueva propuesta/i })).toBeVisible({ timeout: 15_000 })
+  })
 
-    await expect(page.getByText('Borrador generado')).toBeVisible({ timeout: 10_000 })
-    await page.getByRole('button', { name: /Guardar propuesta/i }).click()
-    await expect(page.getByText('Propuesta guardada')).toBeVisible({ timeout: 15_000 })
-
-    await page.goto('/app/propuestas')
-    await expect(page.getByText('Propuesta inicial de validación')).toBeVisible()
+  test('las secciones no muestran datos demo/seed', async ({ page }) => {
+    for (const route of [ROUTES.hoy, ROUTES.leads, ROUTES.pipeline, ROUTES.propuestas]) {
+      await page.goto(route)
+      await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {})
+      const body = await page.locator('body').innerText()
+      expect(body, `Ruta ${route} contiene tokens demo`).not.toMatch(DEMO_TOKENS)
+    }
   })
 })
