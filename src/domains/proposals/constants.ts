@@ -32,6 +32,18 @@ export const SOURCE_LABELS: Record<ProposalSource, string> = {
   other: 'Otro',
 }
 
+// FASE 15M — Etiquetas del ciclo de vida comercial (sin estado de compliance).
+export const PROPOSAL_STATUS_LABELS: Record<
+  'draft' | 'in_review' | 'ready' | 'used' | 'archived',
+  string
+> = {
+  draft: 'Borrador',
+  in_review: 'En revisión',
+  ready: 'Lista',
+  used: 'Usada',
+  archived: 'Archivada',
+}
+
 // Frases prudentes que el generador usa para no afirmar datos reales como hechos.
 export const HEDGE = {
   hypothesis: 'Hipótesis a validar',

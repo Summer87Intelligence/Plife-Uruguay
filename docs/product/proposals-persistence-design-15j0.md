@@ -371,3 +371,8 @@ función `soft_delete_proposal` `SECURITY DEFINER` (owner=postgres, EXECUTE solo
 funciona vía la función DEFINER. Tipos agregados a mano en `database.ts`. **Producción no tocada.**
 Detalle en `proposals-schema-apply-dev-15l.md`. Próximo: 15M (crear propuesta real desde UI /
 server action).
+
+> **Actualización FASE 15M (2026-07-08):** el diseño de persistencia ya está en uso — `createProposalAction`
+> escribe en `public.proposals` desde la UI, con snapshots de score/calificación congelados y `draft`
+> JSONB como fuente de verdad. Ver `proposals-create-real-15m.md`. La conversión a opportunity sigue
+> fuera de alcance (FASE 15O).

@@ -30,8 +30,8 @@ export default async function NuevaPropuestaPage({
         </Link>
         <h1 className="mt-1 text-xl font-bold text-gray-900">Nueva propuesta</h1>
         <p className="mt-0.5 text-sm text-gray-500 max-w-2xl">
-          Cargá una idea y los motores comerciales generan un borrador conceptual. No se guarda
-          ni usa proveedores externos; el resultado requiere validación humana.
+          Cargá una idea y los motores comerciales generan un borrador conceptual. Se genera sin
+          proveedores externos y podés guardarlo en tus propuestas; el resultado requiere validación humana.
         </p>
       </div>
 

@@ -91,6 +91,8 @@ coincide exactamente con `leads`.
   haya más profiles.
 - **`is_in_my_team` sin typing** (ver §7).
 - **Sin server actions ni UI** todavía: la tabla existe pero no hay flujo de app que la use (15M+).
+  → **Resuelto en FASE 15M:** `createProposalAction` + listado real usan la tabla desde la UI.
+  Ver `proposals-create-real-15m.md`.
 
 ## 9. Confirmaciones
 

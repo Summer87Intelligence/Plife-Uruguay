@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, RotateCcw, Link as LinkIcon } from 'lucide-react'
+import Link from 'next/link'
+import { Sparkles, RotateCcw, Link as LinkIcon, Save, CheckCircle2, Loader2, ArrowRight } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input, Textarea } from '@/components/ui/input'
@@ -11,11 +12,13 @@ import {
   TARGET_TYPE_OPTIONS,
   SOURCE_OPTIONS,
   SOURCE_LABELS,
+  type CreateProposalInput,
   type ProposalDraft,
   type ProposalInput,
   type ProposalSource,
   type ProposalTargetType,
 } from '@/domains/proposals'
+import { createProposalAction } from '@/app/app/propuestas/actions'
 import { ProposalDraftView } from './proposal-draft-view'
 
 const EMPTY: ProposalInput = {
@@ -34,10 +37,17 @@ interface ProposalCreateFormProps {
   initial?: Partial<ProposalInput>
 }
 
+type SaveState =
+  | { status: 'idle' }
+  | { status: 'saving' }
+  | { status: 'error'; message: string }
+  | { status: 'success'; id: string; leadSnapshot: boolean }
+
 export function ProposalCreateForm({ initial }: ProposalCreateFormProps) {
   const [input, setInput] = useState<ProposalInput>({ ...EMPTY, ...initial })
   const [error, setError] = useState<string | null>(null)
   const [draft, setDraft] = useState<ProposalDraft | null>(null)
+  const [save, setSave] = useState<SaveState>({ status: 'idle' })
 
   const set = <K extends keyof ProposalInput>(key: K, value: ProposalInput[K]) =>
     setInput((prev) => ({ ...prev, [key]: value }))
@@ -56,8 +66,10 @@ export function ProposalCreateForm({ initial }: ProposalCreateFormProps) {
     }
 
     // Generación 100% local determinística: sin Supabase, sin server action, sin red.
+    // Guardar es un segundo paso explícito (no se persiste al generar).
     const result = generateMockProposal(input)
     setDraft(result)
+    setSave({ status: 'idle' })
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
@@ -66,18 +78,85 @@ export function ProposalCreateForm({ initial }: ProposalCreateFormProps) {
   const handleReset = () => {
     setDraft(null)
     setError(null)
+    setSave({ status: 'idle' })
+  }
+
+  const handleSave = async () => {
+    if (!draft) return
+    setSave({ status: 'saving' })
+    // El servidor deriva lead_id/campaign_id, snapshots y denormalizaciones.
+    const payload: CreateProposalInput = { ...input, draft }
+    const result = await createProposalAction(payload)
+    if (result.success) {
+      setSave({ status: 'success', id: result.id, leadSnapshot: result.leadSnapshot })
+    } else {
+      setSave({ status: 'error', message: result.error })
+    }
   }
 
   if (draft) {
+    const isSaved = save.status === 'success'
     return (
       <div className="space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-sm text-gray-500">Borrador generado en modo determinístico interno.</p>
-          <Button variant="outline" size="sm" onClick={handleReset}>
-            <RotateCcw className="h-4 w-4" />
-            Editar / generar otro
-          </Button>
+        <div className="flex flex-col gap-3 rounded-xl border border-gray-100 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-gray-800">
+              {isSaved ? 'Propuesta guardada' : 'Borrador generado'}
+            </p>
+            <p className="text-xs text-gray-500">
+              {isSaved
+                ? 'Quedó persistida en tus propuestas.'
+                : 'Modo determinístico interno. Todavía no está guardado.'}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {!isSaved && (
+              <Button
+                onClick={handleSave}
+                disabled={save.status === 'saving'}
+                size="sm"
+              >
+                {save.status === 'saving' ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                {save.status === 'saving' ? 'Guardando…' : 'Guardar propuesta'}
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={handleReset}>
+              <RotateCcw className="h-4 w-4" />
+              {isSaved ? 'Crear otra' : 'Editar / generar otro'}
+            </Button>
+          </div>
         </div>
+
+        {save.status === 'error' && (
+          <p className="rounded-lg border border-red-100 bg-red-50 px-3 py-2 text-sm text-red-700">
+            No se pudo guardar: {save.message}
+          </p>
+        )}
+
+        {isSaved && (
+          <div className="flex flex-col gap-2 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
+            <div className="flex items-center gap-2 text-emerald-800">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              <p className="text-sm font-medium">
+                Propuesta guardada
+                {save.leadSnapshot ? ' (con snapshot de score y calificación del lead)' : ''}.
+              </p>
+            </div>
+            <div>
+              <Button asChild variant="outline" size="sm">
+                <Link href="/app/propuestas">
+                  Ver mis propuestas
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        )}
+
         <ProposalDraftView draft={draft} />
       </div>
     )
@@ -174,7 +253,7 @@ export function ProposalCreateForm({ initial }: ProposalCreateFormProps) {
               Generar borrador
             </Button>
             <p className="text-xs text-gray-400">
-              No se guarda ni se envía a ningún proveedor externo.
+              Primero se genera; guardar es un paso aparte. Sin proveedores externos.
             </p>
           </div>
         </form>

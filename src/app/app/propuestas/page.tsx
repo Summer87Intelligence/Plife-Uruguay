@@ -5,10 +5,18 @@ import { FileText, Plus, Info, Inbox, Megaphone, Radar, PenLine } from 'lucide-r
 import { getProfile } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { PROPOSALS_SECTION } from '@/domains/proposals'
+import { PROPOSALS_SECTION, PROPOSAL_STATUS_LABELS, SOURCE_LABELS } from '@/domains/proposals'
+import { getProposals } from '@/domains/proposals/queries'
 
 // FASE 15E — Propuestas (flujo conceptual/determinístico, sin persistencia).
 // FASE 15F — Las propuestas pueden nacer desde Lead, Campaña, Radar u observación manual.
+// FASE 15M — Listado real de propuestas guardadas (RLS, sin service role).
+
+function formatDate(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleDateString('es-UY', { day: '2-digit', month: 'short', year: 'numeric' })
+}
 
 const CREATE_FROM = [
   {
@@ -41,6 +49,8 @@ export default async function PropuestasPage() {
   const profile = await getProfile()
   if (!profile) redirect('/login')
 
+  const proposals = await getProposals()
+
   return (
     <div className="space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
@@ -60,7 +70,7 @@ export default async function PropuestasPage() {
         <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
         <p className="text-sm text-blue-800">
           <span className="font-semibold">Una propuesta puede nacer desde un Lead, una Campaña, el Radar B2B o una observación manual.</span>{' '}
-          El flujo es conceptual y determinístico (sin OpenAI ni proveedores externos) y todavía no se guarda.
+          El borrador se genera en modo determinístico (sin OpenAI ni proveedores externos) y podés guardarlo en tus propuestas.
         </p>
       </div>
 
@@ -87,23 +97,54 @@ export default async function PropuestasPage() {
         </div>
       </section>
 
-      <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
-        <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-gray-100">
-          <FileText className="h-5 w-5 text-gray-400" />
+      {proposals.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
+          <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-gray-100">
+            <FileText className="h-5 w-5 text-gray-400" />
+          </div>
+          <p className="text-sm font-medium text-gray-700">{PROPOSALS_SECTION.emptyState}</p>
+          <p className="mt-1 text-sm text-gray-500">
+            Empezá desde una idea y dejá que los motores ordenen el borrador.
+          </p>
+          <div className="mt-4 flex justify-center">
+            <Button asChild variant="outline" size="sm">
+              <Link href="/app/propuestas/nueva">
+                <Plus className="h-4 w-4" />
+                Crear borrador conceptual
+              </Link>
+            </Button>
+          </div>
         </div>
-        <p className="text-sm font-medium text-gray-700">{PROPOSALS_SECTION.emptyState}</p>
-        <p className="mt-1 text-sm text-gray-500">
-          Empezá desde una idea y dejá que los motores ordenen el borrador.
-        </p>
-        <div className="mt-4 flex justify-center">
-          <Button asChild variant="outline" size="sm">
-            <Link href="/app/propuestas/nueva">
-              <Plus className="h-4 w-4" />
-              Crear borrador conceptual
-            </Link>
-          </Button>
-        </div>
-      </div>
+      ) : (
+        <section className="space-y-2">
+          <p className="text-sm font-semibold text-gray-700">Tus propuestas</p>
+          <div className="space-y-2.5">
+            {proposals.map((proposal) => (
+              <Card key={proposal.id} className="border-gray-100">
+                <CardContent className="p-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-semibold text-gray-900">{proposal.title}</p>
+                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                      {PROPOSAL_STATUS_LABELS[proposal.status] ?? proposal.status}
+                    </span>
+                    <span className="rounded-full bg-[#1B3A6B]/10 px-2 py-0.5 text-xs font-medium text-[#1B3A6B]">
+                      {SOURCE_LABELS[proposal.source] ?? proposal.source}
+                    </span>
+                    {proposal.created_at && (
+                      <span className="ml-auto text-xs text-gray-400">
+                        {formatDate(proposal.created_at)}
+                      </span>
+                    )}
+                  </div>
+                  {proposal.summary && (
+                    <p className="mt-1.5 line-clamp-2 text-sm text-gray-500">{proposal.summary}</p>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   )
 }
