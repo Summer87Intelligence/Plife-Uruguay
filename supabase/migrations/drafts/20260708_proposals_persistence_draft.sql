@@ -1,7 +1,9 @@
 -- =============================================================================
 -- DRAFT ONLY
 -- Do not apply directly.
--- Reviewed in FASE 15J.
+-- Reviewed in FASE 15J. Validated against the real repo schema in FASE 15K
+--   (helpers/roles/FKs/updated_at/grants/RLS confirmed; soft-delete corrected to a
+--    SECURITY DEFINER function — see section 7 and proposals-sql-draft-review-15j.md §8).
 -- Target: future dev Supabase only.
 -- =============================================================================
 -- PLIFE Growth OS — PROPOSALS: SCHEMA DRAFT (persistencia futura de Propuestas)
@@ -234,15 +236,21 @@ CREATE INDEX IF NOT EXISTS idx_proposals_campaign_id
 --     pueden asignar a cualquiera.
 --   * UPDATE: admin/direccion cualquier propuesta; el asesor solo las propias.
 --   * DELETE: NO se otorga a nadie por política. El borrado es soft-delete
---     (UPDATE de deleted_at).
+--     (UPDATE de deleted_at) — pero NO vía UPDATE directo del cliente (ver abajo).
 --
---   ⚠️ SOFT-DELETE — evita el error 42501 detectado en leads (FASE 14G-B):
---     El filtro `deleted_at IS NULL` va ÚNICAMENTE en la política SELECT.
---     Las políticas UPDATE (USING y WITH CHECK) evalúan SOLO permisos, NUNCA
---     deleted_at. Motivo: si el WITH CHECK del UPDATE exigiera deleted_at IS NULL,
---     al hacer UPDATE deleted_at = NOW() la fila nueva dejaría de cumplirlo y
---     Postgres rechazaría el soft-delete con 42501. Referencia:
---     supabase/leads-rls-soft-delete-fix-14gb.sql.
+--   ⚠️ SOFT-DELETE — LECCIÓN VALIDADA EN LEADS (FASE 14G-B, QA en dev):
+--     El filtro `deleted_at IS NULL` va ÚNICAMENTE en la política SELECT, y las
+--     políticas UPDATE evalúan SOLO permisos. ESTO NO ES SUFICIENTE para permitir
+--     el soft-delete vía rol `authenticated`: PostgREST ejecuta `UPDATE ... RETURNING`,
+--     y en Postgres la fila NUEVA debe cumplir además la política SELECT para poder
+--     devolverse. Al setear `deleted_at = NOW()`, la fila nueva deja de cumplir
+--     `deleted_at IS NULL` en el SELECT y el UPDATE se rechaza con 42501.
+--     >>> En leads, el patch 14G-B confirmó por QA que el soft-delete vía
+--         `authenticated` SIGUE fallando (42501) incluso con el UPDATE corregido.
+--     SOLUCIÓN adoptada aquí (recomendada en leads-rls-soft-delete-fix-14gb.md §135):
+--       función SECURITY DEFINER `soft_delete_proposal(uuid)` (sección 7) que hace
+--       el UPDATE bajo privilegios elevados, con autorización explícita, sin exponer
+--       UPDATE directo de `deleted_at` al cliente. DELETE físico sigue bloqueado.
 -- ---------------------------------------------------------------------------
 
 ALTER TABLE proposals ENABLE ROW LEVEL SECURITY;
@@ -289,7 +297,9 @@ END
 $$;
 
 -- UPDATE — SOLO permisos en USING y WITH CHECK (deleted_at NO se evalúa aquí:
--- ver nota de soft-delete arriba). Permite el soft-delete sin error 42501.
+-- ver nota de soft-delete arriba). Habilita updates operativos del cliente
+-- (estado, campos, reasignación). El SOFT-DELETE NO pasa por aquí: se hace vía
+-- la función SECURITY DEFINER de la sección 7 (evita el 42501 validado en leads).
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -322,10 +332,55 @@ $$;
 -- ---------------------------------------------------------------------------
 GRANT SELECT, INSERT, UPDATE ON proposals TO authenticated;
 
+-- ---------------------------------------------------------------------------
+-- 7. SOFT-DELETE vía función SECURITY DEFINER
+--    Motivo: el soft-delete por UPDATE directo del cliente falla con 42501
+--    (validado en leads 14G-B). Esta función corre bajo privilegios elevados y
+--    hace el UPDATE de deleted_at sin que el cliente cumpla la SELECT sobre la
+--    fila nueva. La autorización se verifica EXPLÍCITAMENTE dentro (SECURITY
+--    DEFINER omite RLS, así que la política de permisos se replica a mano).
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION soft_delete_proposal(p_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- Autorización explícita: solo admin/dirección o dueño/asignado de una fila
+  -- activa. auth.uid() sigue leyendo el JWT aunque la función sea DEFINER.
+  IF NOT EXISTS (
+    SELECT 1 FROM proposals
+    WHERE id = p_id
+      AND deleted_at IS NULL
+      AND (
+        is_admin_or_direccion()
+        OR assigned_to = auth.uid()
+        OR created_by = auth.uid()
+      )
+  ) THEN
+    RAISE EXCEPTION 'No autorizado o propuesta inexistente/ya borrada (id=%)', p_id
+      USING ERRCODE = '42501';
+  END IF;
+
+  UPDATE proposals SET deleted_at = NOW() WHERE id = p_id;
+END;
+$$;
+
+-- El EXECUTE se restringe: nadie por defecto, solo authenticated.
+REVOKE ALL ON FUNCTION soft_delete_proposal(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION soft_delete_proposal(UUID) TO authenticated;
+
+COMMENT ON FUNCTION soft_delete_proposal(UUID) IS
+  'Soft-delete seguro de una propuesta (SECURITY DEFINER). Evita el 42501 del '
+  'UPDATE directo bajo RLS (ver leads 14G-B). Verifica permisos de dueño/asignado/'
+  'dirección antes de setear deleted_at. No permite DELETE físico.';
+
 -- =============================================================================
 -- NOTAS DE SEGURIDAD (resumen):
 --   * DELETE físico BLOQUEADO: no hay policy DELETE ni GRANT DELETE.
---   * Borrado = soft-delete vía UPDATE de deleted_at (invisible en SELECT).
+--   * Borrado = soft-delete vía función SECURITY DEFINER soft_delete_proposal()
+--     (el UPDATE directo de deleted_at por el cliente falla con 42501: ver §5/§7).
 --   * NO incluye Compliance ni legal_review en ninguna forma.
 --   * NO incluye proveedor de IA (OpenAI/GPT): el borrador es determinístico.
 --   * `draft` (JSONB) es la fuente de verdad del borrador generado.

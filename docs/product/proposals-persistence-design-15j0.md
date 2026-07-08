@@ -349,12 +349,15 @@ Esto se incorpora **desde la FASE 15J** (SQL draft), no como parche posterior.
   mantiene integridad con el resto del schema y con los helpers de rol.
 - **`created_by` NOT NULL** (toda propuesta tiene autor), sin `ON DELETE SET NULL`;
   `assigned_to` nullable con `ON DELETE SET NULL`.
-- **Fix de soft-delete incorporado de origen**: `deleted_at IS NULL` solo en SELECT, nunca en
-  el `WITH CHECK` del UPDATE — evita el error `42501` (ref. leads 14G-B).
+- **Soft-delete**: `deleted_at IS NULL` solo en SELECT + UPDATE solo con permisos. **Corregido en
+  FASE 15K**: esto NO basta para soft-delete vía `authenticated` (da 42501, validado en leads
+  14G-B); se agregó la función `SECURITY DEFINER` `soft_delete_proposal(uuid)` como mecanismo real.
 - **Sin conexión a `opportunities`** (queda para 15O). **Sin Compliance. Sin proveedor de IA.**
 
-### Pendientes antes de ejecutar (FASE 15K)
+### FASE 15K — Validación contra schema real (2026-07-08)
 
-Ver checklist completo en `proposals-sql-draft-review-15j.md` §6: confirmar proyecto dev,
-existencia de helpers de rol y de tablas `profiles`/`leads`/`campaigns`, literal de rol
-`lider_comercial`, smoke test de RLS/soft-delete y generación de tipos TS.
+El draft se validó contra el schema real del repo (helpers, roles, FKs, updated_at, grants, RLS):
+todo confirmado. **Corrección crítica:** se reemplazó la suposición de que el patrón RLS "evita el
+42501" por la solución real (función `SECURITY DEFINER` `soft_delete_proposal`), tras confirmar en
+la QA de leads que el soft-delete directo vía `authenticated` sigue fallando. Detalle completo y
+riesgos restantes en `proposals-sql-draft-review-15j.md` §8. Sigue **DRAFT no aplicado**.

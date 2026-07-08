@@ -54,11 +54,14 @@ Extensibilidad: `metadata` (JSONB).
 
 - **SELECT**: `deleted_at IS NULL` + (admin/dirección OR asignado OR creador OR líder de equipo).
 - **INSERT**: `created_by = auth.uid()`, `assigned_to` NULL/propio (admin/dirección asigna a otros).
-- **UPDATE**: admin/dirección OR asignado OR creador — **solo permisos, sin `deleted_at`**.
+- **UPDATE**: admin/dirección OR asignado OR creador — **solo permisos, sin `deleted_at`**
+  (updates operativos; el soft-delete NO pasa por aquí).
 - **DELETE físico bloqueado**: sin policy DELETE, sin GRANT DELETE.
-- **⚠️ Fix soft-delete incorporado de origen**: `deleted_at IS NULL` va **solo en SELECT**,
-  nunca en el `WITH CHECK` del UPDATE — evita el error `42501` documentado en
-  `supabase/leads-rls-soft-delete-fix-14gb.sql` (FASE 14G-B).
+- **⚠️ Soft-delete vía función `SECURITY DEFINER` `soft_delete_proposal(uuid)`** (corregido en
+  FASE 15K): el UPDATE directo de `deleted_at` por el rol `authenticated` **falla con `42501`**
+  incluso con `deleted_at IS NULL` solo en SELECT — validado empíricamente en leads 14G-B
+  (PostgREST hace `UPDATE ... RETURNING` y la fila nueva debe cumplir la policy SELECT). La
+  función DEFINER hace el UPDATE con privilegios elevados y autorización explícita. Ver §4.7.
 
 ---
 
@@ -119,9 +122,13 @@ Extensibilidad: `metadata` (JSONB).
 - [ ] Confirmar que existen las tablas `profiles`, `leads`, `campaigns` (FKs).
 - [ ] Revisar el literal de rol `lider_comercial` contra el schema real.
 - [ ] Ejecutar en una transacción y revisar `pg_policy` de `proposals` (query de verificación).
-- [ ] Smoke test RLS: insertar como asesor, leer propio, intentar soft-delete (no debe dar 42501),
-      confirmar que DELETE físico está bloqueado.
-- [ ] Generar tipos TS del schema tras aplicar (para 15L).
+- [ ] Smoke test RLS: insertar como asesor, leer propio, hacer soft-delete **vía
+      `soft_delete_proposal(id)`** (debe funcionar), confirmar que el UPDATE **directo** de
+      `deleted_at` como `authenticated` da 42501 (esperado) y que el DELETE físico está bloqueado.
+- [ ] Confirmar que `soft_delete_proposal` quedó como `SECURITY DEFINER` con `EXECUTE` solo a
+      `authenticated` (y `REVOKE` de PUBLIC).
+- [ ] Generar tipos TS del schema tras aplicar (para 15L); registrar `soft_delete_proposal` en
+      `Functions` de `database.ts` (igual que quedó pendiente `is_in_my_team` en leads).
 - [ ] Registrar la aplicación en un doc `proposals-schema-apply-dev-15k.md`.
 
 ---
@@ -131,3 +138,87 @@ Extensibilidad: `metadata` (JSONB).
 - Verificación de términos prohibidos (OpenAI/GPT/Compliance/legal_review/MQL/PQL): ver reporte.
 - `npm run type-check` — ver reporte (no se tocó código runtime).
 - `npm run test:unit` — ver reporte (sin tests nuevos; no-regresión).
+
+---
+
+## 8. FASE 15K — Validación contra schema real
+
+> Ejecutada el 2026-07-08. Revisión del draft contra el schema real del repo. **No se aplicó SQL.**
+
+### 8.1 Helpers de rol — CONFIRMADOS existentes en dev
+
+| Helper | Evidencia | En `database.ts` |
+|---|---|---|
+| `is_admin_or_direccion()` | Precondición **PASS** en `leads-schema-apply-dev-14g.md`; tipado en `database.ts:615` | Sí |
+| `get_user_role()` | Precondición **PASS** en 14G; tipado en `database.ts:614` (Returns `UserRole`) | Sí |
+| `is_in_my_team(uuid)` | Precondición **PASS** en `leads-schema-apply-dev-14g.md:32` | **No** (falta typing, gap solo TS; existe en la base) |
+
+No se inventó ningún helper. Los tres se usan igual que en `leads`. La precondición del draft
+aborta si alguno falta, así que es seguro.
+
+### 8.2 Roles — CONFIRMADOS
+
+`seed-demo.sql` documenta los literales reales: `direccion`, `lider_comercial`, `asesor` (+`admin`).
+El draft usa `get_user_role() = 'lider_comercial'` → **literal correcto**, idéntico a `leads_select`.
+
+### 8.3 FKs — CONFIRMADAS
+
+- `created_by` / `assigned_to` → `profiles(id)`: coincide con el patrón de `leads`
+  (`leads-schema-draft.sql:88-89`). El proyecto usa `profiles`, **no** `auth.users`.
+- `lead_id` → `leads(id)`, `campaign_id` → `campaigns(id)`: ambas tablas existen en dev
+  (leads aplicada en 14G; campaigns con grants en `fix-app-grants.sql:55`). `ON DELETE SET NULL`.
+- Nota: `profiles`, `leads`, `campaigns` **no** tienen `CREATE TABLE` local (creadas directamente
+  en Supabase); es esperado y consistente con todo el schema del repo.
+
+### 8.4 `updated_at` — CONFIRMADO
+
+`set_updated_at()` es la función común (usada por `ai-engine-schema.sql:40` y
+`leads-schema-draft.sql:70`, ambas `OR REPLACE`). El draft la reutiliza + trigger
+`proposals_updated_at`. Correcto.
+
+### 8.5 Grants — CONFIRMADOS
+
+Patrón real (`fix-app-grants.sql`): a `authenticated` se otorga `SELECT, INSERT, UPDATE` en las
+tablas de negocio (contacts, companies, opportunities, campaigns, leads); **a `anon` no se
+otorga nada**. El draft otorga `SELECT, INSERT, UPDATE ON proposals TO authenticated` y nada a
+`anon`. Correcto y consistente.
+
+### 8.6 RLS — REVISADA contra `leads`
+
+SELECT/INSERT/UPDATE replican el patrón de `leads` (mismos helpers, mismo literal de rol, mismo
+manejo de `deleted_at IS NULL` solo en SELECT). Diferencia deliberada: el INSERT de proposals
+permite `assigned_to IS NULL` (propuesta sin asignar) además de propio/admin.
+
+### 8.7 ⚠️ Corrección crítica de soft-delete (cambio al draft)
+
+**Hallazgo:** el draft 15J afirmaba que mantener `deleted_at IS NULL` solo en SELECT y permisos
+en el UPDATE **"evita el 42501"**. La QA en dev de leads (14G-B) **desmiente** eso: el soft-delete
+por UPDATE directo como `authenticated` **siguió fallando con 42501** incluso con el UPDATE
+corregido, porque PostgREST hace `UPDATE ... RETURNING` y la fila nueva debe cumplir la policy
+**SELECT** (`deleted_at IS NULL`), que deja de cumplir al setear `deleted_at`.
+
+**Cambio aplicado al draft (§7 del SQL):** se agregó la función
+`soft_delete_proposal(p_id uuid)` `SECURITY DEFINER` (search_path fijo, autorización explícita
+dueño/asignado/dirección, `REVOKE ALL FROM PUBLIC` + `GRANT EXECUTE TO authenticated`), que hace
+el `UPDATE deleted_at` bajo privilegios elevados sin exponer el UPDATE directo. Es exactamente la
+solución que recomienda `leads-rls-soft-delete-fix-14gb.md §135`. El UPDATE directo de `deleted_at`
+seguirá dando 42501 **a propósito**; el borrado va por la función. DELETE físico sigue bloqueado.
+
+### 8.8 Riesgos restantes antes de aplicar en dev
+
+- **Ownership de la función DEFINER:** al aplicar, `soft_delete_proposal` debe quedar owned por un
+  rol que efectivamente omita RLS sobre `proposals` (owner de la tabla / postgres). Verificar en 15K
+  real que el UPDATE interno no vuelve a chocar con RLS.
+- **`is_in_my_team` sin typing en `database.ts`:** gap solo de TypeScript (existe en la base). Se
+  regenera junto con `soft_delete_proposal` al aplicar (15K real / 15L).
+- **`created_by = auth.uid()` en INSERT:** una inserción por service role (sin JWT) debe setear
+  `created_by` explícitamente; la policy solo cubre `authenticated`.
+- **Sin constraints cruzados** (`source='lead' ⇒ lead_id NOT NULL`): decisión deliberada; revisar
+  si se quiere endurecer antes de producción.
+
+### 8.9 Conclusión
+
+El draft quedó **alineado con el schema real** (helpers, roles, FKs, updated_at, grants, RLS) y se
+**corrigió el error de soft-delete** heredado de una lectura optimista del caso leads. Sigue siendo
+**DRAFT no aplicado**. GO para revisión humana; la aplicación en dev (15K real) queda sujeta al
+checklist §6 + verificación de ownership de la función DEFINER.
