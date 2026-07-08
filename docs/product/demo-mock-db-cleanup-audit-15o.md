@@ -660,3 +660,50 @@ npm run test:unit
 - `npm run build` — OK
 - `npm run type-check` — OK
 - `npm run test:unit` — 169 tests OK (incl. `ui-anti-demo.test.ts`)
+
+---
+
+## FASE 15Q — Limpieza dev ejecutada
+
+**Fecha:** 2026-07-08  
+**Modelo:** Claude Opus 4.8  
+**Proyecto:** `plife-crm` / `ayvnloxijnfnooaefrlm` (dev)  
+**Documento detallado:** `docs/product/dev-data-cleanup-15q.md`  
+**Aprobación explícita:** SÍ — alcance "TOTAL con soft-delete en leads/proposals, delete físico en el resto".
+
+### Backups previos
+`backups/dev-cleanup-15q/` (11 archivos JSON, git-ignored, no commiteados): profiles, teams, leads, proposals, companies, contacts, opportunities, campaigns, activities, knowledge_documents, ai_execution_runs_outputs.
+
+### Datos limpiados (180 filas)
+
+| Tabla | Filas | Método | Estado final |
+|---|---|---|---|
+| `ai_execution_outputs` | 64 | delete físico | 0 |
+| `ai_execution_runs` | 8 | delete físico | 0 |
+| `activities` | 10 | delete físico | 0 |
+| `opportunities` | 16 | delete físico | 0 |
+| `contacts` | 23 | delete físico | 0 |
+| `companies` | 27 | delete físico | 0 |
+| `campaigns` | 13 | delete físico | 0 |
+| `knowledge_chunks` | 5 | delete físico | 0 |
+| `knowledge_documents` | 5 | delete físico | 0 |
+| `proposals` | 3 | soft-delete | 3 (0 activas) |
+| `leads` | 6 | soft-delete | 6 (0 activas) |
+
+Incluyó el dataset alternativo `22222222/33333333/44444444/55555555-*` (aprobado en el alcance TOTAL).
+
+### Datos conservados
+- `profiles`: 1 (Andrés Larghero, admin, activo).
+- `teams`: 2.
+- Config IA: `ai_stages` (8), `ai_prompts` (8), `ai_analysis_profiles` (1), `ai_categories`, `ai_profile_prompts`.
+
+### Validación post-limpieza
+- Entidades comerciales visibles → 0 filas activas.
+- `leads`/`proposals` → 100% soft-deleted (filtradas por `deleted_at`).
+- `profiles` intacto; RLS sin cambios.
+- Producción **no tocada**.
+
+### QA 15Q
+- `npm run type-check` — OK
+- `npm run test:unit` — 169 tests OK
+- `npm run build` — OK (24 rutas)
