@@ -579,6 +579,29 @@ Comportamiento:
 
 ---
 
+## 17. FASE 15I — Simple qualification and scoring
+
+Leads suma calificación comercial simple y score de prioridad, todo calculado
+en runtime (sin persistencia, sin IA externa, sin siglas de la industria):
+
+| Pieza | Ubicación |
+|---|---|
+| Calificación | `src/domains/leads/qualification.ts` — `LeadQualification` (Sin calificar / En evaluación / Interesado / Caliente / Listo para propuesta / No viable), `getSuggestedLeadQualification` |
+| Scoring | `src/domains/leads/scoring.ts` — `calculateLeadScore` (0–100), bandas Bajo/Medio/Alto/Muy alto, `getLeadScoreSignals` |
+| Panel de detalle | `src/components/leads/lead-qualification-panel.tsx` |
+| Card | `src/components/leads/lead-card.tsx` — chip de score + calificación + recomendación breve |
+| Puente a Propuestas | `src/components/leads/lead-proposal-link.ts` — CTA destacado si banda Alta/Muy alta o calificación Caliente/Listo para propuesta |
+| Tests | `tests/unit/lead-qualification.test.ts` |
+| Documentación | `docs/product/leads-simple-qualification-scoring-15i.md` |
+
+Decisiones:
+
+- **Runtime puro**: score y calificación se derivan de los campos actuales del lead; no se guardan ni disparan automatismos.
+- **Mocks reducidos**: `LeadAIAssistantMock` retirado del detalle (reemplazado por el panel de calificación); botones mock del panel de acciones retirados (etapa/próximo paso ya son reales vía 14J). `LeadTimelineMock` queda pendiente hasta que exista actividad real.
+- **Sin MQL/SQL/PQL**: vocabulario PLIFE propio, verificado por tests de higiene de copy.
+
+---
+
 ## Resumen de decisiones
 
 | Tema | Decisión |

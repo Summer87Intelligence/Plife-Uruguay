@@ -5,6 +5,12 @@
 **Alcance:** solo auditoría, diseño y documentación. Sin código, sin SQL, sin Supabase remoto, sin Vercel, sin push.
 **Base:** menú simplificado en FASE 15G (`src/components/layout/app-sidebar.tsx`).
 
+> **Actualización 15I (2026-07-07):** ejecutada la primera fase del roadmap (§9).
+> Leads ya tiene calificación simple y scoring en runtime; se retiraron
+> `LeadAIAssistantMock` y los botones mock del panel de acciones del detalle
+> (simplificaciones comprometidas en §5.2/§7). `LeadTimelineMock` sigue
+> pendiente. Ver `leads-simple-qualification-scoring-15i.md`.
+
 ---
 
 ## 1. Resumen ejecutivo

@@ -4,9 +4,9 @@ import { LeadDetailHeader } from './lead-detail-header'
 import { LeadDetailSummary } from './lead-detail-summary'
 import { LeadNextActionPanel } from './lead-next-action-panel'
 import { LeadOperationalEditForm } from './lead-operational-edit-form'
+import { LeadQualificationPanel } from './lead-qualification-panel'
 import { LeadTimelineMock } from './lead-timeline-mock'
 import { LeadActionsPanel } from './lead-actions-panel'
-import { LeadAIAssistantMock } from './lead-ai-assistant-mock'
 
 interface LeadDetailViewProps {
   lead: MockLead
@@ -42,10 +42,11 @@ export function LeadDetailView({ lead, dataSource = 'mock' }: LeadDetailViewProp
           <LeadDetailSummary lead={lead} />
           <LeadNextActionPanel lead={lead} />
           {dataSource === 'dev-readonly' && <LeadOperationalEditForm lead={lead} />}
+          {/* FASE 15I — LeadAIAssistantMock retirado: el panel de calificación lo reemplaza. */}
           <LeadTimelineMock lead={lead} />
-          <LeadAIAssistantMock lead={lead} />
         </div>
         <div className="space-y-5">
+          <LeadQualificationPanel lead={lead} />
           <LeadActionsPanel lead={lead} />
         </div>
       </div>

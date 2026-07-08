@@ -3,7 +3,16 @@ import type { Route } from 'next'
 import { CalendarDays, Building2, User, HelpCircle, ArrowRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { MockLead } from '@/domains/leads/mock-data'
-import { LEAD_SOURCE_LABELS, getLeadFollowUpBucket } from '@/domains/leads'
+import {
+  LEAD_SOURCE_LABELS,
+  getLeadFollowUpBucket,
+  calculateLeadScore,
+  getLeadScoreBand,
+  getLeadScoreRecommendation,
+  getSuggestedLeadQualification,
+  getLeadQualificationLabel,
+  type LeadScoreBand,
+} from '@/domains/leads'
 import { LeadStatusBadge } from './lead-status-badge'
 import { LeadPriorityBadge } from './lead-priority-badge'
 import { LeadTemperatureBadge } from './lead-temperature-badge'
@@ -19,10 +28,21 @@ function formatDate(value: string): string {
   return `${d}/${m}/${y}`
 }
 
+// FASE 15I — chip de score por banda, alineado a los estilos de temperatura.
+const SCORE_CHIP_STYLES: Record<LeadScoreBand, string> = {
+  low: 'bg-gray-100 text-gray-600',
+  medium: 'bg-blue-50 text-blue-700',
+  high: 'bg-orange-50 text-orange-700',
+  very_high: 'bg-red-100 text-red-800',
+}
+
 export function LeadCard({ lead, compact = false }: { lead: MockLead; compact?: boolean }) {
   const TypeIcon = TYPE_ICONS[lead.lead_type]
   const bucket = getLeadFollowUpBucket(lead)
   const isOverdue = bucket === 'overdue'
+  const score = calculateLeadScore(lead)
+  const band = getLeadScoreBand(score)
+  const qualificationLabel = getLeadQualificationLabel(getSuggestedLeadQualification(lead))
 
   return (
     <Link
@@ -54,9 +74,23 @@ export function LeadCard({ lead, compact = false }: { lead: MockLead; compact?: 
       )}
 
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
+        <span
+          className={cn(
+            'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium',
+            SCORE_CHIP_STYLES[band]
+          )}
+        >
+          Score {score}
+        </span>
         <LeadTemperatureBadge temperature={lead.temperature} />
         <LeadPriorityBadge priority={lead.priority} />
       </div>
+
+      {/* FASE 15I — calificación sugerida y recomendación breve (runtime, no persistido) */}
+      <p className="mt-2 text-xs text-gray-500 truncate">
+        <span className="font-medium text-gray-700">{qualificationLabel}</span>
+        {!compact && <> · {getLeadScoreRecommendation(score)}</>}
+      </p>
 
       <div className="mt-3 border-t border-gray-50 pt-2">
         {lead.next_action ? (
