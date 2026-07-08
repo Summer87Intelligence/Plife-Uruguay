@@ -127,3 +127,7 @@ que produce `buildProposalInsertRow`**:
 
 Solo dev · producción no tocada · sin Vercel · sin `.env` · sin push · sin `main` · sin PR #4 ·
 sin `feat/operational-readiness-13` · sin opportunity · sin OpenAI · sin Compliance.
+
+> **Actualización FASE 15N (2026-07-08):** las dos propuestas guardadas por este smoke
+> (`DEV Proposal 15M Manual`, `DEV Proposal 15M Lead`) ahora también se pueden **abrir** en
+> `/app/propuestas/[proposalId]` (detalle read-only). Ver `proposals-detail-readonly-15n.md`.

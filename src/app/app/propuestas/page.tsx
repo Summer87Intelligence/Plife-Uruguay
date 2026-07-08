@@ -120,27 +120,29 @@ export default async function PropuestasPage() {
           <p className="text-sm font-semibold text-gray-700">Tus propuestas</p>
           <div className="space-y-2.5">
             {proposals.map((proposal) => (
-              <Card key={proposal.id} className="border-gray-100">
-                <CardContent className="p-4">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-sm font-semibold text-gray-900">{proposal.title}</p>
-                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-                      {PROPOSAL_STATUS_LABELS[proposal.status] ?? proposal.status}
-                    </span>
-                    <span className="rounded-full bg-[#1B3A6B]/10 px-2 py-0.5 text-xs font-medium text-[#1B3A6B]">
-                      {SOURCE_LABELS[proposal.source] ?? proposal.source}
-                    </span>
-                    {proposal.created_at && (
-                      <span className="ml-auto text-xs text-gray-400">
-                        {formatDate(proposal.created_at)}
+              <Link key={proposal.id} href={`/app/propuestas/${proposal.id}` as Route}>
+                <Card className="border-gray-100 transition-colors hover:border-[#1B3A6B]/30 hover:bg-gray-50">
+                  <CardContent className="p-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-semibold text-gray-900">{proposal.title}</p>
+                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                        {PROPOSAL_STATUS_LABELS[proposal.status] ?? proposal.status}
                       </span>
+                      <span className="rounded-full bg-[#1B3A6B]/10 px-2 py-0.5 text-xs font-medium text-[#1B3A6B]">
+                        {SOURCE_LABELS[proposal.source] ?? proposal.source}
+                      </span>
+                      {proposal.created_at && (
+                        <span className="ml-auto text-xs text-gray-400">
+                          {formatDate(proposal.created_at)}
+                        </span>
+                      )}
+                    </div>
+                    {proposal.summary && (
+                      <p className="mt-1.5 line-clamp-2 text-sm text-gray-500">{proposal.summary}</p>
                     )}
-                  </div>
-                  {proposal.summary && (
-                    <p className="mt-1.5 line-clamp-2 text-sm text-gray-500">{proposal.summary}</p>
-                  )}
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         </section>

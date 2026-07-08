@@ -376,3 +376,7 @@ server action).
 > escribe en `public.proposals` desde la UI, con snapshots de score/calificación congelados y `draft`
 > JSONB como fuente de verdad. Ver `proposals-create-real-15m.md`. La conversión a opportunity sigue
 > fuera de alcance (FASE 15O).
+>
+> **Actualización FASE 15N (2026-07-08):** se agregó detalle read-only (`getProposalById` +
+> `/app/propuestas/[proposalId]`), reutilizando la política `proposals_select` de 15L sin tocar
+> SQL/RLS. Ver `proposals-detail-readonly-15n.md`.

@@ -1,8 +1,11 @@
 // FASE 15M — Lectura read-only de propuestas del usuario bajo RLS (sin service role).
 // La política proposals_select ya filtra por visibilidad; igual pedimos deleted_at IS NULL.
+// FASE 15N — Lectura de detalle de una propuesta (getProposalById), misma política.
 
 import { createClient } from '@/lib/supabase/server'
-import type { ProposalSource } from './types'
+import { isUuid } from './persistence'
+import type { Proposal } from '@/types/database'
+import type { ProposalSource, ProposalTargetType } from './types'
 import type { ProposalStatus } from './validation'
 
 export interface ProposalListItem {
@@ -37,4 +40,30 @@ export async function getProposals(limit = 50): Promise<ProposalListItem[]> {
     summary: row.summary,
     created_at: row.created_at,
   }))
+}
+
+export interface ProposalDetail extends Proposal {
+  status: ProposalStatus
+  source: ProposalSource
+  target_type: ProposalTargetType
+}
+
+/**
+ * Lectura read-only de una propuesta por id, bajo RLS (sin service role).
+ * Devuelve null si no es UUID, no existe, está soft-deleted o RLS la oculta.
+ */
+export async function getProposalById(id: string): Promise<ProposalDetail | null> {
+  if (!isUuid(id)) return null
+
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('proposals')
+    .select('*')
+    .eq('id', id)
+    .is('deleted_at', null)
+    .maybeSingle()
+
+  if (error || !data) return null
+  return data as ProposalDetail
 }

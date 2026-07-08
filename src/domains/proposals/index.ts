@@ -44,6 +44,12 @@ export {
   type ProposalScoreSnapshot,
   type ProposalQualificationSnapshot,
 } from './persistence'
-// NOTA: queries.ts (getProposals) es server-only (usa next/headers). No se
-// re-exporta desde este barrel para no arrastrarlo a bundles de cliente;
+// FASE 15N — normalización defensiva del draft/snapshots guardados (para el detalle)
+export {
+  normalizeStoredDraft,
+  normalizeScoreSnapshot,
+  normalizeQualificationSnapshot,
+} from './detail'
+// NOTA: queries.ts (getProposals, getProposalById) es server-only (usa next/headers).
+// No se re-exporta desde este barrel para no arrastrarlo a bundles de cliente;
 // se importa directo desde '@/domains/proposals/queries' en Server Components.
