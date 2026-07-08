@@ -39,9 +39,9 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
 
       <SectionGuideCard
         title="Cómo usar esta vista"
-        description="Revisá métricas, identificá alertas de seguimiento y tomá decisiones sobre el pipeline. Bajá a oportunidades específicas o campañas activas para operar."
-        primaryActionLabel="Ver pipeline completo"
-        primaryActionHref="/app/oportunidades"
+        description="Revisá métricas del equipo e identificá alertas de seguimiento. Operá desde Leads, Pipeline y Propuestas."
+        primaryActionLabel="Ver leads"
+        primaryActionHref="/app/leads"
         compact
       />
 
@@ -51,16 +51,16 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
           <h2 className="text-sm font-semibold text-gray-700 mb-2">Foco comercial del equipo</h2>
           <div className="flex flex-wrap gap-2">
             {focusMetrics.overdueOpps > 0 && (
-              <Link href="/app/oportunidades" className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-200 transition-colors">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1.5 text-xs font-medium text-red-700">
                 <AlertCircle className="h-3 w-3" />
-                {focusMetrics.overdueOpps} oportunidad{focusMetrics.overdueOpps > 1 ? 'es' : ''} con seguimiento vencido
-              </Link>
+                {focusMetrics.overdueOpps} seguimiento{focusMetrics.overdueOpps > 1 ? 's' : ''} vencido{focusMetrics.overdueOpps > 1 ? 's' : ''}
+              </span>
             )}
             {focusMetrics.noNextActionOpps > 0 && (
-              <Link href="/app/oportunidades" className="inline-flex items-center gap-1.5 rounded-full bg-orange-100 px-3 py-1.5 text-xs font-medium text-orange-700 hover:bg-orange-200 transition-colors">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-100 px-3 py-1.5 text-xs font-medium text-orange-700">
                 <Clock className="h-3 w-3" />
-                {focusMetrics.noNextActionOpps} oportunidad{focusMetrics.noNextActionOpps > 1 ? 'es' : ''} sin próximo paso
-              </Link>
+                {focusMetrics.noNextActionOpps} registro{focusMetrics.noNextActionOpps > 1 ? 's' : ''} sin próximo paso
+              </span>
             )}
           </div>
         </div>
@@ -80,7 +80,7 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Distribución del Pipeline</CardTitle>
-              <Link href="/app/oportunidades" className="text-xs text-[#1B3A6B] hover:underline">Ver pipeline completo</Link>
+              <Link href="/app/pipeline" className="text-xs text-[#1B3A6B] hover:underline">Ver pipeline</Link>
             </div>
           </CardHeader>
           <CardContent>
@@ -149,7 +149,7 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
               {topB2BOpps.map(opp => {
                 const companyScore = opp.company ? calcularScoreB2B(opp.company as Company) : null
                 return (
-                  <Link key={opp.id} href={`/app/oportunidades/${opp.id}`} className="flex items-center gap-4 rounded-xl border border-gray-100 p-3 hover:bg-gray-50 transition-colors">
+                  <div key={opp.id} className="flex items-center gap-4 rounded-xl border border-gray-100 p-3">
                     {companyScore && (
                       <div className={`shrink-0 h-10 w-10 rounded-full flex items-center justify-center text-xs font-bold ${nivelColor(companyScore.nivel)}`}>
                         {companyScore.score}
@@ -180,7 +180,7 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
                         <p className="text-xs font-bold text-[#1B3A6B] mt-1">${opp.estimated_value.toLocaleString('es-UY')}</p>
                       )}
                     </div>
-                  </Link>
+                  </div>
                 )
               })}
             </div>

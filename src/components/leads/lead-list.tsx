@@ -86,7 +86,7 @@ export function LeadList({ leads }: { leads: MockLead[] }) {
 
       {filtered.length === 0 ? (
         <p className="mt-6 rounded-xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-500">
-          Ningún lead demo coincide con los filtros seleccionados.
+          Ningún lead coincide con los filtros seleccionados.
         </p>
       ) : (
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

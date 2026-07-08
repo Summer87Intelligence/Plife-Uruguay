@@ -639,3 +639,24 @@ npm run test:unit
 | No Vercel | ✓ |
 | No .env modificado | ✓ |
 | No PR #4 tocado | ✓ |
+
+---
+
+## FASE 15P — Limpieza UI anti-demo ejecutada
+
+**Fecha:** 2026-07-08  
+**Commit:** (ver `git log` en rama `feat/lead-first-crm`)  
+**Documento:** `docs/product/ui-anti-demo-cleanup-15p.md`
+
+### Resumen
+
+- UI visible depurada: timeline mock, badges Dev, copy demo, botones falsos, CTAs a rutas ocultas desde Hoy, recorrido demo en nav/header.
+- PLIFE Hoy simplificado a foco lead-first + campañas + agenda.
+- Motores: labels honestos; botones Duplicar/Desactivar removidos.
+- Supabase: **no tocado** en 15P.
+
+### QA 15P
+
+- `npm run build` — OK
+- `npm run type-check` — OK
+- `npm run test:unit` — 169 tests OK (incl. `ui-anti-demo.test.ts`)

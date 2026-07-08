@@ -2,7 +2,7 @@
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import type { Route } from 'next'
-import { Plus, Megaphone, Search, ArrowRight, Building2, TrendingUp } from 'lucide-react'
+import { Plus, Megaphone, Search, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { SearchNoResults } from '@/components/navigation/search-no-results'
@@ -184,9 +184,6 @@ function CampaignCard({
 }) {
   const nextStep = suggestCampaignNextStep(campaign, counts)
   const statusHint = campaignStatusHint(campaign.status)
-  const oppHref = counts.opportunities > 0
-    ? `/app/oportunidades?q=${encodeURIComponent(campaign.name)}`
-    : '/app/oportunidades'
 
   return (
     <article className="rounded-xl border border-gray-100 bg-white p-5 flex flex-col gap-3">
@@ -237,24 +234,6 @@ function CampaignCard({
           className="inline-flex items-center gap-1 text-xs font-medium text-[#1B3A6B] hover:underline"
         >
           Ver campaña <ArrowRight className="h-3 w-3" />
-        </Link>
-        <Link
-          href={`/app/campanas/${campaign.id}` as Route}
-          className="inline-flex items-center gap-1 text-xs text-gray-600 hover:text-[#1B3A6B] hover:underline"
-        >
-          <Building2 className="h-3 w-3" /> Ver empresas
-        </Link>
-        <Link
-          href={oppHref as Route}
-          className="inline-flex items-center gap-1 text-xs text-gray-600 hover:text-[#1B3A6B] hover:underline"
-        >
-          <TrendingUp className="h-3 w-3" /> Ver oportunidades
-        </Link>
-        <Link
-          href="/app/oportunidades?nuevo=1"
-          className="inline-flex items-center gap-1 text-xs text-gray-600 hover:text-[#1B3A6B] hover:underline"
-        >
-          Crear oportunidad
         </Link>
       </div>
     </article>

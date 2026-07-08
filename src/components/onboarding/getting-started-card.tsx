@@ -2,7 +2,6 @@ import Link from 'next/link'
 import type { Route } from 'next'
 import { Inbox, Columns3, FileText, Megaphone, ArrowRight, Compass } from 'lucide-react'
 
-// FASE 15G — Onboarding orientado al foco actual: Lead-first + Propuestas.
 const steps = [
   {
     n: 1,
@@ -16,7 +15,7 @@ const steps = [
     n: 2,
     icon: Columns3,
     title: 'Avanzar el pipeline',
-    desc: 'Hacé avanzar el lead por sus etapas comerciales.',
+    desc: 'Revisá en qué etapa está cada lead comercial.',
     cta: 'Ver pipeline',
     href: '/app/pipeline' as Route,
   },
@@ -24,7 +23,7 @@ const steps = [
     n: 3,
     icon: FileText,
     title: 'Preparar una propuesta',
-    desc: 'Usá los motores para armar un borrador conceptual.',
+    desc: 'Usá los motores para armar un borrador.',
     cta: 'Nueva propuesta',
     href: '/app/propuestas/nueva' as Route,
   },
@@ -38,11 +37,7 @@ const steps = [
   },
 ]
 
-interface GettingStartedCardProps {
-  mode?: 'empty' | 'demo'
-}
-
-export function GettingStartedCard({ mode = 'empty' }: GettingStartedCardProps) {
+export function GettingStartedCard() {
   return (
     <div className="rounded-xl border border-[#1B3A6B]/15 bg-[#1B3A6B]/[0.03] p-5">
       <div className="flex items-center gap-2 mb-1">
@@ -50,9 +45,7 @@ export function GettingStartedCard({ mode = 'empty' }: GettingStartedCardProps) 
         <p className="text-sm font-semibold text-[#1B3A6B]">¿Por dónde empiezo?</p>
       </div>
       <p className="text-xs text-gray-500 mb-4">
-        {mode === 'demo'
-          ? 'Estás viendo datos de ejemplo. En uso real, el sistema empieza cargando un lead y haciéndolo avanzar por el pipeline.'
-          : 'Todavía no hay datos cargados. Empezá por estos pasos para activar el sistema.'}
+        Todavía no hay datos cargados. Empezá por estos pasos para activar el sistema.
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {steps.map(step => {

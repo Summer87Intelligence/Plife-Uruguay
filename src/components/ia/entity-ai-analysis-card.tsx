@@ -43,7 +43,7 @@ export function EntityAIAnalysisCard({
         setError(result.error)
         return
       }
-      setSuccess('Análisis simulado completado. Revisá los resultados en Motores.')
+      setSuccess('Análisis completado. Revisá los resultados en Motores.')
       router.refresh()
     })
   }
@@ -58,7 +58,7 @@ export function EntityAIAnalysisCard({
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-gray-900">Análisis comercial</p>
             <p className="text-xs text-gray-500 mt-1">
-              Ejecutá los Motores PLIFE en modo simulado para generar una lectura comercial por etapas.
+              Ejecutá los Motores PLIFE para generar una lectura comercial por etapas.
               Opera en modo determinístico interno (sin proveedor externo) y requiere revisión humana.
             </p>
           </div>

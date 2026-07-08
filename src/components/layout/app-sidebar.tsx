@@ -9,7 +9,6 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Avatar } from '@/components/ui/avatar'
-import { isDemoMode } from '@/lib/demo'
 import { isInternalOpenAccessEnabled } from '@/lib/internal-open-access'
 import type { Profile } from '@/types/database'
 
@@ -88,10 +87,6 @@ export function AppSidebar({ profile }: AppSidebarProps) {
   const pathname = usePathname()
   const baseItems = filterNavItems(profile)
 
-  const visibleItems = isDemoMode()
-    ? [{ href: '/app/demo', label: 'Recorrido demo', icon: 'RouteIcon' } as const, ...baseItems]
-    : baseItems
-
   return (
     <aside data-testid="app-sidebar" className="hidden md:flex h-full w-56 flex-col border-r border-gray-100 bg-white shrink-0">
       {/* Logo */}
@@ -109,7 +104,7 @@ export function AppSidebar({ profile }: AppSidebarProps) {
 
       {/* Nav */}
       <nav data-testid="app-sidebar-nav" className="flex-1 overflow-y-auto py-3 px-2">
-        {visibleItems.map(item => {
+        {baseItems.map(item => {
           const Icon = icons[item.icon as keyof typeof icons]
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
           const isSecondary = SECONDARY_ITEMS.includes(item.href)

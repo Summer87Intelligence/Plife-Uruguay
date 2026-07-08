@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Eye, Pencil, Copy, Lightbulb, Power } from 'lucide-react'
+import { Eye, Pencil, Lightbulb } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -191,9 +191,7 @@ function PromptCard({
         <div className="flex flex-wrap gap-1.5 mt-3">
           <Button size="sm" variant="outline" onClick={onEdit}><Pencil className="h-3 w-3" />Editar</Button>
           <Button size="sm" variant="ghost" onClick={onView}><Eye className="h-3 w-3" />Ver</Button>
-          <Button size="sm" variant="ghost" disabled title="Próximamente"><Copy className="h-3 w-3" />Duplicar</Button>
           <Button size="sm" variant="ghost" onClick={onSuggestions}><Lightbulb className="h-3 w-3" />Ver sugerencias</Button>
-          <Button size="sm" variant="ghost" disabled title="Próximamente"><Power className="h-3 w-3" />Desactivar</Button>
         </div>
       </div>
       {isViewing && (

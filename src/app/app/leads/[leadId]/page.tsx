@@ -25,8 +25,7 @@ export default async function LeadDetailPage({
         <h1 className="text-xl font-bold text-gray-900">Lead no encontrado o sin acceso</h1>
         <p className="text-sm text-gray-500">
           El identificador <code className="rounded bg-gray-100 px-1.5 py-0.5 text-xs">{leadId}</code>{' '}
-          no corresponde a un lead visible en Supabase dev para tu usuario, o fue eliminado
-          lógicamente.
+          no corresponde a un lead visible para tu usuario, o fue eliminado lógicamente.
         </p>
         <Link
           href="/app/leads"
@@ -39,5 +38,5 @@ export default async function LeadDetailPage({
     )
   }
 
-  return <LeadDetailView lead={lead} dataSource="dev-readonly" />
+  return <LeadDetailView lead={lead} />
 }

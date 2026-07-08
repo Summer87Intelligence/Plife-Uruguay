@@ -1,8 +1,8 @@
 import type { EngineStatus, FlowStep, ExampleScenario } from './types'
 
 export const ENGINE_STATUS_LABELS: Record<EngineStatus, string> = {
-  available_mock: 'Disponible (simulado)',
-  conceptual: 'Conceptual',
+  available_mock: 'Disponible',
+  conceptual: 'Pendiente de salida operativa',
   future: 'Próximamente',
 }
 

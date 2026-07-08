@@ -1,13 +1,10 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { Database, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { getProfile } from '@/lib/auth'
 import { getLeads } from '@/domains/leads/queries'
 import { LeadFollowUpSummary } from '@/components/leads/lead-follow-up-summary'
 import { LeadList } from '@/components/leads/lead-list'
-
-// FASE 14L-B — Lectura real de leads y alta real en Supabase dev.
-// Conversión, descarte y movimientos de pipeline siguen deshabilitados.
 
 export default async function LeadsPage() {
   const profile = await getProfile()
@@ -30,33 +27,21 @@ export default async function LeadsPage() {
         >
           <Plus className="h-4 w-4" />
           Nuevo lead
-          <span className="ml-1 rounded bg-white/15 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">
-            Dev
-          </span>
         </Link>
-      </div>
-
-      <div className="flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50 p-3.5">
-        <Database className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
-        <p className="text-sm text-blue-800">
-          <span className="font-semibold">Leads conectados a Supabase dev.</span> Creación real
-          habilitada en Supabase dev. Conversión, descarte y movimientos de pipeline siguen
-          deshabilitados.
-        </p>
       </div>
 
       {leads.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
-          <p className="text-sm font-medium text-gray-700">Todavía no hay leads reales cargados.</p>
+          <p className="text-sm font-medium text-gray-700">Todavía no hay leads cargados.</p>
           <p className="mt-1 text-sm text-gray-500">
-            Cuando existan registros en dev visibles para tu usuario, aparecerán aquí.
+            Cuando registres contactos comerciales, aparecerán acá para priorizar y hacer seguimiento.
           </p>
           <p className="mt-3 text-xs text-gray-400">
             Podés usar{' '}
             <Link href="/app/leads/new" className="text-[#1B3A6B] hover:underline">
               Nuevo lead
             </Link>{' '}
-            para registrar tu primer lead real en dev.
+            para cargar el primero.
           </p>
         </div>
       ) : (

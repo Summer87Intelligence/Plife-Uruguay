@@ -69,7 +69,7 @@ export function LeadNextActionPanel({ lead }: { lead: MockLead }) {
             )}
           </div>
         ) : (
-          <p className="text-sm text-gray-500">Todavía no hay un próximo paso definido para este lead demo.</p>
+          <p className="text-sm text-gray-500">Todavía no hay un próximo paso definido para este lead.</p>
         )}
       </CardContent>
     </Card>
