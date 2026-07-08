@@ -222,3 +222,21 @@ El draft quedó **alineado con el schema real** (helpers, roles, FKs, updated_at
 **corrigió el error de soft-delete** heredado de una lectura optimista del caso leads. Sigue siendo
 **DRAFT no aplicado**. GO para revisión humana; la aplicación en dev (15K real) queda sujeta al
 checklist §6 + verificación de ownership de la función DEFINER.
+
+---
+
+## 9. FASE 15L — Aplicado en Supabase dev
+
+> Ejecutada el 2026-07-08. **Aplicado solo en dev** (`plife-crm` / `ayvnloxijnfnooaefrlm`).
+
+- Archivo aplicado: `supabase/migrations/20260708_apply_proposals_persistence_dev.sql` (MCP
+  `apply_migration`, name `proposals_persistence_15l`, resultado `success`).
+- Objetos verificados: tabla 31 columnas, 5 CHECK, 4 FKs, 9 índices, trigger, RLS enabled,
+  3 policies (sin DELETE), función `soft_delete_proposal` `SECURITY DEFINER` owner=postgres,
+  EXECUTE solo authenticated.
+- Smoke RLS 8/8 como esperado (INSERT/SELECT/UPDATE propios OK; UPDATE directo de deleted_at → 42501;
+  `soft_delete_proposal` OK; oculto tras soft-delete; DELETE físico y anon bloqueados).
+- Tipos: `src/types/database.ts` actualizado a mano (`Proposal`, `proposals` TableDef,
+  `soft_delete_proposal`). `is_in_my_team` sigue sin tipar (gap TS heredado de leads).
+- Detalle completo y riesgos: `proposals-schema-apply-dev-15l.md`.
+- Producción NO tocada · No Vercel · No push · No server actions · No UI.

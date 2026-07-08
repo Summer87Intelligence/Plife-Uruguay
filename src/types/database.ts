@@ -179,6 +179,44 @@ export interface Lead {
   metadata: Json
 }
 
+// Propuestas persistidas (FASE 15L, aplicada en Supabase dev). El borrador vive en
+// `draft` (JSONB, fuente de verdad); los campos de texto son denormalizaciones.
+// status: draft/in_review/ready/used/archived · source: lead/campaign/radar/manual/
+// market_observation/other · target_type: person/company/segment/unknown.
+export interface Proposal {
+  id: string
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+  created_by: string
+  assigned_to: string | null
+  title: string
+  status: string
+  source: string
+  source_id: string | null
+  source_title: string | null
+  source_context: string | null
+  lead_id: string | null
+  campaign_id: string | null
+  radar_context: Json | null
+  target_type: string
+  target_description: string | null
+  context: string
+  objective: string | null
+  known_problem: string | null
+  desired_outcome: string | null
+  notes: string | null
+  draft: Json
+  summary: string | null
+  target_audience: string | null
+  problem: string | null
+  opportunity: string | null
+  proposed_offer: string | null
+  score_snapshot: Json | null
+  qualification_snapshot: Json | null
+  metadata: Json
+}
+
 export interface OpportunityWithRelations extends Opportunity {
   contact?: Contact | null
   company?: Company | null
@@ -556,6 +594,12 @@ export interface Database {
         Rel<'leads_campaign_id_fkey', 'campaign_id', 'campaigns'>,
         Rel<'leads_opportunity_id_fkey', 'opportunity_id', 'opportunities'>,
       ]>
+      proposals: TableDef<Proposal, [
+        Rel<'proposals_assigned_to_fkey', 'assigned_to', 'profiles'>,
+        Rel<'proposals_created_by_fkey', 'created_by', 'profiles'>,
+        Rel<'proposals_lead_id_fkey', 'lead_id', 'leads'>,
+        Rel<'proposals_campaign_id_fkey', 'campaign_id', 'campaigns'>,
+      ]>
       opportunities: TableDef<Opportunity, [
         Rel<'opportunities_contact_id_fkey', 'contact_id', 'contacts'>,
         Rel<'opportunities_company_id_fkey', 'company_id', 'companies'>,
@@ -613,6 +657,8 @@ export interface Database {
       }
       get_user_role: { Args: Record<never, never>; Returns: UserRole }
       is_admin_or_direccion: { Args: Record<never, never>; Returns: boolean }
+      // FASE 15L — soft-delete seguro de propuestas (SECURITY DEFINER).
+      soft_delete_proposal: { Args: { p_id: string }; Returns: undefined }
     }
     Enums: {
       user_role: UserRole

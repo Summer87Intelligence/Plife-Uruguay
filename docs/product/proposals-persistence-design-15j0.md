@@ -360,4 +360,14 @@ El draft se validó contra el schema real del repo (helpers, roles, FKs, updated
 todo confirmado. **Corrección crítica:** se reemplazó la suposición de que el patrón RLS "evita el
 42501" por la solución real (función `SECURITY DEFINER` `soft_delete_proposal`), tras confirmar en
 la QA de leads que el soft-delete directo vía `authenticated` sigue fallando. Detalle completo y
-riesgos restantes en `proposals-sql-draft-review-15j.md` §8. Sigue **DRAFT no aplicado**.
+riesgos restantes en `proposals-sql-draft-review-15j.md` §8.
+
+### FASE 15L — Aplicado en Supabase dev (2026-07-08)
+
+Schema aplicado **solo en dev** (`plife-crm` / `ayvnloxijnfnooaefrlm`) vía MCP `apply_migration`.
+Verificado: tabla 31 columnas, 5 CHECK, 4 FKs, 9 índices, trigger, RLS + 3 policies (sin DELETE),
+función `soft_delete_proposal` `SECURITY DEFINER` (owner=postgres, EXECUTE solo authenticated).
+**Smoke RLS 8/8** como esperado, incluida la confirmación de que el soft-delete directo da 42501 y
+funciona vía la función DEFINER. Tipos agregados a mano en `database.ts`. **Producción no tocada.**
+Detalle en `proposals-schema-apply-dev-15l.md`. Próximo: 15M (crear propuesta real desde UI /
+server action).
