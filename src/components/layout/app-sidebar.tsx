@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   Home, Users, Building2, TrendingUp, Radar, Megaphone,
   Bot, BookOpen, ShieldCheck, GraduationCap, BarChart3, Settings,
-  Route as RouteIcon, Database, Cpu, Inbox, Columns3, FileText,
+  Route as RouteIcon, Database, Cpu, Inbox, Columns3, FileText, FileCheck,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Avatar } from '@/components/ui/avatar'
@@ -15,7 +15,7 @@ import type { Profile } from '@/types/database'
 const icons = {
   Home, Users, Building2, TrendingUp, Radar, Megaphone,
   Bot, BookOpen, ShieldCheck, GraduationCap, BarChart3, Settings,
-  RouteIcon, Database, Cpu, Inbox, Columns3, FileText,
+  RouteIcon, Database, Cpu, Inbox, Columns3, FileText, FileCheck,
 }
 
 // FASE 15G — Navegación simplificada. El menú visible se reduce al foco actual
@@ -27,6 +27,8 @@ const navItems = [
   { href: '/app/leads',          label: 'Leads',              icon: 'Inbox' },
   { href: '/app/pipeline',       label: 'Pipeline',           icon: 'Columns3' },
   { href: '/app/propuestas',     label: 'Propuestas',         icon: 'FileText' },
+  // Bloque UI-0 — prototipo visual (datos mock, sin persistencia todavía).
+  { href: '/app/polizas',        label: 'Pólizas',            icon: 'FileCheck' },
   { href: '/app/campanas',       label: 'Campañas',           icon: 'Megaphone' },
   { href: '/app/ia',             label: 'Motores',            icon: 'Cpu' },
   { href: '/app/direccion',      label: 'Dirección',          icon: 'BarChart3' },

@@ -54,6 +54,29 @@ export interface TeamMember {
   joined_at: string
 }
 
+// Gestión de Pólizas — Bloque Técnico 1 (catálogos, sin tabla `polizas` todavía)
+export interface Insurer {
+  id: string
+  name: string
+  normalized_name: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  created_by: string | null
+  updated_by: string | null
+}
+
+export interface InsuranceBranch {
+  id: string
+  name: string
+  normalized_name: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  created_by: string | null
+  updated_by: string | null
+}
+
 export interface Contact {
   id: string
   first_name: string
@@ -581,6 +604,15 @@ export interface Database {
       profiles: TableDef<Profile>
       teams: TableDef<Team, [Rel<'teams_leader_id_fkey', 'leader_id', 'profiles'>]>
       team_members: TableDef<TeamMember>
+      // Gestión de Pólizas — Bloque Técnico 1
+      insurers: TableDef<Insurer, [
+        Rel<'insurers_created_by_fkey', 'created_by', 'profiles'>,
+        Rel<'insurers_updated_by_fkey', 'updated_by', 'profiles'>,
+      ]>
+      insurance_branches: TableDef<InsuranceBranch, [
+        Rel<'insurance_branches_created_by_fkey', 'created_by', 'profiles'>,
+        Rel<'insurance_branches_updated_by_fkey', 'updated_by', 'profiles'>,
+      ]>
       contacts: TableDef<Contact, [
         Rel<'contacts_company_id_fkey', 'company_id', 'companies'>,
         Rel<'contacts_assigned_to_fkey', 'assigned_to', 'profiles'>,
