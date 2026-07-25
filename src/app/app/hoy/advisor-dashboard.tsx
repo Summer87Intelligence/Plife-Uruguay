@@ -2,13 +2,25 @@
 import Link from 'next/link'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { StatCard } from '@/components/ui/stat-card'
 import { GettingStartedCard } from '@/components/onboarding/getting-started-card'
-import { Plus, Megaphone, Calendar, Inbox, Columns3, FileText } from 'lucide-react'
+import { Plus, Megaphone, Calendar, Inbox, Columns3, FileText, ListChecks, CalendarClock, FileWarning } from 'lucide-react'
 import { SectionGuideCard } from '@/components/guidance/section-guide-card'
 import type { Profile, Activity, Campaign } from '@/types/database'
 
+interface AttentionSummary {
+  priorityActions: number
+  upcomingRenewals: number
+  proposalsToFollow: number
+  pendingDocs: number
+}
+
 interface AdvisorDashboardProps {
   leadPanel?: React.ReactNode
+  attentionPanel?: React.ReactNode
+  attentionSummary?: AttentionSummary
+  isDemoData?: boolean
   profile: Profile
   todayActivities: Partial<Activity>[]
   activeCampaigns: Partial<Campaign>[]
@@ -17,6 +29,9 @@ interface AdvisorDashboardProps {
 
 export function AdvisorDashboard({
   leadPanel,
+  attentionPanel,
+  attentionSummary,
+  isDemoData = false,
   profile,
   todayActivities,
   activeCampaigns,
@@ -32,15 +47,29 @@ export function AdvisorDashboard({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">{greeting}, {profile.full_name.split(' ')[0]}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold text-gray-900">{greeting}, {profile.full_name.split(' ')[0]}</h1>
+            {isDemoData && <Badge variant="secondary">Datos de demostración</Badge>}
+          </div>
           <p className="text-sm text-gray-500 mt-0.5">
             Tu tablero de hoy: leads, pipeline, propuestas y campañas.
           </p>
         </div>
         <Link href="/app/leads/new">
-          <Button><Plus className="h-4 w-4" />Nuevo lead</Button>
+          <Button variant="success"><Plus className="h-4 w-4" />Nuevo lead</Button>
         </Link>
       </div>
+
+      {attentionSummary && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard title="Acciones prioritarias hoy" value={attentionSummary.priorityActions} icon={ListChecks} color="red" />
+          <StatCard title="Renovaciones próximas" value={attentionSummary.upcomingRenewals} icon={CalendarClock} color="yellow" />
+          <StatCard title="Propuestas a seguir" value={attentionSummary.proposalsToFollow} icon={FileText} color="blue" />
+          <StatCard title="Documentación pendiente" value={attentionSummary.pendingDocs} icon={FileWarning} color="purple" />
+        </div>
+      )}
+
+      {attentionPanel}
 
       {leadPanel}
 

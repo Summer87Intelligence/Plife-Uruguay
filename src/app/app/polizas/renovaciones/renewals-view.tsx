@@ -5,6 +5,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { PoliciesSubnav } from '@/components/policies/policies-subnav'
 import { POLICY_STATUS_COLORS, POLICY_STATUS_LABELS } from '@/domains/policies/types'
 import type { Policy } from '@/domains/policies/types'
+import { isDemoMode } from '@/lib/demo'
 
 interface RenewalsViewProps {
   renewals: (Policy & { daysToExpiry: number })[]
@@ -23,7 +24,7 @@ export function RenewalsView({ renewals }: RenewalsViewProps) {
       <div>
         <h1 className="text-xl font-bold text-gray-900">Próximas renovaciones</h1>
         <p className="text-sm text-gray-500">Pólizas vigentes, por vencer o en renovación, ordenadas por urgencia.</p>
-        <p className="text-xs text-amber-600 mt-0.5">Prototipo visual — datos de ejemplo.</p>
+        {!isDemoMode() && <p className="text-xs text-amber-600 mt-0.5">Prototipo visual — datos de ejemplo.</p>}
       </div>
 
       <PoliciesSubnav />

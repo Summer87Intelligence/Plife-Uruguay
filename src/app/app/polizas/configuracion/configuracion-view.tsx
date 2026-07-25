@@ -3,6 +3,8 @@ import { useState } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { PoliciesSubnav } from '@/components/policies/policies-subnav'
 import { CatalogManager } from '@/components/admin/catalog-manager'
+import { isDemoMode } from '@/lib/demo'
+import { DEMO_ASEGURADORAS, DEMO_RAMOS } from '@/lib/demo/universe'
 
 interface MockItem {
   id: string
@@ -10,14 +12,18 @@ interface MockItem {
   is_active: boolean
 }
 
-const INITIAL_INSURERS: MockItem[] = [
+const INITIAL_INSURERS: MockItem[] = isDemoMode()
+  ? DEMO_ASEGURADORAS.map(a => ({ id: a.id, name: a.name, is_active: a.is_active }))
+  : [
   { id: 'mi-1', name: 'BSE', is_active: true },
   { id: 'mi-2', name: 'Porto Seguro', is_active: true },
   { id: 'mi-3', name: 'Mapfre', is_active: true },
   { id: 'mi-4', name: 'SURA', is_active: true },
 ]
 
-const INITIAL_BRANCHES: MockItem[] = [
+const INITIAL_BRANCHES: MockItem[] = isDemoMode()
+  ? DEMO_RAMOS.map(r => ({ id: r.id, name: r.name, is_active: r.is_active }))
+  : [
   { id: 'mb-1', name: 'Vehículos', is_active: true },
   { id: 'mb-2', name: 'Responsabilidad civil', is_active: true },
   { id: 'mb-3', name: 'Accidentes de trabajo', is_active: true },
@@ -67,7 +73,9 @@ export function ConfiguracionView() {
       <div>
         <h1 className="text-xl font-bold text-gray-900">Configuración</h1>
         <p className="text-sm text-gray-500">Catálogos de aseguradoras y ramos usados al registrar una póliza.</p>
-        <p className="text-xs text-amber-600 mt-0.5">Prototipo visual — cambios acá no se guardan ni afectan el catálogo real de Admin.</p>
+        {!isDemoMode() && (
+          <p className="text-xs text-amber-600 mt-0.5">Prototipo visual — cambios acá no se guardan ni afectan el catálogo real de Admin.</p>
+        )}
       </div>
 
       <PoliciesSubnav />

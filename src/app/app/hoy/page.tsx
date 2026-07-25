@@ -5,6 +5,9 @@ import { AdvisorDashboard } from './advisor-dashboard'
 import { DirectionDashboard } from './direction-dashboard'
 import { getLeads } from '@/domains/leads/queries'
 import { LeadTodayPanel } from '@/components/leads/lead-today-panel'
+import { isDemoMode } from '@/lib/demo'
+import { DEMO_LEADS, DEMO_COMERCIALES, DEMO_CAMPANAS, actividadesDeHoyPara, getAttentionItemsDemo, getUpcomingRenewalsDemo, getPendingDocumentationDemo } from '@/lib/demo/universe'
+import { AttentionPanel } from '@/components/hoy/attention-panel'
 
 export default async function HoyPage() {
   const profile = await getProfile()
@@ -12,6 +15,50 @@ export default async function HoyPage() {
 
   const supabase = await createClient()
   const today = new Date().toISOString().split('T')[0]
+
+  if (isDemoMode()) {
+    const leads = DEMO_LEADS
+    if (['admin', 'direccion'].includes(profile.role)) {
+      const attentionItems = getAttentionItemsDemo()
+      return (
+        <DirectionDashboard
+          leadPanel={<LeadTodayPanel leads={leads} />}
+          attentionPanel={<AttentionPanel items={attentionItems} />}
+          attentionSummary={{
+            priorityActions: attentionItems.length,
+            upcomingRenewals: getUpcomingRenewalsDemo().length,
+            proposalsToFollow: attentionItems.filter(i => i.kind === 'propuesta').length,
+            pendingDocs: getPendingDocumentationDemo().length,
+          }}
+          isDemoData
+          metrics={{
+            activeCampaigns: DEMO_CAMPANAS.filter(c => c.status === 'activa').length,
+            activeAdvisors: DEMO_COMERCIALES.filter(c => c.role === 'asesor').length,
+          }}
+          activeLeadCount={leads.length}
+        />
+      )
+    }
+    const comercial = DEMO_COMERCIALES[0]
+    const attentionItems = getAttentionItemsDemo(comercial.id)
+    return (
+      <AdvisorDashboard
+        leadPanel={<LeadTodayPanel leads={leads} />}
+        attentionPanel={<AttentionPanel items={attentionItems} />}
+        attentionSummary={{
+          priorityActions: attentionItems.length,
+          upcomingRenewals: getUpcomingRenewalsDemo().filter(p => p.assignedToName === comercial.full_name).length,
+          proposalsToFollow: attentionItems.filter(i => i.kind === 'propuesta').length,
+          pendingDocs: getPendingDocumentationDemo().filter(p => p.assignedToName === comercial.full_name).length,
+        }}
+        isDemoData
+        profile={profile}
+        todayActivities={actividadesDeHoyPara(comercial.id)}
+        activeCampaigns={DEMO_CAMPANAS.filter(c => c.status === 'activa').slice(0, 5)}
+        activeLeadCount={leads.length}
+      />
+    )
+  }
 
   const leads = await getLeads()
 

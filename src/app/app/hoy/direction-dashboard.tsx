@@ -1,12 +1,23 @@
 'use client'
 import Link from 'next/link'
 import { StatCard } from '@/components/ui/stat-card'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { GettingStartedCard } from '@/components/onboarding/getting-started-card'
-import { Users, Megaphone, Inbox, Columns3, FileText } from 'lucide-react'
+import { Users, Megaphone, Inbox, Columns3, FileText, ListChecks, CalendarClock, FileWarning } from 'lucide-react'
+
+interface AttentionSummary {
+  priorityActions: number
+  upcomingRenewals: number
+  proposalsToFollow: number
+  pendingDocs: number
+}
 
 interface DirectionDashboardProps {
   leadPanel?: React.ReactNode
+  attentionPanel?: React.ReactNode
+  attentionSummary?: AttentionSummary
+  isDemoData?: boolean
   metrics: {
     activeCampaigns: number
     activeAdvisors: number
@@ -14,18 +25,32 @@ interface DirectionDashboardProps {
   activeLeadCount?: number
 }
 
-export function DirectionDashboard({ leadPanel, metrics, activeLeadCount = 0 }: DirectionDashboardProps) {
+export function DirectionDashboard({ leadPanel, attentionPanel, attentionSummary, isDemoData = false, metrics, activeLeadCount = 0 }: DirectionDashboardProps) {
   const isEmpty =
     activeLeadCount === 0 && metrics.activeCampaigns === 0 && metrics.activeAdvisors <= 1
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-gray-900">Vista de Dirección</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl font-bold text-gray-900">Vista de Dirección</h1>
+          {isDemoData && <Badge variant="secondary">Datos de demostración</Badge>}
+        </div>
         <p className="text-sm text-gray-500 mt-0.5">
           Resumen del equipo: leads, campañas y acceso a herramientas de gestión.
         </p>
       </div>
+
+      {attentionSummary && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard title="Acciones prioritarias hoy" value={attentionSummary.priorityActions} icon={ListChecks} color="red" />
+          <StatCard title="Renovaciones próximas" value={attentionSummary.upcomingRenewals} icon={CalendarClock} color="yellow" />
+          <StatCard title="Propuestas a seguir" value={attentionSummary.proposalsToFollow} icon={FileText} color="blue" />
+          <StatCard title="Documentación pendiente" value={attentionSummary.pendingDocs} icon={FileWarning} color="purple" />
+        </div>
+      )}
+
+      {attentionPanel}
 
       {leadPanel}
 

@@ -2,13 +2,15 @@ import Link from 'next/link'
 import { SectionGuideCard } from '@/components/guidance/section-guide-card'
 import { GettingStartedCard } from '@/components/onboarding/getting-started-card'
 import { StatCard } from '@/components/ui/stat-card'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { Users, Building2, TrendingUp, Megaphone, Activity, Target, AlertCircle, Clock } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { Users, Building2, TrendingUp, Megaphone, Activity, Target, AlertCircle, Clock, FileCheck2, FileText, CalendarClock, FileWarning, PieChart, UserCheck, Landmark } from 'lucide-react'
 import { OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS, PIPELINE_STAGES } from '@/lib/constants'
 import { formatRelativeDate } from '@/lib/utils'
 import { calcularScoreB2B, nivelColor, nivelLabel } from '@/lib/b2b/scoring'
 import { ICP_NOMBRES } from '@/lib/b2b/icp'
 import type { Company } from '@/types/database'
+import type { getExecutiveAlertsDemo, getDireccionMetricsDemo } from '@/lib/demo/universe'
 
 type TopB2BOpp = {
   id: string
@@ -20,15 +22,41 @@ type TopB2BOpp = {
   assigned_profile: { full_name: string } | null
 }
 
+type DireccionMetricsDemo = ReturnType<typeof getDireccionMetricsDemo>
+type ExecutiveAlert = ReturnType<typeof getExecutiveAlertsDemo>[number]
+
 interface DireccionViewProps {
   metrics: { totalOpps: number; totalContacts: number; totalCompanies: number; activeCampaigns: number }
   stageCounts: Record<string, number>
   recentActivities: Array<{ id: string; type: string; title: string; created_at: string; created_by_profile?: { full_name: string } | null }>
   topB2BOpps: TopB2BOpp[]
   focusMetrics: { overdueOpps: number; noNextActionOpps: number }
+  /** Solo disponible en modo demo: cartera, aseguradoras, propuestas y alertas ejecutivas. */
+  portfolio?: {
+    totalPolicies: number
+    vigentPolicies: number
+    openProposals: number
+    renovacionesProximas: number
+    documentacionPendiente: number
+    primaAnualAdministrada: number
+    comisionEstimadaTotal: number
+    porAseguradora: DireccionMetricsDemo['porAseguradora']
+    carteraPorEjecutivo: DireccionMetricsDemo['carteraPorEjecutivo']
+    facturacionPorEmpresa: DireccionMetricsDemo['facturacionPorEmpresa']
+  }
+  executiveAlerts?: readonly ExecutiveAlert[]
+  isDemoData?: boolean
 }
 
-export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOpps, focusMetrics }: DireccionViewProps) {
+const UYU = new Intl.NumberFormat('es-UY', { style: 'currency', currency: 'UYU', maximumFractionDigits: 0 })
+
+const ALERT_SEVERITY_STYLES: Record<ExecutiveAlert['severity'], string> = {
+  alta: 'border-red-100 bg-red-50 text-red-700',
+  media: 'border-amber-100 bg-amber-50 text-amber-700',
+  baja: 'border-gray-100 bg-gray-50 text-gray-500',
+}
+
+export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOpps, focusMetrics, portfolio, executiveAlerts, isDemoData = false }: DireccionViewProps) {
   const maxStageCount = Math.max(...PIPELINE_STAGES.map(s => stageCounts[s] ?? 0), 1)
   const totalPipelineLeads = PIPELINE_STAGES.reduce((sum, stage) => sum + (stageCounts[stage] ?? 0), 0)
   const isCommerciallyEmpty =
@@ -36,12 +64,16 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
     metrics.totalContacts === 0 &&
     metrics.totalCompanies === 0 &&
     metrics.activeCampaigns === 0
+  const maxAseguradora = portfolio ? Math.max(...Object.values(portfolio.porAseguradora), 1) : 1
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-gray-900">Dirección</h1>
-        <p className="text-sm text-gray-500">Vista ejecutiva del foco comercial del equipo: oportunidades, seguimiento, campañas y prioridades.</p>
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl font-bold text-gray-900">Dirección</h1>
+          {isDemoData && <Badge variant="secondary">Datos de demostración</Badge>}
+        </div>
+        <p className="text-sm text-gray-500">Vista ejecutiva de cómo está funcionando PLIFE: cartera, seguimiento comercial y prioridades.</p>
       </div>
 
       <SectionGuideCard
@@ -51,6 +83,32 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
         primaryActionHref="/app/leads"
         compact
       />
+
+      {/* Alertas ejecutivas */}
+      {executiveAlerts && executiveAlerts.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-[#1B3A6B]" />
+              Alertas ejecutivas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+              {executiveAlerts.map(alert => (
+                <Link
+                  key={alert.id}
+                  href={alert.href}
+                  className={`rounded-lg border px-3 py-2.5 transition-colors hover:opacity-80 ${ALERT_SEVERITY_STYLES[alert.severity]}`}
+                >
+                  <p className="text-sm font-semibold">{alert.title}</p>
+                  <p className="mt-0.5 text-xs opacity-80">{alert.detail}</p>
+                </Link>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Foco comercial */}
       {(focusMetrics.overdueOpps > 0 || focusMetrics.noNextActionOpps > 0) && (
@@ -77,11 +135,20 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
 
       {/* KPIs principales */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard title="Empresas en cartera B2B" value={metrics.totalCompanies} icon={Building2} color="green" />
         <StatCard title="Oportunidades totales" value={metrics.totalOpps} icon={TrendingUp} color="blue" />
         <StatCard title="Contactos" value={metrics.totalContacts} icon={Users} color="purple" />
-        <StatCard title="Empresas B2B" value={metrics.totalCompanies} icon={Building2} color="green" />
         <StatCard title="Campañas activas" value={metrics.activeCampaigns} icon={Megaphone} color="yellow" />
       </div>
+
+      {portfolio && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard title="Pólizas vigentes" value={portfolio.vigentPolicies} subtitle={`${portfolio.totalPolicies} pólizas en cartera en total`} icon={FileCheck2} color="green" />
+          <StatCard title="Propuestas abiertas" value={portfolio.openProposals} icon={FileText} color="blue" />
+          <StatCard title="Renovaciones próximas" value={portfolio.renovacionesProximas} subtitle="Próximos 60 días" icon={CalendarClock} color="yellow" />
+          <StatCard title="Documentación pendiente" value={portfolio.documentacionPendiente} icon={FileWarning} color="red" />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pipeline por etapa */}
@@ -161,6 +228,120 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
         </Card>
       </div>
 
+      {portfolio && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Cartera por aseguradora */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PieChart className="h-4 w-4 text-[#1B3A6B]" />
+                Cartera por aseguradora
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {Object.entries(portfolio.porAseguradora)
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([insurer, count]) => (
+                    <div key={insurer} className="flex items-center gap-3">
+                      <p className="text-xs text-gray-600 w-28 shrink-0">{insurer}</p>
+                      <div className="flex-1 bg-gray-100 rounded-full h-2">
+                        <div
+                          className="bg-[#1B3A6B] h-2 rounded-full transition-all"
+                          style={{ width: `${Math.round((count / maxAseguradora) * 100)}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-semibold text-gray-700 w-8 text-right">{count}</span>
+                    </div>
+                  ))}
+              </div>
+              <p className="mt-3 text-xs text-gray-400">
+                {portfolio.totalPolicies} pólizas en total, distribuidas entre {Object.keys(portfolio.porAseguradora).length} aseguradoras.
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Actividad y capacidad de seguimiento por comercial */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserCheck className="h-4 w-4 text-[#1B3A6B]" />
+                Capacidad de seguimiento del equipo
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2.5">
+                {portfolio.carteraPorEjecutivo.map(c => (
+                  <li key={c.comercial} className="flex items-center justify-between gap-3 rounded-lg border border-gray-100 px-3 py-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">{c.comercial}</p>
+                      <p className="text-xs text-gray-400">{c.empresas} empresas · {c.polizas} pólizas · {c.oportunidadesAbiertas} oport. abiertas</p>
+                    </div>
+                    {c.seguimientosVencidos > 0 ? (
+                      <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-medium text-red-700">
+                        <Clock className="h-3 w-3" />
+                        {c.seguimientosVencidos} vencido{c.seguimientosVencidos > 1 ? 's' : ''}
+                      </span>
+                    ) : (
+                      <span className="shrink-0 text-[11px] font-medium text-green-600">Al día</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {portfolio && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Concentración de cartera */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Landmark className="h-4 w-4 text-[#1B3A6B]" />
+                Concentración de cartera — top clientes
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {portfolio.facturacionPorEmpresa.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-4">Sin pólizas registradas todavía.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {portfolio.facturacionPorEmpresa.map(e => (
+                    <li key={e.empresa} className="flex items-center justify-between gap-3">
+                      <p className="text-sm text-gray-700 truncate">{e.empresa}</p>
+                      <p className="shrink-0 text-xs font-semibold text-gray-900">{UYU.format(e.primaTotal)}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="mt-3 text-xs text-gray-400">Prima anual administrada (UYU) por cliente, top 8.</p>
+            </CardContent>
+          </Card>
+
+          {/* Ingresos administrados */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-[#1B3A6B]" />
+                Ingresos bajo gestión
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <p className="text-2xl font-bold text-gray-900">{UYU.format(portfolio.primaAnualAdministrada)}</p>
+                <p className="text-xs text-gray-500">Prima anual administrada — suma de pólizas vigentes, por vencer y en renovación.</p>
+              </div>
+              <div>
+                <p className="text-lg font-semibold text-gray-700">{UYU.format(portfolio.comisionEstimadaTotal)}</p>
+                <p className="text-xs text-gray-500">Comisión estimada sobre esa misma cartera activa.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Top oportunidades B2B */}
       {topB2BOpps.length > 0 && (
         <Card>
@@ -169,6 +350,7 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
               <Target className="h-4 w-4 text-[#1B3A6B]" />
               Top oportunidades B2B activas
             </CardTitle>
+            <CardDescription>Montos en valor estimado de la oportunidad (UYU), no facturado.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -203,7 +385,9 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
                         {OPPORTUNITY_STAGE_LABELS[opp.stage as keyof typeof OPPORTUNITY_STAGE_LABELS] ?? opp.stage}
                       </span>
                       {opp.estimated_value != null && (
-                        <p className="text-xs font-bold text-[#1B3A6B] mt-1">${opp.estimated_value.toLocaleString('es-UY')}</p>
+                        <p className="text-xs font-bold text-[#1B3A6B] mt-1" title="Valor estimado de la oportunidad (UYU)">
+                          {UYU.format(opp.estimated_value)}
+                        </p>
                       )}
                     </div>
                   </div>

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import type { PolicyFormData } from '@/domains/policies/types'
+import { isDemoMode } from '@/lib/demo'
 
 interface PolicyFormDialogProps {
   open: boolean
@@ -43,7 +44,7 @@ export function PolicyFormDialog({ open, onOpenChange, onSubmit }: PolicyFormDia
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         title="Nueva póliza"
-        description="Prototipo visual — este alta todavía no se guarda en la base de datos."
+        description={isDemoMode() ? undefined : 'Prototipo visual — este alta todavía no se guarda en la base de datos.'}
       >
         <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
           <p className="text-xs text-gray-500">Los campos con * son obligatorios.</p>

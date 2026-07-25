@@ -8,6 +8,7 @@ import { PoliciesSubnav } from '@/components/policies/policies-subnav'
 import { PolicyFormDialog } from '@/components/policies/policy-form-dialog'
 import { POLICY_BOARD_COLUMNS, POLICY_STATUS_COLORS, POLICY_STATUS_LABELS } from '@/domains/policies/types'
 import type { Policy, PolicyFormData } from '@/domains/policies/types'
+import { isDemoMode } from '@/lib/demo'
 
 interface PoliciesViewProps {
   initialPolicies: Policy[]
@@ -61,7 +62,9 @@ export function PoliciesView({ initialPolicies }: PoliciesViewProps) {
         <div>
           <h1 className="text-xl font-bold text-gray-900">Pólizas</h1>
           <p className="text-sm text-gray-500">Vigencia, renovaciones y documentación de las pólizas gestionadas para cada cliente.</p>
-          <p className="text-xs text-amber-600 mt-0.5">Prototipo visual — datos de ejemplo, sin conexión a la base de datos todavía.</p>
+          {!isDemoMode() && (
+            <p className="text-xs text-amber-600 mt-0.5">Prototipo visual — datos de ejemplo, sin conexión a la base de datos todavía.</p>
+          )}
         </div>
         <Button variant="success" onClick={() => setOpen(true)}>
           <Plus className="h-4 w-4" />
@@ -89,14 +92,19 @@ export function PoliciesView({ initialPolicies }: PoliciesViewProps) {
                   </span>
                   <span className="text-xs text-gray-400">{byStatus[col.status]?.length ?? 0}</span>
                 </div>
-                <div className="space-y-2">
-                  {(byStatus[col.status] ?? []).map(policy => (
+                <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-0.5">
+                  {(byStatus[col.status] ?? []).slice(0, 8).map(policy => (
                     <PolicyCard key={policy.id} policy={policy} />
                   ))}
                   {(byStatus[col.status] ?? []).length === 0 && (
                     <div className="h-14 rounded-lg border-2 border-dashed border-gray-100 flex items-center justify-center">
                       <p className="text-xs text-gray-300">Sin pólizas en este estado</p>
                     </div>
+                  )}
+                  {(byStatus[col.status] ?? []).length > 8 && (
+                    <p className="text-xs text-gray-400 text-center py-1.5">
+                      +{(byStatus[col.status] ?? []).length - 8} más en este estado
+                    </p>
                   )}
                 </div>
               </div>

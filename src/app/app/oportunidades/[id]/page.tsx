@@ -3,11 +3,31 @@ import { getProfile, canAccessAll } from '@/lib/auth'
 import { redirect, notFound } from 'next/navigation'
 import { OpportunityDetail } from './opportunity-detail'
 import type { AIExecutionRun } from '@/types/database'
+import { isDemoMode } from '@/lib/demo'
+import { DEMO_OPORTUNIDADES, DEMO_COMERCIALES, DEMO_CAMPANAS } from '@/lib/demo/universe'
 
 export default async function OportunidadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const profile = await getProfile()
   if (!profile) redirect('/login')
+
+  if (isDemoMode()) {
+    const opportunity = DEMO_OPORTUNIDADES.find(o => o.id === id)
+    if (!opportunity) notFound()
+    const campaign = opportunity.campaign_id ? DEMO_CAMPANAS.find(c => c.id === opportunity.campaign_id) ?? null : null
+    return (
+      <OpportunityDetail
+        opportunity={opportunity}
+        activities={[]}
+        notes={[]}
+        advisors={DEMO_COMERCIALES.map(c => ({ id: c.id, full_name: c.full_name }))}
+        campaign={campaign ? { id: campaign.id, name: campaign.name } : null}
+        profile={profile}
+        aiProfile={null}
+        latestAiRun={null}
+      />
+    )
+  }
 
   const supabase = await createClient()
 

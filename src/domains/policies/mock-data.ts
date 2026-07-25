@@ -202,29 +202,33 @@ export const MOCK_POLICIES: Policy[] = [
   },
 ]
 
+// En modo demo comercial, Pólizas se sirve desde el universo completo
+// (180 pólizas relacionadas con el resto de la app); fuera de demo, se
+// mantiene el set chico original de este prototipo (8 pólizas ilustrativas).
+import { isDemoMode } from '@/lib/demo'
+import { DEMO_POLIZAS, getUpcomingRenewalsDemo, getPendingDocumentationDemo } from '@/lib/demo/universe'
+
 export function getMockPolicies(): Policy[] {
-  return MOCK_POLICIES
+  return isDemoMode() ? DEMO_POLIZAS : MOCK_POLICIES
 }
 
 export function getMockPolicyById(id: string): Policy | null {
-  return MOCK_POLICIES.find(p => p.id === id) ?? null
-}
-
-function daysUntil(dateStr: string): number {
-  const today = new Date(); today.setHours(0, 0, 0, 0)
-  const target = new Date(dateStr + 'T00:00:00')
-  return Math.round((target.getTime() - today.getTime()) / 86_400_000)
+  const source = isDemoMode() ? DEMO_POLIZAS : MOCK_POLICIES
+  return source.find(p => p.id === id) ?? null
 }
 
 /** Próximas renovaciones: vigentes/por vencer/en renovación con fecha de vencimiento, ordenadas por urgencia. */
 export function getUpcomingRenewals(): (Policy & { daysToExpiry: number })[] {
+  if (isDemoMode()) return getUpcomingRenewalsDemo()
+  const today = new Date(); today.setHours(0, 0, 0, 0)
   return MOCK_POLICIES
     .filter(p => ['vigente', 'proxima_a_vencer', 'en_renovacion'].includes(p.status) && p.endDate)
-    .map(p => ({ ...p, daysToExpiry: daysUntil(p.endDate!) }))
+    .map(p => ({ ...p, daysToExpiry: Math.round((new Date(p.endDate + 'T00:00:00').getTime() - today.getTime()) / 86_400_000) }))
     .sort((a, b) => a.daysToExpiry - b.daysToExpiry)
 }
 
 /** Documentación pendiente: pólizas sin documentos, o en pendiente_documentacion. */
 export function getPendingDocumentation(): Policy[] {
+  if (isDemoMode()) return getPendingDocumentationDemo()
   return MOCK_POLICIES.filter(p => p.documents.length === 0 || p.status === 'pendiente_documentacion')
 }

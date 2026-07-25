@@ -3,10 +3,23 @@ import { getProfile } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { CampaignsList } from './campaigns-list'
 import type { CampaignLinkCounts } from '@/lib/campaign-operational'
+import { isDemoMode } from '@/lib/demo'
+import { DEMO_CAMPANAS, DEMO_EMPRESAS, DEMO_OPORTUNIDADES } from '@/lib/demo/universe'
 
 export default async function CampanasPage() {
   const profile = await getProfile()
   if (!profile) redirect('/login')
+
+  if (isDemoMode()) {
+    const linkCounts: Record<string, CampaignLinkCounts> = {}
+    for (const camp of DEMO_CAMPANAS) {
+      linkCounts[camp.id] = {
+        companies: DEMO_EMPRESAS.filter(e => e.campaign_id === camp.id).length,
+        opportunities: DEMO_OPORTUNIDADES.filter(o => o.campaign_id === camp.id).length,
+      }
+    }
+    return <CampaignsList campaigns={DEMO_CAMPANAS} profile={profile} linkCounts={linkCounts} />
+  }
 
   const supabase = await createClient()
   const { data: campaigns } = await supabase

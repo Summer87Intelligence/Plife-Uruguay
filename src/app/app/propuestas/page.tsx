@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { PROPOSALS_SECTION, PROPOSAL_STATUS_LABELS, SOURCE_LABELS } from '@/domains/proposals'
 import { getProposals } from '@/domains/proposals/queries'
+import { isDemoMode } from '@/lib/demo'
+import { DEMO_PROPUESTAS } from '@/lib/demo/universe'
 
 // FASE 15E — Propuestas (flujo conceptual/determinístico, sin persistencia).
 // FASE 15F — Las propuestas pueden nacer desde Lead, Campaña, Radar u observación manual.
@@ -50,15 +52,25 @@ export default async function PropuestasPage() {
   const profile = await getProfile()
   if (!profile) redirect('/login')
 
-  const supabase = await createClient()
-  const [proposals, { count: leadCount }, { count: campaignCount }] = await Promise.all([
-    getProposals(),
-    supabase.from('leads').select('*', { count: 'exact', head: true }).is('deleted_at', null),
-    supabase.from('campaigns').select('*', { count: 'exact', head: true }).is('deleted_at', null),
-  ])
+  let proposals: Awaited<ReturnType<typeof getProposals>>
+  let hasLeads: boolean
+  let hasCampaigns: boolean
 
-  const hasLeads = (leadCount ?? 0) > 0
-  const hasCampaigns = (campaignCount ?? 0) > 0
+  if (isDemoMode()) {
+    proposals = DEMO_PROPUESTAS.map(p => ({ id: p.id, title: p.title, status: p.status, source: p.source, summary: p.summary, created_at: p.created_at })) as Awaited<ReturnType<typeof getProposals>>
+    hasLeads = true
+    hasCampaigns = true
+  } else {
+    const supabase = await createClient()
+    const [realProposals, { count: leadCount }, { count: campaignCount }] = await Promise.all([
+      getProposals(),
+      supabase.from('leads').select('*', { count: 'exact', head: true }).is('deleted_at', null),
+      supabase.from('campaigns').select('*', { count: 'exact', head: true }).is('deleted_at', null),
+    ])
+    proposals = realProposals
+    hasLeads = (leadCount ?? 0) > 0
+    hasCampaigns = (campaignCount ?? 0) > 0
+  }
   const createFromItems = CREATE_FROM.filter((item) => {
     if (item.href.includes('source=lead')) return hasLeads
     if (item.href.includes('source=campaign')) return hasCampaigns

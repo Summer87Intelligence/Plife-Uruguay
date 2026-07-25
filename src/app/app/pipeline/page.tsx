@@ -4,12 +4,14 @@ import { Plus } from 'lucide-react'
 import { getProfile } from '@/lib/auth'
 import { getLeads } from '@/domains/leads/queries'
 import { LeadPipelineBoard } from '@/components/leads/lead-pipeline-board'
+import { isDemoMode } from '@/lib/demo'
+import { DEMO_LEADS } from '@/lib/demo/universe'
 
 export default async function PipelinePage() {
   const profile = await getProfile()
   if (!profile) redirect('/login')
 
-  const leads = await getLeads()
+  const leads = isDemoMode() ? DEMO_LEADS : await getLeads()
 
   return (
     <div className="space-y-5">

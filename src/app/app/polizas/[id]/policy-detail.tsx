@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { DOCUMENT_TYPE_LABELS, POLICY_STATUS_COLORS, POLICY_STATUS_LABELS } from '@/domains/policies/types'
 import type { Policy, PolicyStatus } from '@/domains/policies/types'
+import { isDemoMode } from '@/lib/demo'
 
 interface PolicyDetailProps {
   policy: Policy
@@ -61,7 +62,7 @@ export function PolicyDetail({ policy, canSeeCommission }: PolicyDetailProps) {
         <div>
           <h1 className="text-xl font-bold text-gray-900">{policy.companyName}</h1>
           <p className="text-sm text-gray-500">{policy.insurerName} · {policy.branchName}</p>
-          <p className="text-xs text-amber-600 mt-0.5">Prototipo visual — dato de ejemplo, sin conexión a la base de datos.</p>
+          {!isDemoMode() && <p className="text-xs text-amber-600 mt-0.5">Prototipo visual — dato de ejemplo, sin conexión a la base de datos.</p>}
         </div>
         <span className={`shrink-0 inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${POLICY_STATUS_COLORS[policy.status]}`}>
           {POLICY_STATUS_LABELS[policy.status]}

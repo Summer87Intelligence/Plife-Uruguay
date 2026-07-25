@@ -16,9 +16,9 @@ const variants = {
   ghost: 'hover:bg-gray-100 text-gray-700',
   destructive: 'bg-red-600 text-white hover:bg-red-700',
   link: 'text-[#1B3A6B] underline-offset-4 hover:underline',
-  // Bloque UI-0 (Gestión de Pólizas): único CTA dominante verde por pantalla,
-  // decisión explícita del usuario — el resto de la app usa `default` (azul
-  // marino) como color de CTA. No reemplaza `default` en ningún otro lugar.
+  // Único CTA dominante verde por pantalla (decisión explícita del usuario),
+  // usado hoy en Gestión de Pólizas (Bloque UI-0) y en PLIFE Hoy (demo
+  // comercial) — el resto de la app usa `default` (azul marino) como CTA.
   success: 'bg-green-600 text-white hover:bg-green-700 shadow-sm',
 }
 

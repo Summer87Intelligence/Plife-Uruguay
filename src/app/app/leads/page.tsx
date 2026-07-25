@@ -5,12 +5,14 @@ import { getProfile } from '@/lib/auth'
 import { getLeads } from '@/domains/leads/queries'
 import { LeadFollowUpSummary } from '@/components/leads/lead-follow-up-summary'
 import { LeadList } from '@/components/leads/lead-list'
+import { isDemoMode } from '@/lib/demo'
+import { DEMO_LEADS } from '@/lib/demo/universe'
 
 export default async function LeadsPage() {
   const profile = await getProfile()
   if (!profile) redirect('/login')
 
-  const leads = await getLeads()
+  const leads = isDemoMode() ? DEMO_LEADS : await getLeads()
 
   return (
     <div className="space-y-5">
