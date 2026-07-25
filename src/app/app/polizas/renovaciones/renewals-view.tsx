@@ -40,6 +40,7 @@ export function RenewalsView({ renewals }: RenewalsViewProps) {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-900 truncate">{policy.companyName}</p>
                     <p className="text-xs text-gray-500">{policy.insurerName} · {policy.branchName} · vence {policy.endDate}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{policy.assignedToName}</p>
                   </div>
                   <span className={`shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${POLICY_STATUS_COLORS[policy.status]}`}>
                     {POLICY_STATUS_LABELS[policy.status]}

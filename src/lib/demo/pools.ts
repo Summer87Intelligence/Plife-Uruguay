@@ -2,6 +2,10 @@
  * Pools de datos plausibles para el universo mock de la demo comercial.
  * Nombres de empresas ficticios pero verosímiles para Uruguay; aseguradoras
  * reales del mercado; nombres de persona comunes en Uruguay.
+ *
+ * La lógica de generación (tiers de cuenta, madurez, relaciones) vive en
+ * ./universe.ts — este archivo es solo "materia prima" plausible + reglas
+ * de afinidad (rubro → ramo, participación de mercado).
  */
 
 export const NOMBRES = [
@@ -22,14 +26,44 @@ export const DEPARTAMENTOS = [
   'Montevideo', 'Canelones', 'Maldonado', 'Colonia', 'San José', 'Paysandú', 'Salto', 'Rivera',
 ] as const
 
+/** Para nombres tipo "Transportes del Sur", "Constructora del Litoral". */
+export const PUNTOS_CARDINALES = ['Norte', 'Sur', 'Este', 'Oeste', 'Litoral', 'Centro'] as const
+
+export type SectorKey =
+  | 'comercio' | 'servicios_profesionales' | 'salud' | 'industria' | 'transporte'
+  | 'construccion' | 'agro' | 'tecnologia' | 'educacion' | 'hoteleria' | 'inmobiliaria' | 'clubes'
+
 interface CompanyTemplate {
   name: string
   industry: string
   campaignType: string
+  sector: SectorKey
 }
 
-/** Empresas ficticias pero plausibles, agrupadas por rubro (alineadas a CampaignType). */
-export const EMPRESA_TEMPLATES: CompanyTemplate[] = [
+const INDUSTRY_TO_SECTOR: Record<string, SectorKey> = {
+  'Estudio contable': 'servicios_profesionales',
+  'Estudio jurídico': 'servicios_profesionales',
+  'Servicios profesionales': 'servicios_profesionales',
+  'Salud': 'salud',
+  'Construcción': 'construccion',
+  'Transporte y logística': 'transporte',
+  'Comercio': 'comercio',
+  'Administración de edificios': 'inmobiliaria',
+  'Tecnología': 'tecnologia',
+  'Clubes y asociaciones': 'clubes',
+  'Industria alimenticia': 'industria',
+  'Industria': 'industria',
+  'Industria textil': 'industria',
+  'Agropecuario': 'agro',
+  'Turismo y hotelería': 'hoteleria',
+}
+
+/**
+ * Las 41 empresas curadas a mano (nombres ya usados/validados en capturas
+ * previas). Se completan hasta 120 con generación por sector — ver
+ * SECTOR_DEFS y buildCompanyTemplates() en universe.ts.
+ */
+const EMPRESA_TEMPLATES_BASE: { name: string; industry: string; campaignType: string }[] = [
   { name: 'Estudio Contable Deleón & Asociados', industry: 'Estudio contable', campaignType: 'estudios_contables' },
   { name: 'Contadores Rivero Hnos.', industry: 'Estudio contable', campaignType: 'estudios_contables' },
   { name: 'Estudio Techera Auditores', industry: 'Estudio contable', campaignType: 'estudios_contables' },
@@ -73,6 +107,88 @@ export const EMPRESA_TEMPLATES: CompanyTemplate[] = [
   { name: 'Hotel Boutique La Barra', industry: 'Turismo y hotelería', campaignType: 'duenos_pymes' },
 ]
 
+export const EMPRESA_TEMPLATES_CURADAS: CompanyTemplate[] = EMPRESA_TEMPLATES_BASE.map(t => ({
+  ...t,
+  sector: INDUSTRY_TO_SECTOR[t.industry],
+}))
+
+/** Nombre exacto pedido para la Historia A (cliente estratégico), sector transporte. */
+export const NOMBRE_HISTORIA_A = 'Transportes del Sur'
+
+export interface SectorDef {
+  key: SectorKey
+  targetTotal: number
+  campaignType: string
+  industryLabel: string
+  /** Patrones de nombre: {ap} = apellido, {ap2} = segundo apellido, {card} = punto cardinal. */
+  namePatterns: string[]
+  /** Subconjunto de RAMOS_DEMO con mayor probabilidad para este sector (afinidad rubro→ramo). */
+  ramosAfines: string[]
+}
+
+export const SECTOR_DEFS: SectorDef[] = [
+  {
+    key: 'comercio', targetTotal: 18, campaignType: 'duenos_pymes', industryLabel: 'Comercio',
+    namePatterns: ['Almacén {ap}', 'Autoservicio {ap}', 'Comercial {ap}', 'Bazar {ap}', 'Tienda {ap} e Hijos', 'Ferretería {ap}', 'Panadería {ap}'],
+    ramosAfines: ['Comercio', 'Incendio', 'Responsabilidad civil'],
+  },
+  {
+    key: 'servicios_profesionales', targetTotal: 16, campaignType: 'profesionales_independientes', industryLabel: 'Servicios profesionales',
+    namePatterns: ['Estudio {ap}', '{ap} & {ap2} Consultores', 'Consultora {ap}', 'Estudio Jurídico {ap}', 'Estudio Contable {ap}'],
+    ramosAfines: ['Responsabilidad civil', 'Vida', 'Incendio'],
+  },
+  {
+    key: 'salud', targetTotal: 12, campaignType: 'clinicas', industryLabel: 'Salud',
+    namePatterns: ['Clínica {ap}', 'Centro Médico {ap}', 'Laboratorio Clínico {ap}', 'Policlínica {ap}'],
+    ramosAfines: ['Responsabilidad civil', 'Accidentes de trabajo', 'Incendio'],
+  },
+  {
+    key: 'industria', targetTotal: 12, campaignType: 'duenos_pymes', industryLabel: 'Industria',
+    namePatterns: ['Industrias {ap}', 'Metalúrgica {ap}', 'Manufacturas {ap}', 'Fábrica {ap}'],
+    ramosAfines: ['Incendio', 'Accidentes de trabajo', 'Responsabilidad civil'],
+  },
+  {
+    key: 'transporte', targetTotal: 11, campaignType: 'duenos_pymes', industryLabel: 'Transporte y logística',
+    namePatterns: ['Transportes {ap}', 'Transportes del {card}', 'Logística {ap}', 'Distribuidora {ap}'],
+    ramosAfines: ['Transporte', 'Vehículos', 'Responsabilidad civil'],
+  },
+  {
+    key: 'construccion', targetTotal: 10, campaignType: 'constructoras', industryLabel: 'Construcción',
+    namePatterns: ['Constructora {ap}', '{ap} Obras Civiles', 'Edificar {ap}', 'Grupo Constructor {ap}'],
+    ramosAfines: ['Accidentes de trabajo', 'Responsabilidad civil', 'Incendio'],
+  },
+  {
+    key: 'agro', targetTotal: 9, campaignType: 'duenos_pymes', industryLabel: 'Agropecuario',
+    namePatterns: ['Agropecuaria {ap}', 'Estancia {ap}', 'Cooperativa Agraria {ap}', 'Establecimiento {ap}'],
+    ramosAfines: ['Vehículos', 'Responsabilidad civil', 'Incendio'],
+  },
+  {
+    key: 'tecnologia', targetTotal: 8, campaignType: 'empresas_tech', industryLabel: 'Tecnología',
+    namePatterns: ['{ap} Tecnología', 'Softlab {ap}', 'Datacore {ap}', '{ap} Sistemas'],
+    ramosAfines: ['Responsabilidad civil', 'Vida'],
+  },
+  {
+    key: 'educacion', targetTotal: 7, campaignType: 'general', industryLabel: 'Educación',
+    namePatterns: ['Instituto {ap}', 'Colegio {ap}', 'Academia {ap}', 'Centro Educativo {ap}'],
+    ramosAfines: ['Responsabilidad civil', 'Accidentes de trabajo', 'Incendio'],
+  },
+  {
+    key: 'hoteleria', targetTotal: 6, campaignType: 'duenos_pymes', industryLabel: 'Turismo y hotelería',
+    namePatterns: ['Hotel {ap}', 'Hotel Boutique {ap}', 'Posada {ap}', 'Cabañas {ap}'],
+    ramosAfines: ['Incendio', 'Responsabilidad civil', 'Hogar'],
+  },
+  {
+    key: 'inmobiliaria', targetTotal: 6, campaignType: 'duenos_pymes', industryLabel: 'Administración de edificios',
+    namePatterns: ['Inmobiliaria {ap}', 'Consorcio {ap}', 'Administración de Edificios {ap}', 'Edificio {ap}'],
+    ramosAfines: ['Hogar', 'Incendio', 'Responsabilidad civil'],
+  },
+  {
+    key: 'clubes', targetTotal: 5, campaignType: 'clubes_asociaciones', industryLabel: 'Clubes y asociaciones',
+    namePatterns: ['Club {ap}', 'Asociación Civil {ap}', 'Club Social {ap}'],
+    ramosAfines: ['Responsabilidad civil', 'Incendio'],
+  },
+]
+
 export const POSICIONES = [
   'Gerente General', 'Dueño', 'Socio Gerente', 'Contador', 'Responsable de RRHH',
   'Gerente Administrativo', 'Directora Financiera', 'Encargado de Compras', 'Gerente de Operaciones',
@@ -80,6 +196,11 @@ export const POSICIONES = [
 
 /** Aseguradoras reales del mercado (para la demo, no vinculadas al catálogo real de Admin todavía). */
 export const ASEGURADORAS_DEMO = ['BSE', 'Porto Seguro', 'Mapfre', 'SURA', 'Zurich', 'HDI'] as const
+
+/** Participación de mercado relativa (BSE dominante, como en el mercado real de Uruguay). No suma 100 exacto, es relativa. */
+export const ASEGURADORA_WEIGHTS: Record<string, number> = {
+  BSE: 30, Mapfre: 18, SURA: 17, 'Porto Seguro': 15, Zurich: 12, HDI: 8,
+}
 
 export const RAMOS_DEMO = [
   'Vehículos', 'Responsabilidad civil', 'Accidentes de trabajo', 'Vida',
@@ -89,22 +210,26 @@ export const RAMOS_DEMO = [
 interface Comercial {
   id: string
   full_name: string
-  role: 'asesor' | 'lider_comercial'
+  role: 'direccion' | 'lider_comercial' | 'asesor'
+  /** Perfil narrativo/de desempeño — solo para generación, no es un campo de UI. */
+  perfil: 'director' | 'lider' | 'estrella' | 'solido' | 'crecimiento' | 'atrasado'
+  /** Cantidad objetivo de empresas en cartera (define la desigualdad de carga entre el equipo). */
+  carteraObjetivo: number
 }
 
+/**
+ * Equipo comercial (6): 1 Director Comercial, 1 Líder Comercial, 4 Asesores con
+ * desempeño desigual a propósito (para que Dirección tenga variación real que
+ * mostrar, no un equipo parejo e irreal). `role: 'direccion'` reutiliza el
+ * valor ya existente en UserRole — no se agrega ningún rol nuevo al sistema.
+ */
 export const COMERCIALES_DEMO: Comercial[] = [
-  { id: 'com-01', full_name: 'Ana Deleón', role: 'lider_comercial' },
-  { id: 'com-02', full_name: 'Rodrigo Silva', role: 'asesor' },
-  { id: 'com-03', full_name: 'Martín Pérez', role: 'asesor' },
-  { id: 'com-04', full_name: 'Valentina Ríos', role: 'asesor' },
-  { id: 'com-05', full_name: 'Federico Bianchi', role: 'asesor' },
-  { id: 'com-06', full_name: 'Camila Ferreira', role: 'asesor' },
-  { id: 'com-07', full_name: 'Nicolás Ortiz', role: 'asesor' },
-  { id: 'com-08', full_name: 'Sofía Machado', role: 'lider_comercial' },
-  { id: 'com-09', full_name: 'Diego Acosta', role: 'asesor' },
-  { id: 'com-10', full_name: 'Mariana Suárez', role: 'asesor' },
-  { id: 'com-11', full_name: 'Ignacio Cabrera', role: 'asesor' },
-  { id: 'com-12', full_name: 'Florencia Correa', role: 'asesor' },
+  { id: 'com-01', full_name: 'Ana Deleón', role: 'direccion', perfil: 'director', carteraObjetivo: 8 },
+  { id: 'com-02', full_name: 'Sofía Machado', role: 'lider_comercial', perfil: 'lider', carteraObjetivo: 22 },
+  { id: 'com-03', full_name: 'Rodrigo Silva', role: 'asesor', perfil: 'estrella', carteraObjetivo: 24 },
+  { id: 'com-04', full_name: 'Valentina Ríos', role: 'asesor', perfil: 'solido', carteraObjetivo: 22 },
+  { id: 'com-05', full_name: 'Federico Bianchi', role: 'asesor', perfil: 'crecimiento', carteraObjetivo: 18 },
+  { id: 'com-06', full_name: 'Martín Pérez', role: 'asesor', perfil: 'atrasado', carteraObjetivo: 26 },
 ]
 
 export const PRODUCTOS_POR_RAMO: Record<string, string[]> = {

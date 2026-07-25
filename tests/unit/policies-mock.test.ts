@@ -1,6 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, afterEach } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { getMockPolicies, getMockPolicyById, getUpcomingRenewals, getPendingDocumentation } from '@/domains/policies/mock-data'
 import { POLICY_BOARD_COLUMNS } from '@/domains/policies/types'
+import { DEMO_POLIZAS, DEMO_COMERCIALES, DEMO_ASEGURADORAS, DEMO_EMPRESAS } from '@/lib/demo/universe'
 
 // Bloque UI-0 (Gestión de Pólizas) — solo funciones puras sobre datos mock,
 // sin Supabase. Cuando exista persistencia real, este archivo se reemplaza
@@ -50,5 +53,104 @@ describe('POLICY_BOARD_COLUMNS', () => {
     expect(POLICY_BOARD_COLUMNS.map(c => c.label)).toEqual([
       'Vigentes', 'Por vencer', 'En renovación', 'Pendientes de documentación', 'Canceladas',
     ])
+  })
+})
+
+describe('modo demo — Pólizas conectado al universo empresarial', () => {
+  const prevFlag = process.env.NEXT_PUBLIC_DEMO_MODE
+  afterEach(() => { process.env.NEXT_PUBLIC_DEMO_MODE = prevFlag })
+
+  it('getMockPolicies() en demo mode devuelve el universo completo (entre 750 y 900)', () => {
+    process.env.NEXT_PUBLIC_DEMO_MODE = 'true'
+    const policies = getMockPolicies()
+    expect(policies.length).toBeGreaterThanOrEqual(750)
+    expect(policies.length).toBeLessThanOrEqual(900)
+    expect(policies.length).toBe(DEMO_POLIZAS.length)
+  })
+
+  it('getMockPolicyById() resuelve cualquier póliza real del universo', () => {
+    process.env.NEXT_PUBLIC_DEMO_MODE = 'true'
+    const muestra = [DEMO_POLIZAS[0], DEMO_POLIZAS[Math.floor(DEMO_POLIZAS.length / 2)], DEMO_POLIZAS[DEMO_POLIZAS.length - 1]]
+    for (const p of muestra) {
+      expect(getMockPolicyById(p.id)).toEqual(p)
+    }
+  })
+
+  it('getMockPolicyById() sigue devolviendo null para un id inexistente en demo mode', () => {
+    process.env.NEXT_PUBLIC_DEMO_MODE = 'true'
+    expect(getMockPolicyById('no-existe')).toBeNull()
+  })
+
+  it('exactamente 50 renovaciones dentro del próximo mes (mismo cálculo que Dirección)', () => {
+    process.env.NEXT_PUBLIC_DEMO_MODE = 'true'
+    const delMes = getUpcomingRenewals().filter(r => r.daysToExpiry <= 30 && r.daysToExpiry >= -5)
+    expect(delMes).toHaveLength(50)
+  })
+
+  it('exactamente 15 casos de documentación pendiente', () => {
+    process.env.NEXT_PUBLIC_DEMO_MODE = 'true'
+    expect(getPendingDocumentation()).toHaveLength(15)
+  })
+
+  it('toda póliza del universo referencia un comercial, una aseguradora y una empresa reales', () => {
+    process.env.NEXT_PUBLIC_DEMO_MODE = 'true'
+    const nombresComerciales = new Set(DEMO_COMERCIALES.map(c => c.full_name))
+    const nombresAseguradoras = new Set(DEMO_ASEGURADORAS.map(a => a.name))
+    const nombresEmpresas = new Set(DEMO_EMPRESAS.map(e => e.name))
+    const policies = getMockPolicies()
+    expect(policies.every(p => nombresComerciales.has(p.assignedToName))).toBe(true)
+    expect(policies.every(p => nombresAseguradoras.has(p.insurerName))).toBe(true)
+    expect(policies.every(p => nombresEmpresas.has(p.companyName))).toBe(true)
+  })
+
+  it('las 6 aseguradoras del universo aparecen en la cartera de pólizas', () => {
+    process.env.NEXT_PUBLIC_DEMO_MODE = 'true'
+    const policies = getMockPolicies()
+    for (const ins of DEMO_ASEGURADORAS) {
+      expect(policies.some(p => p.insurerName === ins.name)).toBe(true)
+    }
+  })
+
+  it('la documentación pendiente tiene antigüedad plausible (trámite reciente, no arrastrado por años)', () => {
+    process.env.NEXT_PUBLIC_DEMO_MODE = 'true'
+    const pendientes = getPendingDocumentation().filter(p => p.status === 'pendiente_documentacion')
+    const hoy = new Date()
+    for (const p of pendientes) {
+      const dias = Math.round((hoy.getTime() - new Date(p.createdAt).getTime()) / 86_400_000)
+      expect(dias).toBeLessThanOrEqual(30)
+    }
+  })
+})
+
+describe('Pólizas — sin consultas a Supabase (comprobable por código fuente)', () => {
+  const SRC = join(process.cwd(), 'src')
+  const ARCHIVOS_POLIZAS = [
+    'app/app/polizas/page.tsx',
+    'app/app/polizas/[id]/page.tsx',
+    'app/app/polizas/[id]/policy-detail.tsx',
+    'app/app/polizas/policies-view.tsx',
+    'app/app/polizas/renovaciones/page.tsx',
+    'app/app/polizas/renovaciones/renewals-view.tsx',
+    'app/app/polizas/documentacion/page.tsx',
+    'app/app/polizas/documentacion/pending-documentation-view.tsx',
+    'app/app/polizas/configuracion/page.tsx',
+    'app/app/polizas/configuracion/configuracion-view.tsx',
+    'components/policies/policy-form-dialog.tsx',
+    'domains/policies/mock-data.ts',
+    'domains/policies/filters.ts',
+  ]
+
+  it('ningún archivo de Pólizas importa el cliente de Supabase', () => {
+    for (const rel of ARCHIVOS_POLIZAS) {
+      const source = readFileSync(join(SRC, rel), 'utf8')
+      expect(source, `${rel} no debería importar Supabase`).not.toMatch(/createClient|@supabase\/|from ['"]@\/lib\/supabase/)
+    }
+  })
+
+  it('ningún archivo de Pólizas consulta las tablas insurers/insurance_branches', () => {
+    for (const rel of ARCHIVOS_POLIZAS) {
+      const source = readFileSync(join(SRC, rel), 'utf8')
+      expect(source, `${rel} no debería consultar insurers/insurance_branches`).not.toMatch(/from\(['"]insurers['"]\)|from\(['"]insurance_branches['"]\)/)
+    }
   })
 })

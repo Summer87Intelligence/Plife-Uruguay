@@ -11,6 +11,11 @@ interface PendingDocumentationViewProps {
   policies: Policy[]
 }
 
+function antiguedadDias(createdAt: string): number {
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  return Math.max(0, Math.round((today.getTime() - new Date(createdAt).getTime()) / 86_400_000))
+}
+
 export function PendingDocumentationView({ policies }: PendingDocumentationViewProps) {
   return (
     <div className="space-y-5">
@@ -32,10 +37,12 @@ export function PendingDocumentationView({ policies }: PendingDocumentationViewP
                 <Link href={`/app/polizas/${policy.id}`} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-900 truncate">{policy.companyName}</p>
-                    <p className="text-xs text-gray-500">{policy.insurerName} · {policy.branchName}</p>
+                    <p className="text-xs text-gray-500">{policy.insurerName} · {policy.branchName} · {policy.assignedToName}</p>
                     <p className="text-xs text-gray-400 mt-0.5">
                       {policy.documents.length === 0 ? 'Sin documentos registrados' : `${policy.documents.length} documento(s) registrados`}
+                      {' · '}pendiente hace {antiguedadDias(policy.createdAt)} día{antiguedadDias(policy.createdAt) === 1 ? '' : 's'}
                     </p>
+                    {policy.nextAction && <p className="text-xs text-[#1B3A6B] mt-0.5">{policy.nextAction}</p>}
                   </div>
                   <span className={`shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${POLICY_STATUS_COLORS[policy.status]}`}>
                     {POLICY_STATUS_LABELS[policy.status]}

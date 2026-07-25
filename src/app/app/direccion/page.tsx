@@ -51,13 +51,22 @@ export default async function DireccionPage() {
             totalPolicies: m.totalPolicies,
             vigentPolicies: m.vigentPolicies,
             openProposals: m.openProposals,
-            renovacionesProximas: m.renovacionesProximas,
+            renovacionesDelMes: m.renovacionesDelMes,
             documentacionPendiente: m.documentacionPendiente,
             primaAnualAdministrada: m.primaAnualAdministrada,
             comisionEstimadaTotal: m.comisionEstimadaTotal,
             porAseguradora: m.porAseguradora,
+            porRamo: m.porRamo,
             carteraPorEjecutivo: m.carteraPorEjecutivo,
             facturacionPorEmpresa: m.facturacionPorEmpresa,
+            renovacionesPorUrgencia: m.renovacionesPorUrgencia,
+            propuestasPorEstado: m.propuestasPorEstado,
+            totalLeadsActivos: m.totalLeadsActivos,
+            oportunidadesGanadas: m.oportunidadesGanadas,
+            oportunidadesPerdidas: m.oportunidadesPerdidas,
+            propuestasVigentes: m.propuestasVigentes,
+            propuestasAprobadas: m.propuestasAprobadas,
+            propuestasRechazadas: m.propuestasRechazadas,
           }
         })()}
         executiveAlerts={getExecutiveAlertsDemo()}

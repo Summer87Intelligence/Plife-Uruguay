@@ -202,9 +202,10 @@ export const MOCK_POLICIES: Policy[] = [
   },
 ]
 
-// En modo demo comercial, Pólizas se sirve desde el universo completo
-// (180 pólizas relacionadas con el resto de la app); fuera de demo, se
-// mantiene el set chico original de este prototipo (8 pólizas ilustrativas).
+// En modo demo comercial, Pólizas se sirve desde el universo empresarial
+// completo (~800 pólizas de 120 empresas, relacionadas con el resto de la
+// app); fuera de demo, se mantiene el set chico original de este prototipo
+// (8 pólizas ilustrativas).
 import { isDemoMode } from '@/lib/demo'
 import { DEMO_POLIZAS, getUpcomingRenewalsDemo, getPendingDocumentationDemo } from '@/lib/demo/universe'
 

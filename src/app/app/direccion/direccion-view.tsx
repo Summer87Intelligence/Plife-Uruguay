@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import type { Route } from 'next'
 import { SectionGuideCard } from '@/components/guidance/section-guide-card'
 import { GettingStartedCard } from '@/components/onboarding/getting-started-card'
 import { StatCard } from '@/components/ui/stat-card'
@@ -36,16 +37,29 @@ interface DireccionViewProps {
     totalPolicies: number
     vigentPolicies: number
     openProposals: number
-    renovacionesProximas: number
+    renovacionesDelMes: number
     documentacionPendiente: number
     primaAnualAdministrada: number
     comisionEstimadaTotal: number
     porAseguradora: DireccionMetricsDemo['porAseguradora']
+    porRamo: DireccionMetricsDemo['porRamo']
     carteraPorEjecutivo: DireccionMetricsDemo['carteraPorEjecutivo']
     facturacionPorEmpresa: DireccionMetricsDemo['facturacionPorEmpresa']
+    renovacionesPorUrgencia: DireccionMetricsDemo['renovacionesPorUrgencia']
+    propuestasPorEstado: DireccionMetricsDemo['propuestasPorEstado']
+    totalLeadsActivos: number
+    oportunidadesGanadas: number
+    oportunidadesPerdidas: number
+    propuestasVigentes: number
+    propuestasAprobadas: number
+    propuestasRechazadas: number
   }
   executiveAlerts?: readonly ExecutiveAlert[]
   isDemoData?: boolean
+}
+
+const PROPOSAL_STATUS_LABELS_DIRECCION: Record<string, string> = {
+  draft: 'Borrador', in_review: 'En revisión', ready: 'Lista', used: 'Aprobada', archived: 'Rechazada',
 }
 
 const UYU = new Intl.NumberFormat('es-UY', { style: 'currency', currency: 'UYU', maximumFractionDigits: 0 })
@@ -98,7 +112,7 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
               {executiveAlerts.map(alert => (
                 <Link
                   key={alert.id}
-                  href={alert.href}
+                  href={alert.href as Route}
                   className={`rounded-lg border px-3 py-2.5 transition-colors hover:opacity-80 ${ALERT_SEVERITY_STYLES[alert.severity]}`}
                 >
                   <p className="text-sm font-semibold">{alert.title}</p>
@@ -134,18 +148,31 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
       {isCommerciallyEmpty && <GettingStartedCard />}
 
       {/* KPIs principales */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard title="Empresas en cartera B2B" value={metrics.totalCompanies} icon={Building2} color="green" />
-        <StatCard title="Oportunidades totales" value={metrics.totalOpps} icon={TrendingUp} color="blue" />
+        <StatCard
+          title="Oportunidades totales"
+          value={metrics.totalOpps}
+          subtitle={portfolio ? `${portfolio.oportunidadesGanadas} ganadas · ${portfolio.oportunidadesPerdidas} perdidas (histórico)` : undefined}
+          icon={TrendingUp}
+          color="blue"
+        />
         <StatCard title="Contactos" value={metrics.totalContacts} icon={Users} color="purple" />
         <StatCard title="Campañas activas" value={metrics.activeCampaigns} icon={Megaphone} color="yellow" />
+        {portfolio && <StatCard title="Leads activos" value={portfolio.totalLeadsActivos} icon={Users} color="purple" />}
       </div>
 
       {portfolio && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard title="Pólizas vigentes" value={portfolio.vigentPolicies} subtitle={`${portfolio.totalPolicies} pólizas en cartera en total`} icon={FileCheck2} color="green" />
-          <StatCard title="Propuestas abiertas" value={portfolio.openProposals} icon={FileText} color="blue" />
-          <StatCard title="Renovaciones próximas" value={portfolio.renovacionesProximas} subtitle="Próximos 60 días" icon={CalendarClock} color="yellow" />
+          <StatCard
+            title="Propuestas vigentes"
+            value={portfolio.propuestasVigentes}
+            subtitle={`${portfolio.propuestasAprobadas} aprobadas · ${portfolio.propuestasRechazadas} rechazadas (histórico)`}
+            icon={FileText}
+            color="blue"
+          />
+          <StatCard title="Renovaciones (próximo mes)" value={portfolio.renovacionesDelMes} subtitle="Mismo criterio que Pólizas — próximos 30 días" icon={CalendarClock} color="yellow" />
           <StatCard title="Documentación pendiente" value={portfolio.documentacionPendiente} icon={FileWarning} color="red" />
         </div>
       )}
@@ -288,6 +315,87 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
                   </li>
                 ))}
               </ul>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {portfolio && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Pólizas por ramo */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <PieChart className="h-4 w-4 text-[#1B3A6B]" />
+                Pólizas por ramo
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {Object.entries(portfolio.porRamo)
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([ramo, count]) => (
+                    <div key={ramo} className="flex items-center gap-2">
+                      <p className="text-xs text-gray-600 w-24 shrink-0 truncate">{ramo}</p>
+                      <div className="flex-1 bg-gray-100 rounded-full h-1.5">
+                        <div className="bg-[#1B3A6B] h-1.5 rounded-full transition-all" style={{ width: `${Math.round((count / Math.max(...Object.values(portfolio.porRamo), 1)) * 100)}%` }} />
+                      </div>
+                      <span className="text-xs font-semibold text-gray-700 w-7 text-right">{count}</span>
+                    </div>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Propuestas por estado (vigentes + histórico) */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <FileText className="h-4 w-4 text-[#1B3A6B]" />
+                Propuestas por estado
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {Object.entries(portfolio.propuestasPorEstado)
+                  .sort((a, b) => b[1] - a[1])
+                  .map(([estado, count]) => (
+                    <div key={estado} className="flex items-center gap-2">
+                      <p className="text-xs text-gray-600 w-24 shrink-0 truncate">{PROPOSAL_STATUS_LABELS_DIRECCION[estado] ?? estado}</p>
+                      <div className="flex-1 bg-gray-100 rounded-full h-1.5">
+                        <div className="bg-[#1B3A6B] h-1.5 rounded-full transition-all" style={{ width: `${Math.round((count / Math.max(...Object.values(portfolio.propuestasPorEstado), 1)) * 100)}%` }} />
+                      </div>
+                      <span className="text-xs font-semibold text-gray-700 w-7 text-right">{count}</span>
+                    </div>
+                  ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Renovaciones por nivel de urgencia */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                <CalendarClock className="h-4 w-4 text-[#1B3A6B]" />
+                Renovaciones por urgencia
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {[
+                  { label: 'Crítica (≤7 días)', value: portfolio.renovacionesPorUrgencia.critica, className: 'bg-red-500' },
+                  { label: 'Próximo mes (8-30 días)', value: portfolio.renovacionesPorUrgencia.proximoMes, className: 'bg-orange-400' },
+                  { label: 'Seguimiento (31-60 días)', value: portfolio.renovacionesPorUrgencia.seguimiento60, className: 'bg-gray-300' },
+                ].map(row => (
+                  <div key={row.label} className="flex items-center gap-2">
+                    <p className="text-xs text-gray-600 w-32 shrink-0">{row.label}</p>
+                    <div className="flex-1 bg-gray-100 rounded-full h-1.5">
+                      <div className={`${row.className} h-1.5 rounded-full transition-all`} style={{ width: `${Math.round((row.value / Math.max(portfolio.renovacionesPorUrgencia.critica, portfolio.renovacionesPorUrgencia.proximoMes, portfolio.renovacionesPorUrgencia.seguimiento60, 1)) * 100)}%` }} />
+                    </div>
+                    <span className="text-xs font-semibold text-gray-700 w-7 text-right">{row.value}</span>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </div>

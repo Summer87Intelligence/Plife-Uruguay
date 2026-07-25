@@ -42,6 +42,28 @@ export function makeRng(seed: number) {
     return random() < probabilityTrue
   }
 
+  /** Elección ponderada (ej. participación de mercado de aseguradoras). */
+  function pickWeighted<T extends string>(weights: Record<T, number>): T {
+    const entries = Object.entries(weights) as [T, number][]
+    const total = entries.reduce((sum, [, w]) => sum + w, 0)
+    let r = random() * total
+    for (const [key, w] of entries) {
+      r -= w
+      if (r <= 0) return key
+    }
+    return entries[entries.length - 1][0]
+  }
+
+  /** Shuffle determinístico (Fisher-Yates) — usado para repartir tiers/madurez/cartera sin sesgo de orden. */
+  function shuffle<T>(arr: readonly T[]): T[] {
+    const out = [...arr]
+    for (let i = out.length - 1; i > 0; i--) {
+      const j = int(0, i)
+      ;[out[i], out[j]] = [out[j], out[i]]
+    }
+    return out
+  }
+
   /** Fecha ISO (YYYY-MM-DD) a N días de una fecha base. */
   function dateOffset(base: Date, days: number): string {
     const d = new Date(base)
@@ -55,5 +77,5 @@ export function makeRng(seed: number) {
     return d.toISOString()
   }
 
-  return { random, int, pick, pickMany, bool, dateOffset, isoOffset }
+  return { random, int, pick, pickMany, bool, dateOffset, isoOffset, pickWeighted, shuffle }
 }

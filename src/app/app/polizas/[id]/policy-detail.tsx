@@ -49,8 +49,17 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
+function diasParaVencer(endDate: string | null): number | null {
+  if (!endDate) return null
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  return Math.round((new Date(endDate + 'T00:00:00').getTime() - today.getTime()) / 86_400_000)
+}
+
 export function PolicyDetail({ policy, canSeeCommission }: PolicyDetailProps) {
   const cta = STATUS_CTA[policy.status]
+  const enVentanaDeRenovacion = ['vigente', 'proxima_a_vencer', 'en_renovacion'].includes(policy.status)
+  const dias = diasParaVencer(policy.endDate)
+  const tieneRenovacionVinculada = enVentanaDeRenovacion && dias !== null && dias <= 60
 
   return (
     <div className="space-y-5 max-w-3xl">
@@ -94,6 +103,18 @@ export function PolicyDetail({ policy, canSeeCommission }: PolicyDetailProps) {
         <Field label="Inicio de vigencia" value={policy.startDate} />
         <Field label="Vencimiento" value={policy.endDate} />
       </Section>
+
+      {tieneRenovacionVinculada && (
+        <div className="rounded-xl border border-orange-100 bg-orange-50/60 px-5 py-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium text-gray-800">
+              {dias! < 0 ? `Renovación vencida hace ${-dias!} día${dias === -1 ? '' : 's'}` : dias === 0 ? 'Renovación vence hoy' : `Renovación en ${dias} día${dias === 1 ? '' : 's'}`}
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5">Esta póliza aparece en el listado de próximas renovaciones.</p>
+          </div>
+          <Link href="/app/polizas/renovaciones" className="shrink-0 text-xs font-medium text-[#1B3A6B] hover:underline">Ver renovaciones →</Link>
+        </div>
+      )}
 
       <Section title="Importes">
         <Field label="Prima" value={policy.premium != null ? `$${policy.premium.toLocaleString('es-UY')} ${policy.currency}` : null} />
