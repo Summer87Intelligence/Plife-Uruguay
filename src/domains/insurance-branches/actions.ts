@@ -1,6 +1,7 @@
 'use server'
 import { createClient } from '@/lib/supabase/server'
 import { getProfile } from '@/lib/auth'
+import { isDemoModeAuthEnabled } from '@/lib/demo-mode-auth'
 import { revalidatePath } from 'next/cache'
 import { normalizeText } from '@/domains/duplicates/normalize'
 import type { InsuranceBranch } from '@/types/database'
@@ -10,6 +11,9 @@ import { InsuranceBranchSchema } from './validation'
 type ActionResult = { data: InsuranceBranch } | { error: string }
 
 async function requireAdminProfile(): Promise<{ error: string } | null> {
+  // Modo Demo: el perfil sintético de bypass pasa el chequeo de rol de abajo,
+  // así que esta escritura sensible se bloquea explícitamente acá.
+  if (isDemoModeAuthEnabled()) return { error: 'Acción deshabilitada en Modo Demo.' }
   const profile = await getProfile()
   if (!profile) return { error: 'No autenticado' }
   if (profile.role !== 'admin') return { error: 'No autorizado: solo administración puede gestionar ramos' }

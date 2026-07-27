@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { getProfile, canAccessAll } from '@/lib/auth'
+import { isDemoModeAuthEnabled } from '@/lib/demo-mode-auth'
 import { validateStructuredPrompt } from '@/domains/ia-engine/prompt-validation'
 import { runMockAIEngine } from '@/domains/ia-engine/mock-runner'
 import { buildStructuredPrompt } from '@/domains/ia-engine/prompt-builder'
@@ -66,6 +67,9 @@ const MockAnalysisSchema = z.object({
 export type RunMockAnalysisInput = z.infer<typeof MockAnalysisSchema>
 
 async function requireAdmin() {
+  // Modo Demo: el perfil sintético de bypass pasa el chequeo de rol de abajo,
+  // así que estas escrituras de configuración se bloquean explícitamente acá.
+  if (isDemoModeAuthEnabled()) return null
   const profile = await getProfile()
   if (!profile || !canAccessAll(profile)) return null
   return profile

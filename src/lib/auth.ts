@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { UserRole, Profile, Database } from '@/types/database'
+import { isDemoModeAuthEnabled, DEMO_MODE_PROFILE } from '@/lib/demo-mode-auth'
 
 export type SessionAndProfile = {
   user: Awaited<ReturnType<typeof getSession>>
@@ -41,6 +42,17 @@ export function getAuthDebugInfo(session: SessionAndProfile): AuthDebugInfo | nu
 export async function resolveSessionAndProfile(
   supabase: SupabaseClient<Database>
 ): Promise<SessionAndProfile> {
+  // Modo Demo: ver src/lib/demo-mode-auth.ts para el gate completo. Nunca toca
+  // Supabase — devuelve un perfil sintético de solo lectura sin sesión real.
+  if (isDemoModeAuthEnabled()) {
+    return {
+      user: { id: DEMO_MODE_PROFILE.id, email: DEMO_MODE_PROFILE.email } as unknown as Awaited<ReturnType<typeof getSession>>,
+      profile: DEMO_MODE_PROFILE,
+      missingProfile: false,
+      inactiveProfile: false,
+    }
+  }
+
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
