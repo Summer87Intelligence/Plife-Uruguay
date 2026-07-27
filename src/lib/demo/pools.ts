@@ -1,12 +1,17 @@
 /**
  * Pools de datos plausibles para el universo mock de la demo comercial.
- * Nombres de empresas ficticios pero verosímiles para Uruguay; aseguradoras
- * reales del mercado; nombres de persona comunes en Uruguay.
+ * Nombres de empresas ficticios pero verosímiles para Uruguay; nombres de
+ * persona comunes en Uruguay.
  *
  * La lógica de generación (tiers de cuenta, madurez, relaciones) vive en
- * ./universe.ts — este archivo es solo "materia prima" plausible + reglas
- * de afinidad (rubro → ramo, participación de mercado).
+ * ./universe.ts — este archivo es solo "materia prima" plausible.
+ *
+ * Aseguradora y ramo NO se declaran acá como pool: derivan de la regla de
+ * negocio única en src/lib/business-config.ts (Bloque 1, aprobada
+ * 2026-07-25). No agregar otra aseguradora u otro ramo a este archivo sin
+ * antes actualizar esa configuración central.
  */
+import { PLIFE_BUSINESS_CONFIG } from '@/lib/business-config'
 
 export const NOMBRES = [
   'Lucía', 'Martín', 'Valentina', 'Federico', 'Camila', 'Rodrigo', 'Sofía', 'Nicolás',
@@ -194,18 +199,19 @@ export const POSICIONES = [
   'Gerente Administrativo', 'Directora Financiera', 'Encargado de Compras', 'Gerente de Operaciones',
 ] as const
 
-/** Aseguradoras reales del mercado (para la demo, no vinculadas al catálogo real de Admin todavía). */
-export const ASEGURADORAS_DEMO = ['BSE', 'Porto Seguro', 'Mapfre', 'SURA', 'Zurich', 'HDI'] as const
+/**
+ * Aseguradora(s) y ramo(s) del universo demo — derivan exclusivamente de la
+ * regla de negocio central (Bloque 1). Plife es agente exclusivo de MAPFRE
+ * Vida: un solo valor en cada lista, no un pool a elegir.
+ */
+export const ASEGURADORAS_DEMO = PLIFE_BUSINESS_CONFIG.allowedInsurers
 
-/** Participación de mercado relativa (BSE dominante, como en el mercado real de Uruguay). No suma 100 exacto, es relativa. */
+/** Un único valor (100% de participación) — no hay concentración que medir cuando hay una sola aseguradora. */
 export const ASEGURADORA_WEIGHTS: Record<string, number> = {
-  BSE: 30, Mapfre: 18, SURA: 17, 'Porto Seguro': 15, Zurich: 12, HDI: 8,
+  [PLIFE_BUSINESS_CONFIG.insurer]: 1,
 }
 
-export const RAMOS_DEMO = [
-  'Vehículos', 'Responsabilidad civil', 'Accidentes de trabajo', 'Vida',
-  'Incendio', 'Transporte', 'Hogar', 'Comercio',
-] as const
+export const RAMOS_DEMO = PLIFE_BUSINESS_CONFIG.allowedBranches
 
 interface Comercial {
   id: string
@@ -232,13 +238,49 @@ export const COMERCIALES_DEMO: Comercial[] = [
   { id: 'com-06', full_name: 'Martín Pérez', role: 'asesor', perfil: 'atrasado', carteraObjetivo: 26 },
 ]
 
+/**
+ * Categorías provisionales de producto dentro del único ramo permitido
+ * (Vida). No son nombres comerciales reales de MAPFRE ni de Plife — la
+ * Auditoría 360° y la auditoría de cobertura funcional (docs/audits/)
+ * confirmaron que ningún nombre comercial específico está validado todavía.
+ * Regla #8/#9 del Bloque 1: no inventar productos — se marcan explícitamente
+ * pendientes hasta que Plife confirme el catálogo real (Bloque 2).
+ */
 export const PRODUCTOS_POR_RAMO: Record<string, string[]> = {
-  'Vehículos': ['Flota comercial', 'Automóvil particular todo riesgo', 'Vehículos utilitarios'],
-  'Responsabilidad civil': ['RC profesional', 'RC general de la empresa', 'RC directores y gerentes'],
-  'Accidentes de trabajo': ['Colectivo de accidentes laborales', 'Cobertura de obra en construcción'],
-  'Vida': ['Vida colectiva de socios', 'Vida individual ejecutivo', 'Vida saldo deudor'],
-  'Incendio': ['Incendio y contenido comercial', 'Incendio edificio administrado'],
-  'Transporte': ['Carga general', 'Transporte de mercadería propia'],
-  'Hogar': ['Hogar edificio administrado', 'Hogar múltiple integral'],
-  'Comercio': ['Comercio — local + mercadería', 'Multirriesgo comercial'],
+  Vida: [
+    'Vida individual — PENDIENTE DE VALIDAR CON PLIFE (nombre comercial)',
+    'Vida individual con ahorro — PENDIENTE DE VALIDAR CON PLIFE (nombre comercial)',
+  ],
 }
+
+/**
+ * Titulares persona física para el universo demo de Pólizas (Bloque 1).
+ * Reemplaza la generación anterior basada en 120 empresas B2B — un seguro de
+ * vida individual tiene una persona como asegurado, no una empresa. Nombres
+ * distintos de los del equipo comercial (COMERCIALES_DEMO) para no
+ * confundir titular con asesor.
+ */
+export const TITULARES_VIDA_DEMO: { name: string; department: string }[] = [
+  { name: 'Lucía García', department: 'Montevideo' },
+  { name: 'Nicolás Fernández', department: 'Canelones' },
+  { name: 'Camila Bianchi', department: 'Montevideo' },
+  { name: 'Agustina Ferreira', department: 'Maldonado' },
+  { name: 'Gonzalo Machado', department: 'Montevideo' },
+  { name: 'Florencia Deleón', department: 'Colonia' },
+  { name: 'Diego Pintos', department: 'Montevideo' },
+  { name: 'Mariana Ríos', department: 'San José' },
+  { name: 'Ignacio Ortiz', department: 'Montevideo' },
+  { name: 'Victoria Correa', department: 'Paysandú' },
+  { name: 'Pablo Suárez', department: 'Montevideo' },
+  { name: 'Carolina Acosta', department: 'Canelones' },
+  { name: 'Andrés Bentancor', department: 'Montevideo' },
+  { name: 'Josefina Cabrera', department: 'Salto' },
+  { name: 'Sebastián Gómez', department: 'Montevideo' },
+  { name: 'Antonella Larrosa', department: 'Rivera' },
+  { name: 'Matías Methol', department: 'Montevideo' },
+  { name: 'Belén Núñez', department: 'Maldonado' },
+  { name: 'Álvaro Olivera', department: 'Montevideo' },
+  { name: 'Daniela Píriz', department: 'Canelones' },
+  { name: 'Juan Pablo Quiroga', department: 'Montevideo' },
+  { name: 'Rocío Rivero', department: 'Colonia' },
+] as const

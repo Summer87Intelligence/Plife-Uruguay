@@ -5,11 +5,12 @@ import { GettingStartedCard } from '@/components/onboarding/getting-started-card
 import { StatCard } from '@/components/ui/stat-card'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
-import { Users, Building2, TrendingUp, Megaphone, Activity, Target, AlertCircle, Clock, FileCheck2, FileText, CalendarClock, FileWarning, PieChart, UserCheck, Landmark } from 'lucide-react'
+import { Users, Building2, TrendingUp, Megaphone, Activity, Target, AlertCircle, Clock, FileCheck2, FileText, CalendarClock, FileWarning, PieChart, UserCheck, Layers, ShieldCheck } from 'lucide-react'
 import { OPPORTUNITY_STAGE_LABELS, OPPORTUNITY_STAGE_COLORS, PIPELINE_STAGES } from '@/lib/constants'
 import { formatRelativeDate } from '@/lib/utils'
 import { calcularScoreB2B, nivelColor, nivelLabel } from '@/lib/b2b/scoring'
 import { ICP_NOMBRES } from '@/lib/b2b/icp'
+import { POLICY_STATUS_LABELS, POLICY_ORIGIN_LABELS } from '@/domains/policies/types'
 import type { Company } from '@/types/database'
 import type { getExecutiveAlertsDemo, getDireccionMetricsDemo } from '@/lib/demo/universe'
 
@@ -41,10 +42,10 @@ interface DireccionViewProps {
     documentacionPendiente: number
     primaAnualAdministrada: number
     comisionEstimadaTotal: number
-    porAseguradora: DireccionMetricsDemo['porAseguradora']
-    porRamo: DireccionMetricsDemo['porRamo']
+    porEstado: DireccionMetricsDemo['porEstado']
+    porOrigen: DireccionMetricsDemo['porOrigen']
+    registrosIncompletos: number
     carteraPorEjecutivo: DireccionMetricsDemo['carteraPorEjecutivo']
-    facturacionPorEmpresa: DireccionMetricsDemo['facturacionPorEmpresa']
     renovacionesPorUrgencia: DireccionMetricsDemo['renovacionesPorUrgencia']
     propuestasPorEstado: DireccionMetricsDemo['propuestasPorEstado']
     totalLeadsActivos: number
@@ -78,7 +79,7 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
     metrics.totalContacts === 0 &&
     metrics.totalCompanies === 0 &&
     metrics.activeCampaigns === 0
-  const maxAseguradora = portfolio ? Math.max(...Object.values(portfolio.porAseguradora), 1) : 1
+  const maxEstado = portfolio ? Math.max(...Object.values(portfolio.porEstado), 1) : 1
 
   return (
     <div className="space-y-6">
@@ -257,25 +258,25 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
 
       {portfolio && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Cartera por aseguradora */}
+          {/* Distribución por estado de póliza */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <PieChart className="h-4 w-4 text-[#1B3A6B]" />
-                Cartera por aseguradora
+                Pólizas por estado
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {Object.entries(portfolio.porAseguradora)
+                {Object.entries(portfolio.porEstado)
                   .sort((a, b) => b[1] - a[1])
-                  .map(([insurer, count]) => (
-                    <div key={insurer} className="flex items-center gap-3">
-                      <p className="text-xs text-gray-600 w-28 shrink-0">{insurer}</p>
+                  .map(([status, count]) => (
+                    <div key={status} className="flex items-center gap-3">
+                      <p className="text-xs text-gray-600 w-32 shrink-0 truncate">{POLICY_STATUS_LABELS[status as keyof typeof POLICY_STATUS_LABELS] ?? status}</p>
                       <div className="flex-1 bg-gray-100 rounded-full h-2">
                         <div
                           className="bg-[#1B3A6B] h-2 rounded-full transition-all"
-                          style={{ width: `${Math.round((count / maxAseguradora) * 100)}%` }}
+                          style={{ width: `${Math.round((count / maxEstado) * 100)}%` }}
                         />
                       </div>
                       <span className="text-xs font-semibold text-gray-700 w-8 text-right">{count}</span>
@@ -283,7 +284,7 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
                   ))}
               </div>
               <p className="mt-3 text-xs text-gray-400">
-                {portfolio.totalPolicies} pólizas en total, distribuidas entre {Object.keys(portfolio.porAseguradora).length} aseguradoras.
+                {portfolio.totalPolicies} pólizas en total — cartera especializada en vida individual Mapfre.
               </p>
             </CardContent>
           </Card>
@@ -322,23 +323,23 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
 
       {portfolio && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Pólizas por ramo */}
+          {/* Distribución por origen: cartera heredada vs. originada en el CRM */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-sm">
-                <PieChart className="h-4 w-4 text-[#1B3A6B]" />
-                Pólizas por ramo
+                <Layers className="h-4 w-4 text-[#1B3A6B]" />
+                Pólizas por origen
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {Object.entries(portfolio.porRamo)
+                {Object.entries(portfolio.porOrigen)
                   .sort((a, b) => b[1] - a[1])
-                  .map(([ramo, count]) => (
-                    <div key={ramo} className="flex items-center gap-2">
-                      <p className="text-xs text-gray-600 w-24 shrink-0 truncate">{ramo}</p>
+                  .map(([origin, count]) => (
+                    <div key={origin} className="flex items-center gap-2">
+                      <p className="text-xs text-gray-600 w-24 shrink-0 truncate">{POLICY_ORIGIN_LABELS[origin as keyof typeof POLICY_ORIGIN_LABELS] ?? origin}</p>
                       <div className="flex-1 bg-gray-100 rounded-full h-1.5">
-                        <div className="bg-[#1B3A6B] h-1.5 rounded-full transition-all" style={{ width: `${Math.round((count / Math.max(...Object.values(portfolio.porRamo), 1)) * 100)}%` }} />
+                        <div className="bg-[#1B3A6B] h-1.5 rounded-full transition-all" style={{ width: `${Math.round((count / Math.max(...Object.values(portfolio.porOrigen), 1)) * 100)}%` }} />
                       </div>
                       <span className="text-xs font-semibold text-gray-700 w-7 text-right">{count}</span>
                     </div>
@@ -403,28 +404,31 @@ export function DireccionView({ metrics, stageCounts, recentActivities, topB2BOp
 
       {portfolio && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Concentración de cartera */}
+          {/* Calidad de datos de la cartera */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Landmark className="h-4 w-4 text-[#1B3A6B]" />
-                Concentración de cartera — top clientes
+                <ShieldCheck className="h-4 w-4 text-[#1B3A6B]" />
+                Calidad de datos de la cartera
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {portfolio.facturacionPorEmpresa.length === 0 ? (
+              {portfolio.totalPolicies === 0 ? (
                 <p className="text-sm text-gray-400 text-center py-4">Sin pólizas registradas todavía.</p>
               ) : (
-                <ul className="space-y-2">
-                  {portfolio.facturacionPorEmpresa.map(e => (
-                    <li key={e.empresa} className="flex items-center justify-between gap-3">
-                      <p className="text-sm text-gray-700 truncate">{e.empresa}</p>
-                      <p className="shrink-0 text-xs font-semibold text-gray-900">{UYU.format(e.primaTotal)}</p>
-                    </li>
-                  ))}
-                </ul>
+                <>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-2xl font-bold text-gray-900">{portfolio.totalPolicies - portfolio.registrosIncompletos}</p>
+                    <p className="text-sm text-gray-500">de {portfolio.totalPolicies} registros completos</p>
+                  </div>
+                  {portfolio.registrosIncompletos > 0 && (
+                    <p className="mt-2 text-xs text-amber-600">
+                      {portfolio.registrosIncompletos} póliza{portfolio.registrosIncompletos === 1 ? '' : 's'} con datos pendientes de completar — ver detalle en la ficha de cada una.
+                    </p>
+                  )}
+                </>
               )}
-              <p className="mt-3 text-xs text-gray-400">Prima anual administrada (UYU) por cliente, top 8.</p>
+              <p className="mt-3 text-xs text-gray-400">Nunca se completa un dato faltante con un valor inventado.</p>
             </CardContent>
           </Card>
 

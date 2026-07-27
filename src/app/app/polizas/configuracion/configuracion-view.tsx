@@ -5,6 +5,7 @@ import { PoliciesSubnav } from '@/components/policies/policies-subnav'
 import { CatalogManager } from '@/components/admin/catalog-manager'
 import { isDemoMode } from '@/lib/demo'
 import { DEMO_ASEGURADORAS, DEMO_RAMOS } from '@/lib/demo/universe'
+import { PLIFE_BUSINESS_CONFIG } from '@/lib/business-config'
 
 interface MockItem {
   id: string
@@ -12,27 +13,16 @@ interface MockItem {
   is_active: boolean
 }
 
+// Bloque 1: Plife es agente exclusivo de MAPFRE Vida — el fallback fuera de
+// demo también respeta la aseguradora y el ramo únicos (PLIFE_BUSINESS_CONFIG),
+// no una lista de opciones a elegir.
 const INITIAL_INSURERS: MockItem[] = isDemoMode()
   ? DEMO_ASEGURADORAS.map(a => ({ id: a.id, name: a.name, is_active: a.is_active }))
-  : [
-  { id: 'mi-1', name: 'BSE', is_active: true },
-  { id: 'mi-2', name: 'Porto Seguro', is_active: true },
-  { id: 'mi-3', name: 'Mapfre', is_active: true },
-  { id: 'mi-4', name: 'SURA', is_active: true },
-]
+  : [{ id: 'mi-1', name: PLIFE_BUSINESS_CONFIG.insurer, is_active: true }]
 
 const INITIAL_BRANCHES: MockItem[] = isDemoMode()
   ? DEMO_RAMOS.map(r => ({ id: r.id, name: r.name, is_active: r.is_active }))
-  : [
-  { id: 'mb-1', name: 'Vehículos', is_active: true },
-  { id: 'mb-2', name: 'Responsabilidad civil', is_active: true },
-  { id: 'mb-3', name: 'Accidentes de trabajo', is_active: true },
-  { id: 'mb-4', name: 'Vida', is_active: true },
-  { id: 'mb-5', name: 'Incendio', is_active: true },
-  { id: 'mb-6', name: 'Transporte', is_active: true },
-  { id: 'mb-7', name: 'Hogar', is_active: true },
-  { id: 'mb-8', name: 'Comercio', is_active: true },
-]
+  : [{ id: 'mb-1', name: PLIFE_BUSINESS_CONFIG.insuranceBranch, is_active: true }]
 
 let mockCounter = 100
 

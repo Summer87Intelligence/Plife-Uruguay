@@ -1,9 +1,10 @@
 import { describe, expect, it, afterEach } from 'vitest'
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
-import { getMockPolicies, getMockPolicyById, getUpcomingRenewals, getPendingDocumentation } from '@/domains/policies/mock-data'
+import { getMockPolicies, getMockPolicyById, getUpcomingRenewals, getPendingDocumentation, MOCK_POLICIES } from '@/domains/policies/mock-data'
 import { POLICY_BOARD_COLUMNS } from '@/domains/policies/types'
-import { DEMO_POLIZAS, DEMO_COMERCIALES, DEMO_ASEGURADORAS, DEMO_EMPRESAS } from '@/lib/demo/universe'
+import { DEMO_POLIZAS, DEMO_COMERCIALES, DEMO_ASEGURADORAS, DEMO_RAMOS } from '@/lib/demo/universe'
+import { PLIFE_BUSINESS_CONFIG } from '@/lib/business-config'
 
 // Bloque UI-0 (Gestión de Pólizas) — solo funciones puras sobre datos mock,
 // sin Supabase. Cuando exista persistencia real, este archivo se reemplaza
@@ -56,15 +57,14 @@ describe('POLICY_BOARD_COLUMNS', () => {
   })
 })
 
-describe('modo demo — Pólizas conectado al universo empresarial', () => {
+describe('modo demo — Pólizas conectado al universo de vida individual Mapfre (Bloque 1)', () => {
   const prevFlag = process.env.NEXT_PUBLIC_DEMO_MODE
   afterEach(() => { process.env.NEXT_PUBLIC_DEMO_MODE = prevFlag })
 
-  it('getMockPolicies() en demo mode devuelve el universo completo (entre 750 y 900)', () => {
+  it('getMockPolicies() en demo mode devuelve el dataset chico de Bloque 1 (exactamente 26)', () => {
     process.env.NEXT_PUBLIC_DEMO_MODE = 'true'
     const policies = getMockPolicies()
-    expect(policies.length).toBeGreaterThanOrEqual(750)
-    expect(policies.length).toBeLessThanOrEqual(900)
+    expect(policies).toHaveLength(26)
     expect(policies.length).toBe(DEMO_POLIZAS.length)
   })
 
@@ -81,34 +81,30 @@ describe('modo demo — Pólizas conectado al universo empresarial', () => {
     expect(getMockPolicyById('no-existe')).toBeNull()
   })
 
-  it('exactamente 50 renovaciones dentro del próximo mes (mismo cálculo que Dirección)', () => {
+  it('exactamente 5 renovaciones dentro del próximo mes (mismo cálculo que Dirección)', () => {
     process.env.NEXT_PUBLIC_DEMO_MODE = 'true'
     const delMes = getUpcomingRenewals().filter(r => r.daysToExpiry <= 30 && r.daysToExpiry >= -5)
-    expect(delMes).toHaveLength(50)
+    expect(delMes).toHaveLength(5)
   })
 
-  it('exactamente 15 casos de documentación pendiente', () => {
+  it('exactamente 4 casos de documentación pendiente', () => {
     process.env.NEXT_PUBLIC_DEMO_MODE = 'true'
-    expect(getPendingDocumentation()).toHaveLength(15)
+    expect(getPendingDocumentation()).toHaveLength(4)
   })
 
-  it('toda póliza del universo referencia un comercial, una aseguradora y una empresa reales', () => {
+  it('toda póliza del universo referencia un comercial real, y es Mapfre/Vida (aseguradora y ramo únicos)', () => {
     process.env.NEXT_PUBLIC_DEMO_MODE = 'true'
     const nombresComerciales = new Set(DEMO_COMERCIALES.map(c => c.full_name))
-    const nombresAseguradoras = new Set(DEMO_ASEGURADORAS.map(a => a.name))
-    const nombresEmpresas = new Set(DEMO_EMPRESAS.map(e => e.name))
     const policies = getMockPolicies()
     expect(policies.every(p => nombresComerciales.has(p.assignedToName))).toBe(true)
-    expect(policies.every(p => nombresAseguradoras.has(p.insurerName))).toBe(true)
-    expect(policies.every(p => nombresEmpresas.has(p.companyName))).toBe(true)
+    expect(policies.every(p => p.insurerName === PLIFE_BUSINESS_CONFIG.insurer)).toBe(true)
+    expect(policies.every(p => p.branchName === PLIFE_BUSINESS_CONFIG.insuranceBranch)).toBe(true)
   })
 
-  it('las 6 aseguradoras del universo aparecen en la cartera de pólizas', () => {
+  it('la única aseguradora y el único ramo del universo son Mapfre y Vida', () => {
     process.env.NEXT_PUBLIC_DEMO_MODE = 'true'
-    const policies = getMockPolicies()
-    for (const ins of DEMO_ASEGURADORAS) {
-      expect(policies.some(p => p.insurerName === ins.name)).toBe(true)
-    }
+    expect(DEMO_ASEGURADORAS.map(a => a.name)).toEqual(['Mapfre'])
+    expect(DEMO_RAMOS.map(r => r.name)).toEqual(['Vida'])
   })
 
   it('la documentación pendiente tiene antigüedad plausible (trámite reciente, no arrastrado por años)', () => {
@@ -151,6 +147,60 @@ describe('Pólizas — sin consultas a Supabase (comprobable por código fuente)
     for (const rel of ARCHIVOS_POLIZAS) {
       const source = readFileSync(join(SRC, rel), 'utf8')
       expect(source, `${rel} no debería consultar insurers/insurance_branches`).not.toMatch(/from\(['"]insurers['"]\)|from\(['"]insurance_branches['"]\)/)
+    }
+  })
+})
+
+/**
+ * Bloque 1 (2026-07-25) — regla de negocio aprobada: Plife es agente
+ * exclusivo de MAPFRE Vida. Estos tests blindan esa regla a nivel de código
+ * fuente, no solo de datos: ningún archivo del dominio de Pólizas ni del
+ * universo demo debería volver a mencionar otra aseguradora.
+ */
+describe('Pólizas — regla de negocio Bloque 1 (Mapfre/Vida exclusivo)', () => {
+  it('PLIFE_BUSINESS_CONFIG declara exactamente una aseguradora y un ramo permitidos', () => {
+    expect(PLIFE_BUSINESS_CONFIG.allowedInsurers).toHaveLength(1)
+    expect(PLIFE_BUSINESS_CONFIG.allowedBranches).toHaveLength(1)
+    expect(PLIFE_BUSINESS_CONFIG.allowedInsurers[0]).toBe('Mapfre')
+    expect(PLIFE_BUSINESS_CONFIG.allowedBranches[0]).toBe('Vida')
+  })
+
+  it('MOCK_POLICIES (fuera de modo demo) también respeta aseguradora y ramo únicos', () => {
+    expect(MOCK_POLICIES.length).toBeGreaterThan(0)
+    for (const p of MOCK_POLICIES) {
+      expect(p.insurerName).toBe('Mapfre')
+      expect(p.branchName).toBe('Vida')
+      expect(p.holderName.trim().length).toBeGreaterThan(0)
+    }
+  })
+
+  it('MOCK_POLICIES respeta el invariante de dataGapsNote', () => {
+    for (const p of MOCK_POLICIES) {
+      if (p.dataCompleteness === 'completo') expect(p.dataGapsNote).toBeNull()
+      else expect(p.dataGapsNote).toBeTruthy()
+    }
+  })
+
+  function listTsFiles(dir: string): string[] {
+    const out: string[] = []
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name)
+      if (entry.isDirectory()) out.push(...listTsFiles(full))
+      else if (entry.isFile() && (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx'))) out.push(full)
+    }
+    return out
+  }
+
+  it('ningún archivo de src/domains/policies o src/lib/demo menciona otra aseguradora', () => {
+    const PROHIBIDAS = ['BSE', 'SURA', 'Porto Seguro', 'Zurich', 'HDI']
+    const dirs = [join(process.cwd(), 'src/domains/policies'), join(process.cwd(), 'src/lib/demo')]
+    for (const dir of dirs) {
+      for (const file of listTsFiles(dir)) {
+        const source = readFileSync(file, 'utf8')
+        for (const term of PROHIBIDAS) {
+          expect(source, `${file} no debería mencionar "${term}"`).not.toContain(term)
+        }
+      }
     }
   })
 })

@@ -41,7 +41,7 @@ export function filterPolicies(policies: Policy[], criteria: PolicyFilterCriteri
       if (vencimiento === 'trimestre' && (days < 0 || days > 90)) return false
     }
     if (q && !(
-      p.companyName.toLowerCase().includes(q) ||
+      p.holderName.toLowerCase().includes(q) ||
       (p.policyNumber ?? '').toLowerCase().includes(q) ||
       p.product.toLowerCase().includes(q) ||
       (p.contactName ?? '').toLowerCase().includes(q)

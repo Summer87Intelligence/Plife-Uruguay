@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { DOCUMENT_TYPE_LABELS, POLICY_STATUS_COLORS, POLICY_STATUS_LABELS } from '@/domains/policies/types'
+import { DOCUMENT_TYPE_LABELS, POLICY_STATUS_COLORS, POLICY_STATUS_LABELS, POLICY_ORIGIN_LABELS, PAYMENT_FREQUENCY_LABELS } from '@/domains/policies/types'
 import type { Policy, PolicyStatus } from '@/domains/policies/types'
 import { isDemoMode } from '@/lib/demo'
 
@@ -69,7 +69,7 @@ export function PolicyDetail({ policy, canSeeCommission }: PolicyDetailProps) {
 
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900">{policy.companyName}</h1>
+          <h1 className="text-xl font-bold text-gray-900">{policy.holderName}</h1>
           <p className="text-sm text-gray-500">{policy.insurerName} · {policy.branchName}</p>
           {!isDemoMode() && <p className="text-xs text-amber-600 mt-0.5">Prototipo visual — dato de ejemplo, sin conexión a la base de datos.</p>}
         </div>
@@ -89,9 +89,15 @@ export function PolicyDetail({ policy, canSeeCommission }: PolicyDetailProps) {
         <Field label="Producto" value={policy.product} />
       </Section>
 
-      <Section title="Cliente">
-        <Field label="Empresa" value={policy.companyName} />
-        <Field label="Contacto responsable" value={policy.contactName} />
+      <Section title="Titular">
+        <Field label="Titular (persona física)" value={policy.holderName} />
+        <Field label="Origen" value={POLICY_ORIGIN_LABELS[policy.origin]} />
+        {policy.dataCompleteness === 'incompleto' && (
+          <div className="col-span-2">
+            <p className="text-xs text-gray-400">Calidad de datos</p>
+            <p className="text-sm text-amber-600 mt-0.5">Registro incompleto — {policy.dataGapsNote}</p>
+          </div>
+        )}
       </Section>
 
       <Section title="Aseguradora y ramo">
@@ -118,6 +124,7 @@ export function PolicyDetail({ policy, canSeeCommission }: PolicyDetailProps) {
 
       <Section title="Importes">
         <Field label="Prima" value={policy.premium != null ? `$${policy.premium.toLocaleString('es-UY')} ${policy.currency}` : null} />
+        <Field label="Frecuencia de pago" value={policy.paymentFrequency ? PAYMENT_FREQUENCY_LABELS[policy.paymentFrequency] : null} />
         <Field
           label="Comisión"
           value={

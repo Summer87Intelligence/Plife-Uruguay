@@ -96,20 +96,49 @@ export interface PolicyDocument {
   addedByName: string
 }
 
+/** Origen de la póliza (Bloque 1) — nunca "sin origen": toda póliza declara si viene de cartera preexistente o nació en el CRM. */
+export type PolicyOrigin = 'cartera_heredada' | 'originada_en_crm'
+
+export const POLICY_ORIGIN_LABELS: Record<PolicyOrigin, string> = {
+  cartera_heredada: 'Cartera heredada',
+  originada_en_crm: 'Originada en el CRM',
+}
+
+/** Frecuencia de pago de la prima (Bloque 1 — dato operativo, no de suscripción). */
+export type PaymentFrequency = 'mensual' | 'trimestral' | 'semestral' | 'anual'
+
+export const PAYMENT_FREQUENCY_LABELS: Record<PaymentFrequency, string> = {
+  mensual: 'Mensual',
+  trimestral: 'Trimestral',
+  semestral: 'Semestral',
+  anual: 'Anual',
+}
+
+/** Calidad/completitud del registro — nunca se inventa un dato faltante, se declara pendiente. */
+export type DataCompleteness = 'completo' | 'incompleto'
+
 /** Forma objetivo del modelo de datos — ver docs/product/PLIFE-GESTION-POLIZAS-V1.md §9. */
 export interface Policy {
   id: string
   policyNumber: string | null
-  companyName: string
+  /** Persona física titular/asegurada — Plife es corredor especializado en vida individual (Bloque 1). */
+  holderName: string
+  /** Contacto adicional (referente distinto del titular), cuando corresponda. Normalmente null en vida individual. */
   contactName: string | null
   insurerName: string
   branchName: string
+  /** Categoría provisional — el catálogo maestro de productos confirmados es un bloque posterior. */
   product: string
   status: PolicyStatus
   startDate: string | null
   endDate: string | null
   premium: number | null
   currency: string
+  paymentFrequency: PaymentFrequency | null
+  origin: PolicyOrigin
+  dataCompleteness: DataCompleteness
+  /** Qué falta exactamente cuando dataCompleteness es 'incompleto' — nunca se completa con un valor inventado. */
+  dataGapsNote: string | null
   // Comisión: visible solo para dirección/admin (docs §9, decisión de comisión V1).
   commissionValue: number | null
   commissionType: 'percentage' | 'fixed' | null
@@ -123,13 +152,13 @@ export interface Policy {
 }
 
 export interface PolicyFormData {
-  companyName: string
-  contactName: string
+  holderName: string
   insurerName: string
   branchName: string
   product: string
   startDate: string
   endDate: string
   premium: string
+  paymentFrequency: string
   nextAction: string
 }

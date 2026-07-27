@@ -5,7 +5,7 @@ const {
   DEMO_COMERCIALES, DEMO_EMPRESAS, DEMO_CONTACTOS, DEMO_POLIZAS,
   DEMO_OPORTUNIDADES, DEMO_OPORTUNIDADES_HISTORICAS,
   DEMO_PROPUESTAS, DEMO_PROPUESTAS_HISTORICAS,
-  DEMO_LEADS, DEMO_CAMPANAS, DEMO_ASEGURADORAS,
+  DEMO_LEADS, DEMO_CAMPANAS, DEMO_ASEGURADORAS, DEMO_RAMOS,
   getUpcomingRenewalsDemo, getPendingDocumentationDemo, getDireccionMetricsDemo,
   getDemoHistoriasTransversales, HISTORIA_A_EMPRESA_ID, HISTORIA_B_LEAD_ID, HISTORIA_C_EMPRESA_ID,
 } = universe
@@ -18,11 +18,12 @@ describe('universo empresarial — cantidades aprobadas', () => {
   it('120 empresas', () => expect(DEMO_EMPRESAS).toHaveLength(120))
   it('~250 contactos', () => expect(DEMO_CONTACTOS.length).toBeGreaterThanOrEqual(240))
   it('~250 contactos (cota superior)', () => expect(DEMO_CONTACTOS.length).toBeLessThanOrEqual(260))
-  it('entre 750 y 900 pólizas', () => {
-    expect(DEMO_POLIZAS.length).toBeGreaterThanOrEqual(750)
-    expect(DEMO_POLIZAS.length).toBeLessThanOrEqual(900)
-  })
-  it('6 aseguradoras', () => expect(DEMO_ASEGURADORAS).toHaveLength(6))
+  // Bloque 1 (2026-07-25): pólizas de vida individual son por persona, no por
+  // empresa — el dataset pasó de ~800 (generado desde 120 empresas B2B) a un
+  // set chico y escrito a mano (ver POLICY_SPECS en universe.ts).
+  it('exactamente 26 pólizas (dataset chico Bloque 1)', () => expect(DEMO_POLIZAS).toHaveLength(26))
+  it('1 aseguradora (Mapfre) — Plife es agente exclusivo', () => expect(DEMO_ASEGURADORAS).toHaveLength(1))
+  it('1 ramo (Vida) — negocio especializado en vida individual', () => expect(DEMO_RAMOS).toHaveLength(1))
   it('equipo comercial: 1 director + 1 líder + 4 asesores', () => {
     expect(DEMO_COMERCIALES).toHaveLength(6)
     expect(DEMO_COMERCIALES.filter(c => c.role === 'direccion')).toHaveLength(1)
@@ -41,12 +42,15 @@ describe('universo empresarial — cantidades aprobadas', () => {
     expect(DEMO_CAMPANAS).toHaveLength(20)
     expect(DEMO_CAMPANAS.filter(c => c.status === 'activa')).toHaveLength(4)
   })
-  it('exactamente 50 renovaciones dentro del próximo mes', () => {
+  // 5 = 3 en bucket "proxima_mes" (endDate +1..+28) + 2 en "renovacion_mes"
+  // (endDate -3..+3) del nuevo dataset chico — ver POLICY_SPECS en universe.ts.
+  it('exactamente 5 renovaciones dentro del próximo mes', () => {
     const metrics = getDireccionMetricsDemo()
-    expect(metrics.renovacionesDelMes).toBe(50)
+    expect(metrics.renovacionesDelMes).toBe(5)
   })
-  it('exactamente 15 casos con documentación pendiente', () => {
-    expect(getPendingDocumentationDemo()).toHaveLength(15)
+  // 4 = pólizas en bucket "pendiente_documentacion" del nuevo dataset chico.
+  it('exactamente 4 casos con documentación pendiente', () => {
+    expect(getPendingDocumentationDemo()).toHaveLength(4)
   })
 })
 
@@ -67,7 +71,6 @@ describe('universo empresarial — unicidad de IDs', () => {
 
 describe('universo empresarial — referencias válidas', () => {
   const empresaIds = new Set(DEMO_EMPRESAS.map(e => e.id))
-  const empresaNames = new Set(DEMO_EMPRESAS.map(e => e.name))
   const comercialIds = new Set(DEMO_COMERCIALES.map(c => c.id))
   const comercialNames = new Set(DEMO_COMERCIALES.map(c => c.full_name))
 
@@ -77,8 +80,11 @@ describe('universo empresarial — referencias válidas', () => {
   it('toda empresa está asignada a un comercial existente', () => {
     expect(DEMO_EMPRESAS.every(e => e.assigned_to && comercialIds.has(e.assigned_to))).toBe(true)
   })
-  it('toda póliza pertenece a una empresa real del universo (por nombre)', () => {
-    expect(DEMO_POLIZAS.every(p => empresaNames.has(p.companyName))).toBe(true)
+  it('toda póliza tiene un titular (persona física) no vacío', () => {
+    expect(DEMO_POLIZAS.every(p => typeof p.holderName === 'string' && p.holderName.trim().length > 0)).toBe(true)
+  })
+  it('ningún titular de póliza coincide con el nombre de un asesor (no confundir titular con comercial)', () => {
+    expect(DEMO_POLIZAS.every(p => !comercialNames.has(p.holderName))).toBe(true)
   })
   it('toda póliza está asignada a un comercial real', () => {
     expect(DEMO_POLIZAS.every(p => comercialNames.has(p.assignedToName))).toBe(true)
@@ -117,17 +123,6 @@ describe('universo empresarial — totales por estado y distribución', () => {
     const sum = statuses.reduce((acc, s) => acc + DEMO_POLIZAS.filter(p => p.status === s).length, 0)
     expect(sum).toBe(DEMO_POLIZAS.length)
   })
-  it('distribución no vacía por aseguradora: las 6 tienen al menos una póliza', () => {
-    for (const ins of DEMO_ASEGURADORAS) {
-      expect(DEMO_POLIZAS.some(p => p.insurerName === ins.name)).toBe(true)
-    }
-  })
-  it('la cartera por aseguradora no es artificialmente uniforme (BSE es la de mayor participación)', () => {
-    const counts: Record<string, number> = {}
-    for (const p of DEMO_POLIZAS) counts[p.insurerName] = (counts[p.insurerName] ?? 0) + 1
-    const max = Math.max(...Object.values(counts))
-    expect(counts['BSE']).toBe(max)
-  })
   it('hay variación de desempeño entre comerciales (no todos con la misma cantidad de empresas)', () => {
     const metrics = getDireccionMetricsDemo()
     const empresasPorComercial = metrics.carteraPorEjecutivo.map(c => c.empresas)
@@ -135,23 +130,47 @@ describe('universo empresarial — totales por estado y distribución', () => {
   })
 })
 
+describe('universo empresarial — regla de negocio Bloque 1 (Mapfre/Vida exclusivo)', () => {
+  const PROHIBIDAS = ['BSE', 'SURA', 'Porto Seguro', 'Zurich', 'HDI']
+  const RAMOS_VIEJOS = ['Vehículos', 'Responsabilidad civil', 'Accidentes de trabajo', 'Incendio', 'Transporte', 'Hogar', 'Comercio']
+
+  it('DEMO_ASEGURADORAS es exactamente ["Mapfre"]', () => {
+    expect(DEMO_ASEGURADORAS.map(a => a.name)).toEqual(['Mapfre'])
+  })
+  it('DEMO_RAMOS es exactamente ["Vida"]', () => {
+    expect(DEMO_RAMOS.map(r => r.name)).toEqual(['Vida'])
+  })
+  it('toda póliza es Mapfre y Vida — ninguna aseguradora ni ramo viejo aparece', () => {
+    for (const p of DEMO_POLIZAS) {
+      expect(p.insurerName).toBe('Mapfre')
+      expect(p.branchName).toBe('Vida')
+      expect(PROHIBIDAS).not.toContain(p.insurerName)
+      expect(RAMOS_VIEJOS).not.toContain(p.branchName)
+    }
+  })
+  it('toda póliza declara origin y dataCompleteness válidos, con invariante de dataGapsNote', () => {
+    for (const p of DEMO_POLIZAS) {
+      expect(['cartera_heredada', 'originada_en_crm']).toContain(p.origin)
+      expect(['completo', 'incompleto']).toContain(p.dataCompleteness)
+      if (p.dataCompleteness === 'completo') expect(p.dataGapsNote).toBeNull()
+      else expect(p.dataGapsNote).toBeTruthy()
+    }
+  })
+  it('leads y oportunidades heredan el ramo único (Vida) — la afinidad rubro→ramo queda sin efecto', () => {
+    expect(DEMO_LEADS.every(l => l.interest_area === 'Vida')).toBe(true)
+    expect(DEMO_OPORTUNIDADES.every(o => o.suggested_product === 'Vida')).toBe(true)
+    expect(DEMO_OPORTUNIDADES_HISTORICAS.every(o => o.suggested_product === 'Vida')).toBe(true)
+  })
+})
+
 describe('universo empresarial — historias transversales', () => {
   const historias = getDemoHistoriasTransversales()
 
-  it('Historia A: empresa estratégica identificable por id', () => {
+  it('Historia A: empresa identificable por id, con contactos y propuesta', () => {
     expect(HISTORIA_A_EMPRESA_ID).toBeTruthy()
     expect(historias.historiaA.empresa.id).toBe(HISTORIA_A_EMPRESA_ID)
-  })
-  it('Historia A: 12 pólizas, 1 renovación este mes, 2 documentos faltantes, 1 propuesta', () => {
-    expect(historias.historiaA.polizas).toHaveLength(12)
-    expect(historias.historiaA.polizas.filter(p => p.status === 'pendiente_documentacion')).toHaveLength(2)
-    expect(historias.historiaA.polizas.filter(p => p.status === 'proxima_a_vencer').length).toBeGreaterThanOrEqual(1)
     expect(historias.historiaA.contactos).toHaveLength(3)
     expect(historias.historiaA.propuesta).not.toBeNull()
-  })
-  it('Historia A: cubierta por 2 comerciales distintos', () => {
-    const nombres = new Set(historias.historiaA.polizas.map(p => p.assignedToName))
-    expect(nombres.size).toBeGreaterThanOrEqual(2)
   })
   it('Historia B: lead identificable por id, con oportunidad y propuesta vinculadas, sin empresa', () => {
     expect(HISTORIA_B_LEAD_ID).toBeTruthy()
@@ -160,21 +179,20 @@ describe('universo empresarial — historias transversales', () => {
     expect(historias.historiaB.oportunidad?.company_id).toBeNull()
     expect(historias.historiaB.propuesta).not.toBeNull()
   })
-  it('Historia C: empresa identificable por id con documentación pendiente real', () => {
+  it('Historia C: empresa identificable por id', () => {
     expect(HISTORIA_C_EMPRESA_ID).toBeTruthy()
     expect(historias.historiaC.empresa.id).toBe(HISTORIA_C_EMPRESA_ID)
-    expect(historias.historiaC.polizasPendientes.length).toBeGreaterThanOrEqual(2)
   })
 })
 
 describe('universo empresarial — determinismo', () => {
   it('dos cargas independientes del módulo producen exactamente el mismo universo', async () => {
-    const first = { empresas: DEMO_EMPRESAS.map(e => e.name), polizas: DEMO_POLIZAS.map(p => p.id + p.status + p.companyName) }
+    const first = { empresas: DEMO_EMPRESAS.map(e => e.name), polizas: DEMO_POLIZAS.map(p => p.id + p.status + p.holderName) }
 
     vi.resetModules()
     const reloaded = await import('@/lib/demo/universe')
 
     expect(reloaded.DEMO_EMPRESAS.map(e => e.name)).toEqual(first.empresas)
-    expect(reloaded.DEMO_POLIZAS.map(p => p.id + p.status + p.companyName)).toEqual(first.polizas)
+    expect(reloaded.DEMO_POLIZAS.map(p => p.id + p.status + p.holderName)).toEqual(first.polizas)
   })
 })

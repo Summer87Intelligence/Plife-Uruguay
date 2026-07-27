@@ -45,34 +45,63 @@ describe('Dirección — totales base coinciden con universe.ts', () => {
   })
 })
 
-describe('Dirección — distribución por aseguradora', () => {
+// Bloque 1 (2026-07-25): "distribución por aseguradora" y "distribución por
+// ramo" se retiraron de Dirección — con una única aseguradora (Mapfre) y un
+// único ramo (Vida) no hay concentración ni distribución que medir. En su
+// lugar: distribución por estado de póliza y por origen (cartera heredada
+// vs. originada en el CRM).
+describe('Dirección — distribución por estado de póliza', () => {
   const m = getDireccionMetricsDemo()
 
-  it('suma de la distribución por aseguradora iguala el total de pólizas', () => {
-    const suma = Object.values(m.porAseguradora).reduce((a, b) => a + b, 0)
+  it('suma de la distribución por estado iguala el total de pólizas', () => {
+    const suma = Object.values(m.porEstado).reduce((a, b) => a + b, 0)
     expect(suma).toBe(DEMO_POLIZAS.length)
   })
 
-  it('las 6 aseguradoras del universo están representadas', () => {
-    for (const ins of DEMO_ASEGURADORAS) {
-      expect(m.porAseguradora[ins.name]).toBeGreaterThan(0)
+  it('los estados que aparecen son estados válidos de PolicyStatus', () => {
+    const ESTADOS_VALIDOS = new Set([
+      'borrador', 'cotizacion', 'pendiente_documentacion', 'enviada_a_aseguradora', 'emitida',
+      'vigente', 'proxima_a_vencer', 'en_renovacion', 'renovada', 'no_renovada', 'cancelada', 'rechazada',
+    ])
+    for (const estado of Object.keys(m.porEstado)) expect(ESTADOS_VALIDOS.has(estado)).toBe(true)
+  })
+})
+
+describe('Dirección — distribución por origen (cartera heredada vs. CRM)', () => {
+  const m = getDireccionMetricsDemo()
+
+  it('suma de la distribución por origen iguala el total de pólizas', () => {
+    const suma = Object.values(m.porOrigen).reduce((a, b) => a + b, 0)
+    expect(suma).toBe(DEMO_POLIZAS.length)
+  })
+
+  it('solo existen los dos orígenes válidos', () => {
+    for (const origen of Object.keys(m.porOrigen)) {
+      expect(['cartera_heredada', 'originada_en_crm']).toContain(origen)
     }
   })
 })
 
-describe('Dirección — distribución por ramo', () => {
-  const m = getDireccionMetricsDemo()
+describe('Dirección — calidad de datos de la cartera', () => {
+  it('registrosIncompletos coincide con las pólizas dataCompleteness === "incompleto"', () => {
+    const m = getDireccionMetricsDemo()
+    expect(m.registrosIncompletos).toBe(DEMO_POLIZAS.filter(p => p.dataCompleteness === 'incompleto').length)
+  })
+})
 
-  it('suma de la distribución por ramo iguala el total de pólizas', () => {
-    const suma = Object.values(m.porRamo).reduce((a, b) => a + b, 0)
-    expect(suma).toBe(DEMO_POLIZAS.length)
+describe('Dirección — regla de negocio Bloque 1 (Mapfre/Vida exclusivo)', () => {
+  it('1 aseguradora y 1 ramo en todo el universo', () => {
+    expect(DEMO_ASEGURADORAS).toHaveLength(1)
+    expect(DEMO_RAMOS).toHaveLength(1)
+    expect(DEMO_ASEGURADORAS[0].name).toBe('Mapfre')
+    expect(DEMO_RAMOS[0].name).toBe('Vida')
   })
 
-  it('los ramos que aparecen existen en el catálogo DEMO_RAMOS', () => {
-    const nombresRamos = new Set(DEMO_RAMOS.map(r => r.name))
-    for (const ramo of Object.keys(m.porRamo)) {
-      expect(nombresRamos.has(ramo)).toBe(true)
-    }
+  it('getDireccionMetricsDemo() ya no expone porAseguradora, porRamo ni facturacionPorEmpresa', () => {
+    const m = getDireccionMetricsDemo() as Record<string, unknown>
+    expect(m.porAseguradora).toBeUndefined()
+    expect(m.porRamo).toBeUndefined()
+    expect(m.facturacionPorEmpresa).toBeUndefined()
   })
 })
 
@@ -125,8 +154,10 @@ describe('Dirección — propuestas por estado', () => {
 describe('Dirección — renovaciones', () => {
   const m = getDireccionMetricsDemo()
 
-  it('renovacionesDelMes es exactamente 50, según el universo aprobado', () => {
-    expect(m.renovacionesDelMes).toBe(50)
+  // 5 = 3 en bucket "proxima_mes" + 2 en "renovacion_mes" del dataset chico
+  // de Bloque 1 (POLICY_SPECS en universe.ts) — ver demo-universe.test.ts.
+  it('renovacionesDelMes es exactamente 5, según el dataset chico aprobado (Bloque 1)', () => {
+    expect(m.renovacionesDelMes).toBe(5)
   })
 
   it('renovacionesPorUrgencia suma exactamente a renovacionesProximas (ventana de 60 días)', () => {
@@ -145,8 +176,9 @@ describe('Dirección — renovaciones', () => {
 })
 
 describe('Dirección — documentación pendiente', () => {
-  it('exactamente 15, según el universo aprobado', () => {
-    expect(getDireccionMetricsDemo().documentacionPendiente).toBe(15)
+  // 4 = pólizas en bucket "pendiente_documentacion" del dataset chico (Bloque 1).
+  it('exactamente 4, según el dataset chico aprobado (Bloque 1)', () => {
+    expect(getDireccionMetricsDemo().documentacionPendiente).toBe(4)
   })
 })
 
@@ -174,14 +206,17 @@ describe('Dirección — alertas ejecutivas', () => {
     }
   })
 
-  it('la alerta de concentración por aseguradora refleja la participación real de la principal', () => {
+  it('no existe ninguna alerta de concentración por aseguradora ni de clientes estratégicos por empresa (retiradas en Bloque 1)', () => {
+    expect(alertas.find(a => a.id === 'alerta-concentracion-aseguradora')).toBeUndefined()
+    expect(alertas.find(a => a.id === 'alerta-clientes-estrategicos')).toBeUndefined()
+  })
+
+  it('la alerta de calidad de datos refleja registrosIncompletos', () => {
     const m = getDireccionMetricsDemo()
-    const alerta = alertas.find(a => a.id === 'alerta-concentracion-aseguradora')
-    const top = Object.entries(m.porAseguradora).sort((a, b) => b[1] - a[1])[0]
-    const share = top[1] / DEMO_POLIZAS.length
-    if (share > 0.25) {
+    const alerta = alertas.find(a => a.id === 'alerta-calidad-datos')
+    if (m.registrosIncompletos > 0) {
       expect(alerta).toBeDefined()
-      expect(alerta!.title).toContain(top[0])
+      expect(alerta!.title).toContain(String(m.registrosIncompletos))
     } else {
       expect(alerta).toBeUndefined()
     }

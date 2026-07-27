@@ -2,20 +2,30 @@ import { describe, expect, it } from 'vitest'
 import { filterPolicies, daysToExpiryOf } from '@/domains/policies/filters'
 import type { Policy } from '@/domains/policies/types'
 
+// Bloque 1 (2026-07-25): Plife es agente exclusivo de MAPFRE Vida — el
+// fixture por defecto respeta esa regla (aseguradora Mapfre, ramo Vida,
+// titular persona física). El describe "estado / aseguradora / ramo /
+// comercial" sigue probando el mecanismo genérico de filterPolicies (que no
+// conoce la regla de negocio) con valores de prueba claramente ficticios,
+// nunca con nombres reales de otras aseguradoras.
 function pol(overrides: Partial<Policy>): Policy {
   return {
     id: 'pol-x',
-    policyNumber: 'BSE-1',
-    companyName: 'Empresa X',
-    contactName: 'Contacto X',
-    insurerName: 'BSE',
-    branchName: 'Vehículos',
-    product: 'Flota comercial',
+    policyNumber: 'MAP-1',
+    holderName: 'Titular X',
+    contactName: null,
+    insurerName: 'Mapfre',
+    branchName: 'Vida',
+    product: 'Vida individual — PENDIENTE DE VALIDAR CON PLIFE (nombre comercial)',
     status: 'vigente',
     startDate: '2026-01-01',
     endDate: '2026-12-31',
     premium: 100000,
     currency: 'UYU',
+    paymentFrequency: 'mensual',
+    origin: 'cartera_heredada',
+    dataCompleteness: 'completo',
+    dataGapsNote: null,
     commissionValue: 10,
     commissionType: 'percentage',
     assignedToName: 'Ana Deleón',
@@ -40,14 +50,14 @@ describe('filterPolicies — sin filtros', () => {
 
 describe('filterPolicies — búsqueda', () => {
   const policies = [
-    pol({ id: 'a', companyName: 'Transportes del Sur', policyNumber: 'BSE-100' }),
-    pol({ id: 'b', companyName: 'Clínica Nova Salud', policyNumber: 'SUR-200' }),
+    pol({ id: 'a', holderName: 'Lucía García', policyNumber: 'MAP-100' }),
+    pol({ id: 'b', holderName: 'Nicolás Fernández', policyNumber: 'MAP-200' }),
   ]
-  it('busca por empresa (case-insensitive)', () => {
-    expect(filterPolicies(policies, { search: 'transportes' }).map(p => p.id)).toEqual(['a'])
+  it('busca por titular (case-insensitive)', () => {
+    expect(filterPolicies(policies, { search: 'lucía' }).map(p => p.id)).toEqual(['a'])
   })
   it('busca por número de póliza', () => {
-    expect(filterPolicies(policies, { search: 'sur-200' }).map(p => p.id)).toEqual(['b'])
+    expect(filterPolicies(policies, { search: 'map-200' }).map(p => p.id)).toEqual(['b'])
   })
   it('sin coincidencias devuelve vacío', () => {
     expect(filterPolicies(policies, { search: 'no existe esto' })).toHaveLength(0)
@@ -55,25 +65,28 @@ describe('filterPolicies — búsqueda', () => {
 })
 
 describe('filterPolicies — estado / aseguradora / ramo / comercial', () => {
+  // insurerName/branchName ficticios a propósito (el mecanismo genérico de
+  // filterPolicies no conoce la regla de negocio de Plife) — nunca nombres
+  // reales de otras aseguradoras/ramos.
   const policies = [
-    pol({ id: 'a', status: 'vigente', insurerName: 'BSE', branchName: 'Vehículos', assignedToName: 'Ana Deleón' }),
-    pol({ id: 'b', status: 'proxima_a_vencer', insurerName: 'SURA', branchName: 'Incendio', assignedToName: 'Rodrigo Silva' }),
+    pol({ id: 'a', status: 'vigente', insurerName: 'Aseguradora Test Uno', branchName: 'Ramo Test Uno', assignedToName: 'Ana Deleón' }),
+    pol({ id: 'b', status: 'proxima_a_vencer', insurerName: 'Aseguradora Test Dos', branchName: 'Ramo Test Dos', assignedToName: 'Rodrigo Silva' }),
   ]
   it('filtra por estado', () => {
     expect(filterPolicies(policies, { estado: 'proxima_a_vencer' }).map(p => p.id)).toEqual(['b'])
   })
   it('filtra por aseguradora', () => {
-    expect(filterPolicies(policies, { aseguradora: 'BSE' }).map(p => p.id)).toEqual(['a'])
+    expect(filterPolicies(policies, { aseguradora: 'Aseguradora Test Uno' }).map(p => p.id)).toEqual(['a'])
   })
   it('filtra por ramo', () => {
-    expect(filterPolicies(policies, { ramo: 'Incendio' }).map(p => p.id)).toEqual(['b'])
+    expect(filterPolicies(policies, { ramo: 'Ramo Test Dos' }).map(p => p.id)).toEqual(['b'])
   })
   it('filtra por comercial', () => {
     expect(filterPolicies(policies, { comercial: 'Rodrigo Silva' }).map(p => p.id)).toEqual(['b'])
   })
   it('combina varios filtros a la vez (AND)', () => {
-    expect(filterPolicies(policies, { estado: 'vigente', aseguradora: 'BSE' }).map(p => p.id)).toEqual(['a'])
-    expect(filterPolicies(policies, { estado: 'vigente', aseguradora: 'SURA' })).toHaveLength(0)
+    expect(filterPolicies(policies, { estado: 'vigente', aseguradora: 'Aseguradora Test Uno' }).map(p => p.id)).toEqual(['a'])
+    expect(filterPolicies(policies, { estado: 'vigente', aseguradora: 'Aseguradora Test Dos' })).toHaveLength(0)
   })
 })
 

@@ -30,8 +30,6 @@ export function PoliciesView({ initialPolicies, renewalsMesCount, pendingDocsCou
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [estadoFiltro, setEstadoFiltro] = useState(ALL)
-  const [aseguradoraFiltro, setAseguradoraFiltro] = useState(ALL)
-  const [ramoFiltro, setRamoFiltro] = useState(ALL)
   const [comercialFiltro, setComercialFiltro] = useState(ALL)
   const [vencimientoFiltro, setVencimientoFiltro] = useState(ALL)
 
@@ -41,16 +39,20 @@ export function PoliciesView({ initialPolicies, renewalsMesCount, pendingDocsCou
     const newPolicy: Policy = {
       id: `mock-${mockIdCounter}`,
       policyNumber: null,
-      companyName: data.companyName,
-      contactName: data.contactName || null,
+      holderName: data.holderName,
+      contactName: null,
       insurerName: data.insurerName,
-      branchName: data.branchName || '—',
+      branchName: data.branchName,
       product: data.product || '—',
       status: 'borrador',
       startDate: data.startDate || null,
       endDate: data.endDate || null,
       premium: data.premium ? Number(data.premium) : null,
       currency: 'UYU',
+      paymentFrequency: (data.paymentFrequency as Policy['paymentFrequency']) || null,
+      origin: 'originada_en_crm',
+      dataCompleteness: 'completo',
+      dataGapsNote: null,
       commissionValue: null,
       commissionType: null,
       assignedToName: 'Vos',
@@ -69,16 +71,6 @@ export function PoliciesView({ initialPolicies, renewalsMesCount, pendingDocsCou
     return [{ value: ALL, label: 'Todos los estados' }, ...presentes.map(s => ({ value: s, label: POLICY_STATUS_LABELS[s] }))]
   }, [policies])
 
-  const aseguradoraOptions = useMemo(() => {
-    const presentes = Array.from(new Set(policies.map(p => p.insurerName))).sort()
-    return [{ value: ALL, label: 'Todas las aseguradoras' }, ...presentes.map(n => ({ value: n, label: n }))]
-  }, [policies])
-
-  const ramoOptions = useMemo(() => {
-    const presentes = Array.from(new Set(policies.map(p => p.branchName))).sort()
-    return [{ value: ALL, label: 'Todos los ramos' }, ...presentes.map(n => ({ value: n, label: n }))]
-  }, [policies])
-
   const comercialOptions = useMemo(() => {
     const presentes = Array.from(new Set(policies.map(p => p.assignedToName))).sort()
     return [{ value: ALL, label: 'Todos los comerciales' }, ...presentes.map(n => ({ value: n, label: n }))]
@@ -93,11 +85,11 @@ export function PoliciesView({ initialPolicies, renewalsMesCount, pendingDocsCou
   ]
 
   const filteredPolicies = useMemo(
-    () => filterPolicies(policies, { search, estado: estadoFiltro, aseguradora: aseguradoraFiltro, ramo: ramoFiltro, comercial: comercialFiltro, vencimiento: vencimientoFiltro }),
-    [policies, search, estadoFiltro, aseguradoraFiltro, ramoFiltro, comercialFiltro, vencimientoFiltro]
+    () => filterPolicies(policies, { search, estado: estadoFiltro, comercial: comercialFiltro, vencimiento: vencimientoFiltro }),
+    [policies, search, estadoFiltro, comercialFiltro, vencimientoFiltro]
   )
 
-  const hayFiltrosActivos = search.trim() !== '' || estadoFiltro !== ALL || aseguradoraFiltro !== ALL || ramoFiltro !== ALL || comercialFiltro !== ALL || vencimientoFiltro !== ALL
+  const hayFiltrosActivos = search.trim() !== '' || estadoFiltro !== ALL || comercialFiltro !== ALL || vencimientoFiltro !== ALL
 
   const byStatus = POLICY_BOARD_COLUMNS.reduce((acc, col) => {
     acc[col.status] = filteredPolicies.filter(p => p.status === col.status)
@@ -106,14 +98,14 @@ export function PoliciesView({ initialPolicies, renewalsMesCount, pendingDocsCou
 
   const otherStates = filteredPolicies.filter(p => !POLICY_BOARD_COLUMNS.some(c => c.status === p.status))
   const vigentesCount = policies.filter(p => p.status === 'vigente').length
-  const aseguradorasCount = new Set(policies.map(p => p.insurerName)).size
+  const titularesCount = new Set(policies.map(p => p.holderName)).size
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Pólizas</h1>
-          <p className="text-sm text-gray-500">Vigencia, renovaciones y documentación de las pólizas gestionadas para cada cliente.</p>
+          <p className="text-sm text-gray-500">Vigencia, renovaciones y documentación de las pólizas de vida individual Mapfre gestionadas para cada titular.</p>
           {!isDemoMode() && (
             <p className="text-xs text-amber-600 mt-0.5">Prototipo visual — datos de ejemplo, sin conexión a la base de datos todavía.</p>
           )}
@@ -131,7 +123,7 @@ export function PoliciesView({ initialPolicies, renewalsMesCount, pendingDocsCou
         {[
           { label: 'Pólizas en cartera', value: policies.length },
           { label: 'Vigentes', value: vigentesCount },
-          { label: 'Aseguradoras', value: aseguradorasCount },
+          { label: 'Titulares', value: titularesCount },
           { label: 'Renovaciones (próx. mes)', value: renewalsMesCount, href: '/app/polizas/renovaciones' },
           { label: 'Documentación pendiente', value: pendingDocsCount, href: '/app/polizas/documentacion' },
         ].map(stat => {
@@ -154,24 +146,22 @@ export function PoliciesView({ initialPolicies, renewalsMesCount, pendingDocsCou
           <Input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar por empresa, número de póliza, contacto o producto…"
+            placeholder="Buscar por titular, número de póliza o producto…"
             className="pl-9"
           />
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <Select value={estadoFiltro} onValueChange={setEstadoFiltro} options={estadoOptions} />
-          <Select value={aseguradoraFiltro} onValueChange={setAseguradoraFiltro} options={aseguradoraOptions} />
-          <Select value={ramoFiltro} onValueChange={setRamoFiltro} options={ramoOptions} />
           <Select value={comercialFiltro} onValueChange={setComercialFiltro} options={comercialOptions} />
           <Select value={vencimientoFiltro} onValueChange={setVencimientoFiltro} options={vencimientoOptions} />
         </div>
         <p className="text-xs text-gray-500">
-          Mostrando <span className="font-semibold text-gray-700">{filteredPolicies.length}</span> de {policies.length} pólizas
+          Mostrando <span className="font-semibold text-gray-700">{filteredPolicies.length}</span> de {policies.length} pólizas — todas Mapfre · Vida
           {hayFiltrosActivos && (
             <button
               type="button"
               className="ml-2 text-[#1B3A6B] hover:underline"
-              onClick={() => { setSearch(''); setEstadoFiltro(ALL); setAseguradoraFiltro(ALL); setRamoFiltro(ALL); setComercialFiltro(ALL); setVencimientoFiltro(ALL) }}
+              onClick={() => { setSearch(''); setEstadoFiltro(ALL); setComercialFiltro(ALL); setVencimientoFiltro(ALL) }}
             >
               Limpiar filtros
             </button>
@@ -233,7 +223,7 @@ export function PoliciesView({ initialPolicies, renewalsMesCount, pendingDocsCou
                 <li key={policy.id}>
                   <Link href={`/app/polizas/${policy.id}`} className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50 transition-colors">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{policy.companyName}</p>
+                      <p className="text-sm font-semibold text-gray-900 truncate">{policy.holderName}</p>
                       <p className="text-xs text-gray-400">{policy.insurerName} · {policy.branchName}</p>
                     </div>
                     <span className={`shrink-0 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${POLICY_STATUS_COLORS[policy.status]}`}>
@@ -260,7 +250,7 @@ export function PoliciesView({ initialPolicies, renewalsMesCount, pendingDocsCou
 function PolicyCard({ policy }: { policy: Policy }) {
   return (
     <Link href={`/app/polizas/${policy.id}`} className="block rounded-lg bg-white border border-gray-100 p-3 shadow-sm hover:shadow-md transition-shadow">
-      <p className="text-xs font-semibold text-gray-900 truncate">{policy.companyName}</p>
+      <p className="text-xs font-semibold text-gray-900 truncate">{policy.holderName}</p>
       <p className="text-xs text-gray-400 mt-0.5 truncate">{policy.insurerName} · {policy.branchName}</p>
       {policy.policyNumber && <p className="text-[10px] text-gray-400 mt-1">Nº {policy.policyNumber}</p>}
       <p className="text-[10px] text-gray-400 mt-0.5 truncate">{policy.assignedToName}</p>

@@ -27,10 +27,11 @@ import { makeRng } from './prng'
 import {
   NOMBRES, APELLIDOS, DEPARTAMENTOS, PUNTOS_CARDINALES,
   EMPRESA_TEMPLATES_CURADAS, SECTOR_DEFS, NOMBRE_HISTORIA_A,
-  POSICIONES, ASEGURADORAS_DEMO, ASEGURADORA_WEIGHTS, RAMOS_DEMO,
+  POSICIONES, ASEGURADORAS_DEMO, RAMOS_DEMO,
   COMERCIALES_DEMO, PRODUCTOS_POR_RAMO,
 } from './pools'
 import type { SectorKey } from './pools'
+import { PLIFE_BUSINESS_CONFIG } from '@/lib/business-config'
 import type {
   Company, ContactWithRelations, OpportunityWithRelations, Proposal, Campaign,
   Activity, CompanyB2BStatus, ContactStatus, InterestLevel, OpportunityStage,
@@ -248,10 +249,15 @@ export const DEMO_EMPRESAS: Company[] = ALL_TEMPLATES.map((tpl, i) => {
   }
 })
 
-function ramoParaSector(sector: SectorKey): string {
-  const def = SECTOR_DEFS.find(d => d.key === sector)!
-  // 75% ramo afín al rubro (afinidad rubro→ramo), 25% otro — para no ser artificialmente perfecto.
-  return rng.bool(0.75) ? rng.pick(def.ramosAfines) : rng.pick(RAMOS_DEMO)
+/**
+ * Bloque 1: ramo único (Vida) — la afinidad rubro→ramo de SECTOR_DEFS
+ * (`ramosAfines`) queda sin efecto por la regla de negocio central
+ * (src/lib/business-config.ts). Se mantiene el parámetro `sector` para no
+ * tocar las firmas de Leads/Oportunidades, que siguen llamando a esta
+ * función y no se rediseñan en este bloque.
+ */
+function ramoParaSector(_sector: SectorKey): string {
+  return RAMOS_DEMO[0]
 }
 
 // ---------------------------------------------------------------------------
@@ -303,9 +309,16 @@ function contactsOf(empresaId: string) {
 }
 
 // ---------------------------------------------------------------------------
-// Pólizas (~800): por empresa según su tier, con cohortes EXACTAS de
-// renovación "próximo mes" (50) y documentación pendiente (15) — nunca un
-// número aparte, siempre pólizas reales de empresas reales.
+// Pólizas (~26): titulares persona física, aseguradora y ramo únicos (Mapfre
+// / Vida — regla de negocio Bloque 1, ver src/lib/business-config.ts).
+// Dataset chico y escrito a mano a propósito: un seguro de vida individual
+// es por persona, no por empresa — no tiene sentido derivar cientos de
+// pólizas de vida de un universo de 120 empresas B2B (ver auditorías en
+// docs/audits/). Cobertura de estados exigida: vigentes, próximas a vencer
+// (urgencia crítica / próximo mes / 60 días), en renovación, documentación
+// pendiente, canceladas, renovadas, no renovadas, rechazadas — más origen
+// (cartera heredada vs. originada en el CRM) y calidad de datos
+// (completo/incompleto, nunca inventando capital ni beneficiarios).
 // ---------------------------------------------------------------------------
 type StatusBucket =
   | 'vigente' | 'proxima_mes' | 'proxima_otro' | 'renovacion_mes' | 'renovacion_otro'
@@ -324,90 +337,7 @@ const BUCKET_TO_STATUS: Record<StatusBucket, PolicyStatus> = {
   rechazada: 'rechazada',
 }
 
-const POLIZAS_OVERRIDE_COUNT: Record<string, number> = { [NOMBRE_HISTORIA_A]: 12 }
-
-interface PolicySlot { empresaId: string; empresaName: string; sector: SectorKey }
-
-const POLICY_SLOTS: PolicySlot[] = DEMO_EMPRESAS.flatMap(empresa => {
-  const meta = EMPRESA_META.get(empresa.id)!
-  const [min, max] = TIER_RANGO_POLIZAS[meta.tier]
-  const count = POLIZAS_OVERRIDE_COUNT[empresa.name] ?? rng.int(min, max)
-  return Array.from({ length: count }, (): PolicySlot => ({ empresaId: empresa.id, empresaName: empresa.name, sector: meta.sector }))
-})
-
-// Historias trazables A y C: cohortes forzadas por empresa (se sacan del pool
-// general antes de repartir el resto — así los totales exactos (50/15) nunca
-// se ven afectados por lo que le toque a estas dos empresas).
-const OVERRIDES_POR_EMPRESA = new Map<string, StatusBucket[]>([
-  [NOMBRE_HISTORIA_A, [
-    'proxima_mes', 'pendiente_documentacion', 'pendiente_documentacion', 'renovada',
-    'vigente', 'vigente', 'vigente', 'vigente', 'vigente', 'vigente', 'vigente', 'vigente',
-  ]],
-  ['Estudio Techera Auditores', ['pendiente_documentacion', 'pendiente_documentacion']],
-])
-
-const reservedSlots: (PolicySlot & { bucket: StatusBucket })[] = []
-const freeSlots: PolicySlot[] = []
-const overrideCursor = new Map<string, number>()
-for (const slot of POLICY_SLOTS) {
-  const overrides = OVERRIDES_POR_EMPRESA.get(slot.empresaName)
-  const cursor = overrideCursor.get(slot.empresaName) ?? 0
-  if (overrides && cursor < overrides.length) {
-    reservedSlots.push({ ...slot, bucket: overrides[cursor] })
-    overrideCursor.set(slot.empresaName, cursor + 1)
-  } else {
-    freeSlots.push(slot)
-  }
-}
-
-const cohortMesRestante = Math.max(0, 50 - reservedSlots.filter(s => s.bucket === 'proxima_mes' || s.bucket === 'renovacion_mes').length)
-const cohortDocRestante = Math.max(0, 15 - reservedSlots.filter(s => s.bucket === 'pendiente_documentacion').length)
-const proximaMesRestante = Math.round(cohortMesRestante * 0.75)
-const renovacionMesRestante = cohortMesRestante - proximaMesRestante
-
-const FLEX_RATIOS: Record<string, number> = {
-  proxima_otro: 0.062, renovacion_otro: 0.030, cancelada: 0.073, renovada: 0.060, no_renovada: 0.026, rechazada: 0.013,
-}
-const remainingFlexible = Math.max(0, freeSlots.length - proximaMesRestante - renovacionMesRestante - cohortDocRestante)
-const flexCounts: Record<string, number> = {}
-let flexAssigned = 0
-for (const key of Object.keys(FLEX_RATIOS)) {
-  const c = Math.round(FLEX_RATIOS[key] * remainingFlexible)
-  flexCounts[key] = c
-  flexAssigned += c
-}
-flexCounts.vigente = Math.max(0, remainingFlexible - flexAssigned)
-
-const statusPool: StatusBucket[] = [
-  ...Array.from({ length: proximaMesRestante }, (): StatusBucket => 'proxima_mes'),
-  ...Array.from({ length: renovacionMesRestante }, (): StatusBucket => 'renovacion_mes'),
-  ...Array.from({ length: cohortDocRestante }, (): StatusBucket => 'pendiente_documentacion'),
-  ...Array.from({ length: flexCounts.proxima_otro }, (): StatusBucket => 'proxima_otro'),
-  ...Array.from({ length: flexCounts.renovacion_otro }, (): StatusBucket => 'renovacion_otro'),
-  ...Array.from({ length: flexCounts.cancelada }, (): StatusBucket => 'cancelada'),
-  ...Array.from({ length: flexCounts.renovada }, (): StatusBucket => 'renovada'),
-  ...Array.from({ length: flexCounts.no_renovada }, (): StatusBucket => 'no_renovada'),
-  ...Array.from({ length: flexCounts.rechazada }, (): StatusBucket => 'rechazada'),
-  ...Array.from({ length: flexCounts.vigente }, (): StatusBucket => 'vigente'),
-]
-while (statusPool.length < freeSlots.length) statusPool.push('vigente')
-while (statusPool.length > freeSlots.length) statusPool.pop()
-
-const shuffledStatusPool = rng.shuffle(statusPool)
-const allPolicySlots: (PolicySlot & { bucket: StatusBucket })[] = [
-  ...reservedSlots,
-  ...freeSlots.map((slot, i) => ({ ...slot, bucket: shuffledStatusPool[i] })),
-]
-
-/** "2 comerciales" en algunas cuentas — parte de sus pólizas las lleva un segundo ejecutivo. */
-const SEGUNDO_COMERCIAL: Record<string, string> = {
-  [NOMBRE_HISTORIA_A]: 'com-03',
-  'Sanatorio Costa Azul': 'com-04',
-}
-
-const INSURER_PREFIX: Record<string, string> = {
-  BSE: 'BSE', 'Porto Seguro': 'POR', Mapfre: 'MAP', SURA: 'SUR', Zurich: 'ZUR', HDI: 'HDI',
-}
+const INSURER_PREFIX: Record<string, string> = { [PLIFE_BUSINESS_CONFIG.insurer]: 'MAP' }
 
 function documentsFor(status: PolicyStatus): PolicyDocument[] {
   const base: PolicyDocument[] = []
@@ -431,7 +361,7 @@ function documentsFor(status: PolicyStatus): PolicyDocument[] {
 function fechasParaBucket(bucket: StatusBucket) {
   switch (bucket) {
     case 'vigente': {
-      const nextAction = rng.pick(['Confirmar datos actualizados con el cliente', 'Sin acción pendiente por ahora', null])
+      const nextAction = rng.pick(['Confirmar datos actualizados con el titular', 'Sin acción pendiente por ahora', null])
       return { startDate: rng.dateOffset(NOW, -rng.int(30, 300)), endDate: rng.dateOffset(NOW, rng.int(61, 400)), nextAction, nextActionDate: nextAction ? rng.dateOffset(NOW, rng.int(15, 90)) : null, notes: null as string | null }
     }
     case 'proxima_mes':
@@ -443,54 +373,92 @@ function fechasParaBucket(bucket: StatusBucket) {
     case 'proxima_otro':
       return { startDate: rng.dateOffset(NOW, -rng.int(300, 340)), endDate: rng.dateOffset(NOW, rng.int(32, 60)), nextAction: 'Iniciar renovación', nextActionDate: rng.dateOffset(NOW, rng.int(10, 25)), notes: null as string | null }
     case 'renovacion_mes':
-      return { startDate: rng.dateOffset(NOW, -rng.int(340, 380)), endDate: rng.dateOffset(NOW, rng.int(-3, 3)), nextAction: rng.pick(['Esperando condiciones de renovación de la aseguradora', 'Confirmar nueva prima con el cliente']), nextActionDate: rng.dateOffset(NOW, rng.int(-2, 5)), notes: rng.bool(0.4) ? 'La aseguradora solicitó actualizar datos antes de emitir la renovación.' : null }
+      return { startDate: rng.dateOffset(NOW, -rng.int(340, 380)), endDate: rng.dateOffset(NOW, rng.int(-3, 3)), nextAction: rng.pick(['Esperando condiciones de renovación de Mapfre', 'Confirmar nueva prima con el titular']), nextActionDate: rng.dateOffset(NOW, rng.int(-2, 5)), notes: rng.bool(0.4) ? 'Mapfre solicitó actualizar datos antes de emitir la renovación.' : null }
     case 'renovacion_otro':
-      return { startDate: rng.dateOffset(NOW, -rng.int(340, 390)), endDate: rng.dateOffset(NOW, rng.int(-25, -7)), nextAction: 'Confirmar nueva prima con el cliente', nextActionDate: rng.dateOffset(NOW, rng.int(-10, 0)), notes: null as string | null }
+      return { startDate: rng.dateOffset(NOW, -rng.int(340, 390)), endDate: rng.dateOffset(NOW, rng.int(-25, -7)), nextAction: 'Confirmar nueva prima con el titular', nextActionDate: rng.dateOffset(NOW, rng.int(-10, 0)), notes: null as string | null }
     case 'pendiente_documentacion':
-      return { startDate: null, endDate: null, nextAction: rng.pick(['Solicitar RUT y padrón al cliente', 'Falta comprobante de titularidad', 'Esperando cédula del titular']), nextActionDate: rng.dateOffset(NOW, rng.int(-2, 8)), notes: null as string | null }
+      return { startDate: null, endDate: null, nextAction: rng.pick(['Solicitar cédula al titular', 'Falta comprobante de identidad', 'Esperando cédula del titular']), nextActionDate: rng.dateOffset(NOW, rng.int(-2, 8)), notes: null as string | null }
     case 'cancelada':
-      return { startDate: rng.dateOffset(NOW, -rng.int(400, 1200)), endDate: rng.dateOffset(NOW, -rng.int(10, 300)), nextAction: null, nextActionDate: null, notes: rng.pick(['Cliente canceló por cierre de actividad.', 'Cliente cambió de aseguradora.', 'Baja solicitada por el cliente.']) }
+      return { startDate: rng.dateOffset(NOW, -rng.int(400, 1200)), endDate: rng.dateOffset(NOW, -rng.int(10, 300)), nextAction: null, nextActionDate: null, notes: rng.pick(['El titular solicitó la baja.', 'El titular cambió de compañía.', 'Baja solicitada por el titular.']) }
     case 'renovada':
       return { startDate: rng.dateOffset(NOW, -rng.int(10, 60)), endDate: rng.dateOffset(NOW, rng.int(300, 365)), nextAction: null, nextActionDate: null, notes: 'Renovada con nueva vigencia.' }
     case 'no_renovada':
-      return { startDate: rng.dateOffset(NOW, -rng.int(400, 700)), endDate: rng.dateOffset(NOW, -rng.int(5, 90)), nextAction: 'Evaluar recontacto comercial en el próximo semestre', nextActionDate: rng.dateOffset(NOW, rng.int(60, 150)), notes: 'Cliente decidió no renovar; evaluar recontacto más adelante.' }
+      return { startDate: rng.dateOffset(NOW, -rng.int(400, 700)), endDate: rng.dateOffset(NOW, -rng.int(5, 90)), nextAction: 'Evaluar recontacto comercial en el próximo semestre', nextActionDate: rng.dateOffset(NOW, rng.int(60, 150)), notes: 'El titular decidió no renovar; evaluar recontacto más adelante.' }
     case 'rechazada':
-      return { startDate: null, endDate: null, nextAction: 'Buscar alternativa con otra aseguradora', nextActionDate: rng.dateOffset(NOW, rng.int(0, 10)), notes: 'La aseguradora no emitió la póliza tras la evaluación de riesgo.' }
+      return { startDate: null, endDate: null, nextAction: 'Evaluar alternativa de cobertura con Mapfre', nextActionDate: rng.dateOffset(NOW, rng.int(0, 10)), notes: 'Mapfre no emitió la póliza tras la evaluación de riesgo.' }
   }
 }
 
-export const DEMO_POLIZAS: Policy[] = allPolicySlots.map((slot, index) => {
-  const empresa = DEMO_EMPRESAS.find(e => e.id === slot.empresaId)!
-  const contactosEmpresa = contactsOf(empresa.id)
-  const contacto = contactosEmpresa.length > 0 ? rng.pick(contactosEmpresa) : null
-  const insurerName = rng.pickWeighted(ASEGURADORA_WEIGHTS)
-  const branchName = ramoParaSector(slot.sector)
-  const product = rng.pick(PRODUCTOS_POR_RAMO[branchName] ?? [branchName])
-  const status = BUCKET_TO_STATUS[slot.bucket]
+const PRODUCTO_BASE = PRODUCTOS_POR_RAMO[PLIFE_BUSINESS_CONFIG.insuranceBranch][0]
+const PRODUCTO_AHORRO = PRODUCTOS_POR_RAMO[PLIFE_BUSINESS_CONFIG.insuranceBranch][1]
 
-  const segundoId = SEGUNDO_COMERCIAL[empresa.name]
-  const comercialId = segundoId && rng.bool(0.35) ? segundoId : (empresa.assigned_to ?? DEMO_COMERCIALES[0].id)
-  const comercial = DEMO_COMERCIALES.find(c => c.id === comercialId)!
+interface PolicySpec {
+  holder: string
+  bucket: StatusBucket
+  comercial: string
+  origin: 'cartera_heredada' | 'originada_en_crm'
+  dataCompleteness: 'completo' | 'incompleto'
+  dataGapsNote: string | null
+  product: string
+  premium: number
+  paymentFrequency: 'mensual' | 'trimestral' | 'semestral' | 'anual'
+  policyNumber: string | null
+}
 
-  const sinNumero = status === 'pendiente_documentacion' || status === 'rechazada'
-  const policyNumber = sinNumero ? null : `${INSURER_PREFIX[insurerName] ?? 'POL'}-${rng.int(10000, 99999)}`
-  const fechas = fechasParaBucket(slot.bucket)
-  const sinImporte = status === 'pendiente_documentacion' || status === 'rechazada'
+/** Titulares tomados de TITULARES_VIDA_DEMO (pools.ts) — ningún nombre inventado acá. */
+const POLICY_SPECS: PolicySpec[] = [
+  { holder: 'Lucía García', bucket: 'vigente', comercial: 'com-03', origin: 'cartera_heredada', dataCompleteness: 'completo', dataGapsNote: null, product: PRODUCTO_BASE, premium: 14200, paymentFrequency: 'mensual', policyNumber: 'MAP-51032' },
+  { holder: 'Nicolás Fernández', bucket: 'vigente', comercial: 'com-04', origin: 'cartera_heredada', dataCompleteness: 'completo', dataGapsNote: null, product: PRODUCTO_BASE, premium: 9800, paymentFrequency: 'anual', policyNumber: 'MAP-51087' },
+  { holder: 'Camila Bianchi', bucket: 'vigente', comercial: 'com-05', origin: 'cartera_heredada', dataCompleteness: 'completo', dataGapsNote: null, product: PRODUCTO_AHORRO, premium: 26500, paymentFrequency: 'trimestral', policyNumber: 'MAP-51124' },
+  { holder: 'Agustina Ferreira', bucket: 'vigente', comercial: 'com-06', origin: 'cartera_heredada', dataCompleteness: 'completo', dataGapsNote: null, product: PRODUCTO_BASE, premium: 11300, paymentFrequency: 'mensual', policyNumber: 'MAP-51166' },
+  { holder: 'Gonzalo Machado', bucket: 'vigente', comercial: 'com-02', origin: 'cartera_heredada', dataCompleteness: 'completo', dataGapsNote: null, product: PRODUCTO_BASE, premium: 15900, paymentFrequency: 'semestral', policyNumber: 'MAP-51201' },
+  { holder: 'Florencia Deleón', bucket: 'vigente', comercial: 'com-03', origin: 'cartera_heredada', dataCompleteness: 'incompleto', dataGapsNote: 'Falta confirmar domicilio actualizado del titular.', product: PRODUCTO_BASE, premium: 10400, paymentFrequency: 'mensual', policyNumber: 'MAP-51245' },
+  { holder: 'Diego Pintos', bucket: 'vigente', comercial: 'com-04', origin: 'originada_en_crm', dataCompleteness: 'completo', dataGapsNote: null, product: PRODUCTO_AHORRO, premium: 22800, paymentFrequency: 'trimestral', policyNumber: 'MAP-51289' },
+  { holder: 'Mariana Ríos', bucket: 'vigente', comercial: 'com-06', origin: 'cartera_heredada', dataCompleteness: 'completo', dataGapsNote: null, product: PRODUCTO_BASE, premium: 8700, paymentFrequency: 'anual', policyNumber: 'MAP-51320' },
+  { holder: 'Lucía García', bucket: 'proxima_mes', comercial: 'com-03', origin: 'cartera_heredada', dataCompleteness: 'completo', dataGapsNote: null, product: PRODUCTO_AHORRO, premium: 19500, paymentFrequency: 'mensual', policyNumber: 'MAP-49810' },
+  { holder: 'Ignacio Ortiz', bucket: 'proxima_mes', comercial: 'com-05', origin: 'cartera_heredada', dataCompleteness: 'completo', dataGapsNote: null, product: PRODUCTO_BASE, premium: 12100, paymentFrequency: 'mensual', policyNumber: 'MAP-49855' },
+  { holder: 'Victoria Correa', bucket: 'proxima_mes', comercial: 'com-06', origin: 'cartera_heredada', dataCompleteness: 'completo', dataGapsNote: null, product: PRODUCTO_BASE, premium: 9200, paymentFrequency: 'trimestral', policyNumber: 'MAP-49902' },
+  { holder: 'Pablo Suárez', bucket: 'proxima_otro', comercial: 'com-04', origin: 'cartera_heredada', dataCompleteness: 'completo', dataGapsNote: null, product: PRODUCTO_BASE, premium: 13400, paymentFrequency: 'anual', policyNumber: 'MAP-49960' },
+  { holder: 'Carolina Acosta', bucket: 'proxima_otro', comercial: 'com-03', origin: 'cartera_heredada', dataCompleteness: 'completo', dataGapsNote: null, product: PRODUCTO_AHORRO, premium: 24100, paymentFrequency: 'semestral', policyNumber: 'MAP-50002' },
+  { holder: 'Agustina Ferreira', bucket: 'renovacion_mes', comercial: 'com-06', origin: 'cartera_heredada', dataCompleteness: 'completo', dataGapsNote: null, product: PRODUCTO_BASE, premium: 11800, paymentFrequency: 'mensual', policyNumber: 'MAP-48120' },
+  { holder: 'Andrés Bentancor', bucket: 'renovacion_mes', comercial: 'com-05', origin: 'cartera_heredada', dataCompleteness: 'incompleto', dataGapsNote: 'Mapfre pidió actualizar la declaración jurada de salud para renovar.', product: PRODUCTO_BASE, premium: 10900, paymentFrequency: 'mensual', policyNumber: 'MAP-48175' },
+  { holder: 'Josefina Cabrera', bucket: 'renovacion_otro', comercial: 'com-02', origin: 'cartera_heredada', dataCompleteness: 'completo', dataGapsNote: null, product: PRODUCTO_AHORRO, premium: 27600, paymentFrequency: 'trimestral', policyNumber: 'MAP-48240' },
+  { holder: 'Pablo Suárez', bucket: 'pendiente_documentacion', comercial: 'com-04', origin: 'originada_en_crm', dataCompleteness: 'incompleto', dataGapsNote: 'Falta cédula del titular.', product: PRODUCTO_BASE, premium: 0, paymentFrequency: 'mensual', policyNumber: null },
+  { holder: 'Sebastián Gómez', bucket: 'pendiente_documentacion', comercial: 'com-06', origin: 'originada_en_crm', dataCompleteness: 'incompleto', dataGapsNote: 'Falta comprobante de identidad y cotización en trámite con Mapfre.', product: PRODUCTO_BASE, premium: 0, paymentFrequency: 'mensual', policyNumber: null },
+  { holder: 'Antonella Larrosa', bucket: 'pendiente_documentacion', comercial: 'com-03', origin: 'originada_en_crm', dataCompleteness: 'incompleto', dataGapsNote: 'Falta cédula del titular.', product: PRODUCTO_AHORRO, premium: 0, paymentFrequency: 'trimestral', policyNumber: null },
+  { holder: 'Matías Methol', bucket: 'pendiente_documentacion', comercial: 'com-05', origin: 'cartera_heredada', dataCompleteness: 'incompleto', dataGapsNote: 'Falta comprobante de identidad actualizado.', product: PRODUCTO_BASE, premium: 0, paymentFrequency: 'mensual', policyNumber: null },
+  { holder: 'Belén Núñez', bucket: 'cancelada', comercial: 'com-04', origin: 'cartera_heredada', dataCompleteness: 'completo', dataGapsNote: null, product: PRODUCTO_BASE, premium: 8100, paymentFrequency: 'mensual', policyNumber: 'MAP-44210' },
+  { holder: 'Álvaro Olivera', bucket: 'cancelada', comercial: 'com-06', origin: 'cartera_heredada', dataCompleteness: 'completo', dataGapsNote: null, product: PRODUCTO_BASE, premium: 9600, paymentFrequency: 'anual', policyNumber: 'MAP-44255' },
+  { holder: 'Daniela Píriz', bucket: 'renovada', comercial: 'com-03', origin: 'cartera_heredada', dataCompleteness: 'completo', dataGapsNote: null, product: PRODUCTO_BASE, premium: 12700, paymentFrequency: 'mensual', policyNumber: 'MAP-52310' },
+  { holder: 'Juan Pablo Quiroga', bucket: 'renovada', comercial: 'com-05', origin: 'cartera_heredada', dataCompleteness: 'completo', dataGapsNote: null, product: PRODUCTO_AHORRO, premium: 25300, paymentFrequency: 'semestral', policyNumber: 'MAP-52355' },
+  { holder: 'Rocío Rivero', bucket: 'no_renovada', comercial: 'com-06', origin: 'cartera_heredada', dataCompleteness: 'completo', dataGapsNote: null, product: PRODUCTO_BASE, premium: 8900, paymentFrequency: 'mensual', policyNumber: 'MAP-43102' },
+  { holder: 'Daniela Píriz', bucket: 'rechazada', comercial: 'com-03', origin: 'originada_en_crm', dataCompleteness: 'completo', dataGapsNote: null, product: PRODUCTO_AHORRO, premium: 0, paymentFrequency: 'mensual', policyNumber: null },
+]
+
+export const DEMO_POLIZAS: Policy[] = POLICY_SPECS.map((spec, index) => {
+  const comercial = DEMO_COMERCIALES.find(c => c.id === spec.comercial)!
+  const status = BUCKET_TO_STATUS[spec.bucket]
+  const fechas = fechasParaBucket(spec.bucket)
+  const sinImporte = spec.premium === 0
 
   return {
     id: `pol-${index + 1}`,
-    policyNumber,
-    companyName: empresa.name,
-    contactName: contacto ? `${contacto.first_name} ${contacto.last_name}` : null,
-    insurerName,
-    branchName,
-    product,
+    policyNumber: spec.policyNumber,
+    holderName: spec.holder,
+    contactName: null,
+    insurerName: PLIFE_BUSINESS_CONFIG.insurer,
+    branchName: PLIFE_BUSINESS_CONFIG.insuranceBranch,
+    product: spec.product,
     status,
     startDate: fechas.startDate,
     endDate: fechas.endDate,
-    premium: sinImporte ? null : rng.int(15000, 420000),
+    premium: sinImporte ? null : spec.premium,
     currency: 'UYU',
-    commissionValue: sinImporte ? null : rng.int(8, 16),
+    paymentFrequency: sinImporte ? null : spec.paymentFrequency,
+    origin: spec.origin,
+    dataCompleteness: spec.dataCompleteness,
+    dataGapsNote: spec.dataGapsNote,
+    commissionValue: sinImporte ? null : rng.int(8, 15),
     commissionType: sinImporte ? null : 'percentage',
     assignedToName: comercial.full_name,
     documents: documentsFor(status),
@@ -499,20 +467,10 @@ export const DEMO_POLIZAS: Policy[] = allPolicySlots.map((slot, index) => {
     notes: fechas.notes,
     // pendiente_documentacion: trámite recién abierto, no un caso arrastrado
     // desde hace años — antigüedad realista de "esperando papeles".
-    createdAt: status === 'pendiente_documentacion' ? rng.dateOffset(NOW, -rng.int(1, 25)) : rng.dateOffset(NOW, -rng.int(10, 1200)),
+    createdAt: spec.bucket === 'pendiente_documentacion' ? rng.dateOffset(NOW, -rng.int(1, 25)) : rng.dateOffset(NOW, -rng.int(10, 900)),
     updatedAt: rng.dateOffset(NOW, -rng.int(0, 25)),
   }
 })
-
-// Garantizar "2 comerciales" en Historia A incluso si el sorteo (35%) no le
-// tocó a ninguna de sus 12 pólizas — probabilidad de eso es ínfima pero esta
-// historia es explícita, no debe depender de la suerte del RNG.
-{
-  const polizasHistoriaA = DEMO_POLIZAS.filter(p => p.companyName === NOMBRE_HISTORIA_A)
-  if (polizasHistoriaA.length > 0 && !polizasHistoriaA.some(p => p.assignedToName === 'Rodrigo Silva')) {
-    polizasHistoriaA[0].assignedToName = 'Rodrigo Silva'
-  }
-}
 
 /** Empresas fuera del tier "ancla" — usadas para poblar leads/oportunidades/propuestas nuevas (las cuentas ancla ya están saturadas de historia, no de prospección). */
 function empresaEnCrecimiento(): Company {
@@ -927,9 +885,6 @@ export function getDireccionMetricsDemo() {
   const stageCounts: Record<string, number> = {}
   for (const opp of DEMO_OPORTUNIDADES) stageCounts[opp.stage] = (stageCounts[opp.stage] ?? 0) + 1
 
-  const porAseguradora: Record<string, number> = {}
-  for (const pol of DEMO_POLIZAS) porAseguradora[pol.insurerName] = (porAseguradora[pol.insurerName] ?? 0) + 1
-
   const todayStr = NOW.toISOString().slice(0, 10)
 
   const carteraPorEjecutivo = DEMO_COMERCIALES.map(c => {
@@ -946,19 +901,19 @@ export function getDireccionMetricsDemo() {
     }
   }).sort((a, b) => b.primaTotal - a.primaTotal)
 
-  const facturacionPorEmpresa = DEMO_EMPRESAS.map(e => {
-    const polizasEmpresa = DEMO_POLIZAS.filter(p => p.companyName === e.name)
-    return {
-      empresa: e.name,
-      primaTotal: primaAdministradaDe(polizasEmpresa),
-      polizas: polizasEmpresa.length,
-    }
-  }).filter(e => e.polizas > 0).sort((a, b) => b.primaTotal - a.primaTotal).slice(0, 8)
-
   const propuestasAbiertas = DEMO_PROPUESTAS.filter(p => p.status === 'draft' || p.status === 'in_review')
 
-  const porRamo: Record<string, number> = {}
-  for (const pol of DEMO_POLIZAS) porRamo[pol.branchName] = (porRamo[pol.branchName] ?? 0) + 1
+  // Bloque 1: aseguradora y ramo son constantes (Mapfre/Vida) — ya no aporta
+  // nada medir "concentración" o "distribución" por esos dos ejes. En su
+  // lugar: distribución por estado de póliza, por origen (cartera heredada
+  // vs. originada en el CRM) y calidad de datos de la cartera.
+  const porEstado: Record<string, number> = {}
+  for (const pol of DEMO_POLIZAS) porEstado[pol.status] = (porEstado[pol.status] ?? 0) + 1
+
+  const porOrigen: Record<string, number> = {}
+  for (const pol of DEMO_POLIZAS) porOrigen[pol.origin] = (porOrigen[pol.origin] ?? 0) + 1
+
+  const registrosIncompletos = DEMO_POLIZAS.filter(p => p.dataCompleteness === 'incompleto').length
 
   const todasLasPropuestas = [...DEMO_PROPUESTAS, ...DEMO_PROPUESTAS_HISTORICAS]
   const propuestasPorEstado: Record<string, number> = {}
@@ -980,10 +935,10 @@ export function getDireccionMetricsDemo() {
     activeCampaigns: DEMO_CAMPANAS.filter(c => c.status === 'activa').length,
     openProposals: propuestasAbiertas.length,
     stageCounts,
-    porAseguradora,
-    porRamo,
+    porEstado,
+    porOrigen,
+    registrosIncompletos,
     carteraPorEjecutivo,
-    facturacionPorEmpresa,
     renovacionesDelMes: getUpcomingRenewalsDemo().filter(p => p.daysToExpiry <= 30 && p.daysToExpiry >= -5).length,
     renovacionesProximas: getUpcomingRenewalsDemo().length,
     renovacionesPorUrgencia,
@@ -1015,12 +970,19 @@ export interface ExecutiveAlertDemo {
 /**
  * Alertas ejecutivas derivadas de condiciones reales del universo — nunca
  * texto hardcodeado. Se evalúan 7 categorías como mínimo (renovaciones,
- * documentación, concentración por aseguradora, carga del equipo,
- * propuestas sin seguimiento, clientes estratégicos en riesgo, pólizas sin
- * responsable); solo se devuelven las que representan una condición real
- * (severidad alta o media), para no llenar la pantalla con tarjetas "todo
- * bien". Sin IA, sin scoring nuevo, sin predicciones — son condiciones y
- * umbrales fijos sobre datos ya existentes.
+ * documentación, seguimiento de oportunidades, carga del equipo, propuestas
+ * sin seguimiento, calidad de datos de la cartera, pólizas sin responsable);
+ * solo se devuelven las que representan una condición real (severidad alta
+ * o media), para no llenar la pantalla con tarjetas "todo bien". Sin IA, sin
+ * scoring nuevo, sin predicciones — son condiciones y umbrales fijos sobre
+ * datos ya existentes.
+ *
+ * Bloque 1: se eliminó la alerta de "concentración por aseguradora" (aseguradora
+ * y ramo son constantes — Mapfre/Vida — no hay concentración que medir) y la de
+ * "clientes estratégicos con riesgo" (cruzaba pólizas con empresas por nombre,
+ * un vínculo que ya no existe: las pólizas de vida individual son de personas,
+ * no de empresas). En su lugar, "alerta-calidad-datos" sobre registros
+ * incompletos — la señal de riesgo real y verificable que sí sigue existiendo.
  */
 export function getExecutiveAlertsDemo(): ExecutiveAlertDemo[] {
   const renewals = getUpcomingRenewalsDemo()
@@ -1030,11 +992,8 @@ export function getExecutiveAlertsDemo(): ExecutiveAlertDemo[] {
   const todayStr = NOW.toISOString().slice(0, 10)
   const seguimientosVencidos = openOpps.filter(o => o.next_action_date && o.next_action_date < todayStr)
 
-  // Concentración por aseguradora: participación de la principal sobre el total de pólizas.
-  const porAseguradora: Record<string, number> = {}
-  for (const pol of DEMO_POLIZAS) porAseguradora[pol.insurerName] = (porAseguradora[pol.insurerName] ?? 0) + 1
-  const topAseguradora = Object.entries(porAseguradora).sort((a, b) => b[1] - a[1])[0]
-  const shareTopAseguradora = topAseguradora ? topAseguradora[1] / DEMO_POLIZAS.length : 0
+  // Calidad de datos: registros con información pendiente de completar (nunca inventada).
+  const registrosIncompletos = DEMO_POLIZAS.filter(p => p.dataCompleteness === 'incompleto')
 
   // Carga desbalanceada: comparar la cartera de empresas entre asesor/líder (se excluye
   // al Director, cuya cartera chica y estratégica es intencional, no un desbalance).
@@ -1050,15 +1009,6 @@ export function getExecutiveAlertsDemo(): ExecutiveAlertDemo[] {
   const propuestasSinSeguimiento = DEMO_PROPUESTAS
     .filter(p => p.status === 'draft' || p.status === 'in_review')
     .filter(p => diasDesde(p.updated_at) >= 3)
-
-  // Clientes estratégicos (score alto o cartera grande) con una señal de riesgo real: renovación crítica o documentación pendiente.
-  const empresasConRiesgo = DEMO_EMPRESAS.filter(e => {
-    const esEstrategica = (e.b2b_score ?? 0) >= 80
-    if (!esEstrategica) return false
-    const polizasEmpresa = DEMO_POLIZAS.filter(p => p.companyName === e.name)
-    return polizasEmpresa.some(p => p.status === 'pendiente_documentacion') ||
-      renewals.some(r => r.companyName === e.name && r.daysToExpiry <= 7)
-  })
 
   // Pólizas sin responsable — no debería existir en un universo bien formado; se valida en vivo, no se asume.
   const polizasSinResponsable = DEMO_POLIZAS.filter(p => !p.assignedToName || p.assignedToName.trim() === '')
@@ -1086,10 +1036,10 @@ export function getExecutiveAlertsDemo(): ExecutiveAlertDemo[] {
       href: '/app/oportunidades',
     },
     {
-      id: 'alerta-concentracion-aseguradora',
-      severity: shareTopAseguradora > 0.35 ? 'alta' : shareTopAseguradora > 0.25 ? 'media' : 'baja',
-      title: topAseguradora ? `${Math.round(shareTopAseguradora * 100)}% de la cartera está concentrada en ${topAseguradora[0]}` : 'Sin datos de aseguradoras',
-      detail: 'Alta dependencia de una sola aseguradora: un cambio de condiciones afecta buena parte de la cartera.',
+      id: 'alerta-calidad-datos',
+      severity: registrosIncompletos.length > 5 ? 'alta' : registrosIncompletos.length > 0 ? 'media' : 'baja',
+      title: `${registrosIncompletos.length} póliza${registrosIncompletos.length === 1 ? '' : 's'} con datos incompletos`,
+      detail: 'Falta información del titular u otro dato necesario — revisar antes de la próxima gestión con el cliente.',
       href: '/app/polizas',
     },
     {
@@ -1105,13 +1055,6 @@ export function getExecutiveAlertsDemo(): ExecutiveAlertDemo[] {
       title: `${propuestasSinSeguimiento.length} propuesta${propuestasSinSeguimiento.length === 1 ? '' : 's'} vigente${propuestasSinSeguimiento.length === 1 ? '' : 's'} sin seguimiento reciente`,
       detail: 'Propuestas ya iniciadas sin actividad en los últimos días — riesgo de perder el negocio por inacción.',
       href: '/app/propuestas',
-    },
-    {
-      id: 'alerta-clientes-estrategicos',
-      severity: empresasConRiesgo.length > 3 ? 'alta' : empresasConRiesgo.length > 0 ? 'media' : 'baja',
-      title: `${empresasConRiesgo.length} cliente${empresasConRiesgo.length === 1 ? '' : 's'} estratégico${empresasConRiesgo.length === 1 ? '' : 's'} con riesgo abierto`,
-      detail: 'Cuentas de alto potencial con una renovación crítica o documentación pendiente sin resolver.',
-      href: '/app/polizas',
     },
     ...(polizasSinResponsable.length > 0 ? [{
       id: 'alerta-sin-responsable',
@@ -1163,7 +1106,7 @@ export function getAttentionItemsDemo(comercialId?: string): AttentionItem[] {
       id: `att-ren-${p.id}`,
       kind: 'renovacion',
       title: `Renovación de ${p.branchName.toLowerCase()} próxima a vencer`,
-      clientName: p.companyName,
+      clientName: p.holderName,
       responsible: p.assignedToName,
       dueLabel: p.daysToExpiry < 0
         ? `Vencida hace ${-p.daysToExpiry} día${p.daysToExpiry === -1 ? '' : 's'}`
@@ -1182,7 +1125,7 @@ export function getAttentionItemsDemo(comercialId?: string): AttentionItem[] {
       id: `att-doc-${p.id}`,
       kind: 'documentacion',
       title: 'Documentación pendiente bloquea la póliza',
-      clientName: p.companyName,
+      clientName: p.holderName,
       responsible: p.assignedToName,
       dueLabel: antiguedad === 0 ? 'Abierta hoy' : `Pendiente hace ${antiguedad} día${antiguedad === 1 ? '' : 's'}`,
       actionLabel: p.nextAction ?? 'Solicitar documentación al cliente',
@@ -1273,14 +1216,20 @@ export const HISTORIA_A_EMPRESA_ID = DEMO_EMPRESAS.find(e => e.name === NOMBRE_H
 export const HISTORIA_B_LEAD_ID = HISTORIA_B_LEAD.id
 export const HISTORIA_C_EMPRESA_ID = DEMO_EMPRESAS.find(e => e.name === 'Estudio Techera Auditores')!.id
 
+/**
+ * Bloque 1: "historiaA.polizas"/"historiaC.polizasPendientes" se retiraron —
+ * dependían de cruzar pólizas por `companyName`, un vínculo que ya no existe
+ * (las pólizas de vida individual son de personas, no de empresas; ver
+ * DEMO_POLIZAS más arriba). Empresa/contactos/propuesta siguen siendo
+ * válidos porque dependen de Leads/Empresas, no de Pólizas.
+ */
 export function getDemoHistoriasTransversales() {
   const empresaA = DEMO_EMPRESAS.find(e => e.id === HISTORIA_A_EMPRESA_ID)!
   const empresaC = DEMO_EMPRESAS.find(e => e.id === HISTORIA_C_EMPRESA_ID)!
   return {
     historiaA: {
-      descripcion: 'Cliente estratégico con varias pólizas, renovación próxima y propuesta abierta.',
+      descripcion: 'Cliente con propuesta abierta y contactos activos.',
       empresa: empresaA,
-      polizas: DEMO_POLIZAS.filter(p => p.companyName === empresaA.name),
       contactos: DEMO_CONTACTOS.filter(c => c.company_id === empresaA.id),
       propuesta: DEMO_PROPUESTAS.find(p => p.id === 'prop-historia-a') ?? null,
     },
@@ -1291,9 +1240,8 @@ export function getDemoHistoriasTransversales() {
       propuesta: DEMO_PROPUESTAS.find(p => p.lead_id === HISTORIA_B_LEAD_ID) ?? null,
     },
     historiaC: {
-      descripcion: 'Cliente con documentación pendiente que genera riesgo operativo y requiere atención administrativa.',
+      descripcion: 'Cliente con seguimiento administrativo pendiente.',
       empresa: empresaC,
-      polizasPendientes: DEMO_POLIZAS.filter(p => p.companyName === empresaC.name && p.status === 'pendiente_documentacion'),
     },
   }
 }

@@ -36,7 +36,7 @@ export function PendingDocumentationView({ policies }: PendingDocumentationViewP
               <li key={policy.id}>
                 <Link href={`/app/polizas/${policy.id}`} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{policy.companyName}</p>
+                    <p className="text-sm font-semibold text-gray-900 truncate">{policy.holderName}</p>
                     <p className="text-xs text-gray-500">{policy.insurerName} · {policy.branchName} · {policy.assignedToName}</p>
                     <p className="text-xs text-gray-400 mt-0.5">
                       {policy.documents.length === 0 ? 'Sin documentos registrados' : `${policy.documents.length} documento(s) registrados`}
