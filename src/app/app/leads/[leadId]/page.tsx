@@ -4,6 +4,8 @@ import { ArrowLeft } from 'lucide-react'
 import { getProfile } from '@/lib/auth'
 import { getLeadById } from '@/domains/leads/queries'
 import { LeadDetailView } from '@/components/leads/lead-detail-view'
+import { isDemoMode } from '@/lib/demo'
+import { DEMO_LEADS } from '@/lib/demo/universe'
 
 // FASE 14L-B — Detalle con lectura y update operativo real desde Supabase dev.
 // Asistente IA mock, conversión y descarte siguen deshabilitados.
@@ -17,7 +19,9 @@ export default async function LeadDetailPage({
   const profile = await getProfile()
   if (!profile) redirect('/login')
 
-  const lead = await getLeadById(leadId)
+  const lead = isDemoMode()
+    ? DEMO_LEADS.find(l => l.id === leadId) ?? null
+    : await getLeadById(leadId)
 
   if (!lead) {
     return (

@@ -4,7 +4,7 @@ import { getProfile } from '@/lib/auth'
 import { redirect, notFound } from 'next/navigation'
 import {
   Megaphone, Target, Users, MessageSquare, PhoneCall,
-  ShieldQuestion, Building2, TrendingUp, Clock, List, FileText,
+  ShieldQuestion, Building2, TrendingUp, Clock,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
@@ -19,6 +19,8 @@ import { SimpleBreadcrumb } from '@/components/navigation/simple-breadcrumb'
 import { DetailBackLink } from '@/components/navigation/detail-back-link'
 import { QuickActions } from '@/components/navigation/quick-actions'
 import { EntitySummary } from '@/components/navigation/entity-summary'
+import { isDemoMode } from '@/lib/demo'
+import { DEMO_CAMPANAS, DEMO_EMPRESAS, DEMO_OPORTUNIDADES } from '@/lib/demo/universe'
 
 export default async function CampanaDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -26,22 +28,37 @@ export default async function CampanaDetailPage({ params }: { params: Promise<{ 
   if (!profile) redirect('/login')
   const canManage = ['admin', 'direccion', 'lider_comercial'].includes(profile.role)
 
-  const supabase = await createClient()
+  let campaign
+  let linkedCompanies
+  let linkedOpportunities
 
-  const [
-    { data: campaign },
-    { data: companies },
-    { data: opportunities },
-  ] = await Promise.all([
-    supabase.from('campaigns').select('*').eq('id', id).is('deleted_at', null).single(),
-    supabase.from('companies').select('id, name, industry, b2b_status').eq('campaign_id', id).is('deleted_at', null).order('name'),
-    supabase.from('opportunities').select('id, title, stage, type').eq('campaign_id', id).is('deleted_at', null).order('created_at', { ascending: false }),
-  ])
+  if (isDemoMode()) {
+    campaign = DEMO_CAMPANAS.find(c => c.id === id) ?? null
+    linkedCompanies = DEMO_EMPRESAS
+      .filter(e => e.campaign_id === id)
+      .map(e => ({ id: e.id, name: e.name, industry: e.industry, b2b_status: e.b2b_status }))
+    linkedOpportunities = DEMO_OPORTUNIDADES
+      .filter(o => o.campaign_id === id)
+      .map(o => ({ id: o.id, title: o.title, stage: o.stage, type: o.type }))
+  } else {
+    const supabase = await createClient()
+
+    const [
+      { data: campaignData },
+      { data: companies },
+      { data: opportunities },
+    ] = await Promise.all([
+      supabase.from('campaigns').select('*').eq('id', id).is('deleted_at', null).single(),
+      supabase.from('companies').select('id, name, industry, b2b_status').eq('campaign_id', id).is('deleted_at', null).order('name'),
+      supabase.from('opportunities').select('id, title, stage, type').eq('campaign_id', id).is('deleted_at', null).order('created_at', { ascending: false }),
+    ])
+
+    campaign = campaignData
+    linkedCompanies = companies ?? []
+    linkedOpportunities = opportunities ?? []
+  }
 
   if (!campaign) notFound()
-
-  const linkedCompanies = companies ?? []
-  const linkedOpportunities = opportunities ?? []
 
   const followUpText = (() => {
     const f = campaign.follow_up_sequence
@@ -113,10 +130,10 @@ export default async function CampanaDetailPage({ params }: { params: Promise<{ 
       <QuickActions
         actions={[
           ...(linkedOpportunities.length > 0
-            ? [{ label: 'Ver oportunidades', href: `/app/oportunidades?q=${encodeURIComponent(campaign.name)}`, icon: List }]
-            : [{ label: 'Ver pipeline', href: '/app/oportunidades', icon: List }]),
-          { label: 'Crear propuesta', href: buildCampaignProposalHref(campaign), icon: FileText },
-          { label: 'Volver a campañas', href: '/app/campanas', icon: Megaphone },
+            ? [{ label: 'Ver oportunidades', href: `/app/oportunidades?q=${encodeURIComponent(campaign.name)}` }]
+            : [{ label: 'Ver pipeline', href: '/app/oportunidades' }]),
+          { label: 'Crear propuesta', href: buildCampaignProposalHref(campaign) },
+          { label: 'Volver a campañas', href: '/app/campanas' },
         ]}
       />
 
