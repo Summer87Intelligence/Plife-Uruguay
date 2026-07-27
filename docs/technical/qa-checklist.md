@@ -1,5 +1,8 @@
 # PLIFE Growth OS — QA Checklist Técnico
 
+> **Nota (FASE 15B):** OpenAI fue removido. Los ítems que mencionan `OPENAI_API_KEY`
+> / OpenAI son **históricos**; los motores operan en modo determinístico interno.
+
 > Checklist manual para validar el sistema antes de un deploy o demo controlada.
 > Marcar cada ítem como ✅ OK / ❌ Falla / ⚠ Advertencia / ➖ No aplica.
 

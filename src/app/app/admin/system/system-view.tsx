@@ -17,13 +17,11 @@ import {
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  COMPLIANCE_ACTION_COLORS,
-  COMPLIANCE_ACTION_LABELS,
   RISK_LEVEL_COLORS,
   RISK_LEVEL_LABELS,
   ROLE_LABELS,
 } from '@/lib/constants'
-import type { ComplianceAction, Profile, RiskLevel } from '@/types/database'
+import type { Profile, RiskLevel } from '@/types/database'
 
 interface AIInteractionSummary {
   id: string
@@ -31,14 +29,6 @@ interface AIInteractionSummary {
   risk_level: RiskLevel | null
   created_at: string
   documents_used: string[] | null
-}
-
-interface ComplianceReviewSummary {
-  id: string
-  content_reviewed: string
-  risk_level: RiskLevel
-  action: ComplianceAction
-  created_at: string
 }
 
 interface SystemViewProps {
@@ -59,7 +49,6 @@ interface SystemViewProps {
     embeddingsReady: boolean
   }
   recentAIInteractions: AIInteractionSummary[]
-  recentComplianceReviews: ComplianceReviewSummary[]
 }
 
 const COUNTS_CONFIG = [
@@ -78,7 +67,6 @@ export function SystemView({
   counts,
   knowledgeStats,
   recentAIInteractions,
-  recentComplianceReviews,
 }: SystemViewProps) {
   return (
     <div className="space-y-6">
@@ -167,14 +155,14 @@ export function SystemView({
             <div className="h-4 w-px bg-gray-200" />
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4 text-gray-400" />
-              <span className="text-sm text-gray-600">IA (OpenAI)</span>
+              <span className="text-sm text-gray-600">Motores internos</span>
               {isAIConfigured ? (
                 <span className="inline-flex items-center rounded-full bg-green-100 text-green-800 px-2.5 py-0.5 text-xs font-medium">
-                  Configurada
+                  Modo determinístico
                 </span>
               ) : (
                 <span className="inline-flex items-center rounded-full bg-red-100 text-red-700 px-2.5 py-0.5 text-xs font-medium">
-                  Sin configurar
+                  No disponible
                 </span>
               )}
             </div>
@@ -275,50 +263,6 @@ export function SystemView({
                     )}
                     <span className="text-xs text-gray-400 tabular-nums">
                       {format(new Date(item.created_at), 'dd/MM/yy HH:mm')}
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Últimas revisiones compliance */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-4 w-4 text-[#1B3A6B]" />
-            Últimas 5 revisiones compliance
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {recentComplianceReviews.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-6">Sin revisiones registradas</p>
-          ) : (
-            <ul className="divide-y divide-gray-50">
-              {recentComplianceReviews.map(item => (
-                <li key={item.id} className="py-3 space-y-1.5">
-                  <div className="flex items-start justify-between gap-4">
-                    <p className="text-sm text-gray-700 leading-snug line-clamp-2">
-                      {item.content_reviewed.length > 100
-                        ? `${item.content_reviewed.slice(0, 100)}…`
-                        : item.content_reviewed}
-                    </p>
-                    <span className="text-xs text-gray-400 shrink-0 tabular-nums">
-                      {format(new Date(item.created_at), 'dd/MM/yy HH:mm')}
-                    </span>
-                  </div>
-                  <div className="flex gap-2">
-                    <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${RISK_LEVEL_COLORS[item.risk_level]}`}
-                    >
-                      {RISK_LEVEL_LABELS[item.risk_level]}
-                    </span>
-                    <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${COMPLIANCE_ACTION_COLORS[item.action]}`}
-                    >
-                      {COMPLIANCE_ACTION_LABELS[item.action]}
                     </span>
                   </div>
                 </li>

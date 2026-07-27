@@ -1,5 +1,11 @@
 # Matriz de roles — PLIFE Growth OS
 
+> **Histórico (FASE 15B):** OpenAI fue removido del proyecto. Las menciones a OpenAI / GPT / `OPENAI_API_KEY` son registro histórico; los motores operan en modo determinístico interno.
+>
+> **Histórico (FASE 15C):** Compliance fue removido del producto (sección/menú/ruta). El rol `compliance` de la base ya no habilita accesos en la app. Ver `docs/product/compliance-removal-15c.md`.
+>
+> **Actualización (FASE 15D):** La sección **"Motor IA"** se renombró a **"Motores"** (motores comerciales) y **"Copiloto IA"** aparece como **"Copiloto"**. Las menciones previas reflejan la denominación anterior. Ver `docs/product/commercial-engines-redesign-15d.md`.
+
 **Versión:** FASE 12G  
 **Última actualización:** 2026-07-01
 

@@ -1,10 +1,23 @@
 # Backlog de producto — PLIFE Growth OS
 
+> **Histórico (FASE 15B):** OpenAI fue removido del proyecto. Las menciones a OpenAI / GPT / `OPENAI_API_KEY` son registro histórico; los motores operan en modo determinístico interno.
+
 **Versión:** FASE 12G  
 **Última actualización:** 2026-07-01  
 **Foco actual:** facilidad de uso, gestión comercial B2B, seguimiento y compliance.
 
 Leyenda de **estado:** `pendiente` | `en curso` | `hecho` | `futuro` | `bloqueado`
+
+---
+
+## Bloque 2 — Catálogo maestro de productos (pendientes diferidos del Bloque 1)
+
+> Bloque 1 (alineación MAPFRE Vida y saneamiento del mockup) se cerró el 2026-07-27 — ver [release-notes.md](./release-notes.md). Ninguno de estos ítems bloqueó el cierre; quedan acá para retomar antes/durante Bloque 2.
+
+| Item | Descripción | Prioridad | Impacto | Esfuerzo | Dependencia | Estado |
+|------|-------------|-----------|---------|----------|-------------|--------|
+| Deshabilitar alta manual de aseguradora/ramo | El `CatalogManager` de Admin/Configuración sigue permitiendo escribir a mano "Nueva aseguradora"/"Nuevo ramo" (estado local, no persiste) | P2 | Bajo | Bajo | `PLIFE_BUSINESS_CONFIG.businessMode` | pendiente |
+| Corregir `ui-anti-demo.test.ts` | Test roto por el link "Recorrido demo" en `app-sidebar.tsx` — **no relacionado a Bloque 1/2**, pertenece al frente de demo tour/navegación | P2 | Bajo | Bajo | Ninguna | pendiente |
 
 ---
 

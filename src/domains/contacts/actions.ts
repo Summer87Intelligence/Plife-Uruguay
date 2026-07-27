@@ -2,6 +2,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { queryContactDuplicates } from '@/domains/duplicates/contact-duplicate-check'
+import type { ContactDuplicateMatch } from '@/domains/duplicates/types'
 import type { ActivityType, Contact } from '@/types/database'
 
 const ContactSchema = z.object({
@@ -26,13 +28,54 @@ const ContactSchema = z.object({
 
 export type ContactFormData = z.infer<typeof ContactSchema>
 
-export async function createContact(data: ContactFormData) {
+export type CreateContactResult =
+  | { data: Contact }
+  | { error: string }
+  | { duplicates: ContactDuplicateMatch[] }
+
+export async function checkContactDuplicates(
+  data: ContactFormData,
+  excludeId?: string
+): Promise<{ duplicates: ContactDuplicateMatch[] }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { duplicates: [] }
+
+  const parsed = ContactSchema.safeParse(data)
+  if (!parsed.success) return { duplicates: [] }
+
+  const duplicates = await queryContactDuplicates(supabase, {
+    first_name: parsed.data.first_name,
+    last_name: parsed.data.last_name,
+    email: parsed.data.email || null,
+    phone: parsed.data.phone || null,
+    company_id: parsed.data.company_id || null,
+    excludeId,
+  })
+  return { duplicates }
+}
+
+export async function createContact(
+  data: ContactFormData,
+  options?: { confirmDuplicates?: boolean }
+): Promise<CreateContactResult> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'No autenticado' }
 
   const parsed = ContactSchema.safeParse(data)
   if (!parsed.success) return { error: parsed.error.issues[0].message }
+
+  const duplicates = await queryContactDuplicates(supabase, {
+    first_name: parsed.data.first_name,
+    last_name: parsed.data.last_name,
+    email: parsed.data.email || null,
+    phone: parsed.data.phone || null,
+    company_id: parsed.data.company_id || null,
+  })
+  if (duplicates.length > 0 && !options?.confirmDuplicates) {
+    return { duplicates }
+  }
 
   const clean = {
     ...parsed.data,

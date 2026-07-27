@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { getProfile } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { ContactsList } from './contacts-list'
+import { isDemoMode } from '@/lib/demo'
+import { DEMO_CONTACTOS, DEMO_EMPRESAS } from '@/lib/demo/universe'
 
 export default async function ContactosPage({
   searchParams,
@@ -12,6 +14,19 @@ export default async function ContactosPage({
   if (!profile) redirect('/login')
 
   const params = await searchParams
+
+  if (isDemoMode()) {
+    return (
+      <ContactsList
+        contacts={DEMO_CONTACTOS}
+        companies={DEMO_EMPRESAS.map(e => ({ id: e.id, name: e.name }))}
+        profile={profile}
+        autoOpenNew={params.nuevo === '1'}
+        initialCompanyId={params.empresa}
+      />
+    )
+  }
+
   const supabase = await createClient()
 
   let query = supabase

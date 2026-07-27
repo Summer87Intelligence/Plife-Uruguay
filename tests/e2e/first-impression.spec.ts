@@ -149,32 +149,6 @@ test.describe('Primera impresión — claridad de pantallas clave', () => {
     ).toBeVisible({ timeout: 10_000 })
   })
 
-  test('/app/compliance: explica revisión de mensajes y tiene input', async ({ page }) => {
-    await page.goto(ROUTES.compliance)
-    await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {})
-
-    // Heading
-    await expect(page.getByText(/Compliance Comercial/i).first()).toBeVisible({ timeout: 10_000 })
-
-    // Explains purpose in commercial terms
-    await expect(
-      page.getByText(/mensajes antes de enviarlos/i).first()
-    ).toBeVisible({ timeout: 8_000 })
-
-    // Input field is present and usable
-    const textarea = page.getByRole('textbox').first()
-    await expect(textarea).toBeVisible({ timeout: 8_000 })
-  })
-
-  test('/app/compliance: muestra guía "mensajes antes de enviarlos"', async ({ page }) => {
-    await page.goto(ROUTES.compliance)
-    await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {})
-
-    await expect(
-      page.getByText(/mensajes antes de enviarlos/i).first()
-    ).toBeVisible({ timeout: 10_000 })
-  })
-
   test('/app/direccion: muestra guía "Vista ejecutiva"', async ({ page }) => {
     await page.goto(ROUTES.direccion)
     await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {})

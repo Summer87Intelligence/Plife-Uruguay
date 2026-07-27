@@ -1,31 +1,31 @@
 import Link from 'next/link'
 import type { Route } from 'next'
-import { Building2, Users, TrendingUp, Megaphone, ShieldCheck, ArrowRight, Compass } from 'lucide-react'
+import { Inbox, Columns3, FileText, Megaphone, ArrowRight, Compass } from 'lucide-react'
 
 const steps = [
   {
     n: 1,
-    icon: Building2,
-    title: 'Crear una empresa',
-    desc: 'La empresa es la base del seguimiento comercial.',
-    cta: 'Crear empresa',
-    href: '/app/empresas' as Route,
+    icon: Inbox,
+    title: 'Crear un lead',
+    desc: 'El lead es el punto de partida del trabajo comercial.',
+    cta: 'Nuevo lead',
+    href: '/app/leads/new' as Route,
   },
   {
     n: 2,
-    icon: Users,
-    title: 'Agregar un contacto',
-    desc: 'El contacto es la persona real con la que va a hablar el asesor.',
-    cta: 'Agregar contacto',
-    href: '/app/contactos' as Route,
+    icon: Columns3,
+    title: 'Avanzar el pipeline',
+    desc: 'Revisá en qué etapa está cada lead comercial.',
+    cta: 'Ver pipeline',
+    href: '/app/pipeline' as Route,
   },
   {
     n: 3,
-    icon: TrendingUp,
-    title: 'Crear una oportunidad',
-    desc: 'La oportunidad representa una conversación comercial concreta.',
-    cta: 'Crear oportunidad',
-    href: '/app/oportunidades' as Route,
+    icon: FileText,
+    title: 'Preparar una propuesta',
+    desc: 'Usá los motores para armar un borrador.',
+    cta: 'Nueva propuesta',
+    href: '/app/propuestas/nueva' as Route,
   },
   {
     n: 4,
@@ -35,21 +35,9 @@ const steps = [
     cta: 'Ver campañas',
     href: '/app/campanas' as Route,
   },
-  {
-    n: 5,
-    icon: ShieldCheck,
-    title: 'Revisar mensajes con Compliance',
-    desc: 'Antes de enviar un mensaje, revisá que no prometa algo riesgoso.',
-    cta: 'Revisar mensaje',
-    href: '/app/compliance' as Route,
-  },
 ]
 
-interface GettingStartedCardProps {
-  mode?: 'empty' | 'demo'
-}
-
-export function GettingStartedCard({ mode = 'empty' }: GettingStartedCardProps) {
+export function GettingStartedCard() {
   return (
     <div className="rounded-xl border border-[#1B3A6B]/15 bg-[#1B3A6B]/[0.03] p-5">
       <div className="flex items-center gap-2 mb-1">
@@ -57,11 +45,9 @@ export function GettingStartedCard({ mode = 'empty' }: GettingStartedCardProps) 
         <p className="text-sm font-semibold text-[#1B3A6B]">¿Por dónde empiezo?</p>
       </div>
       <p className="text-xs text-gray-500 mb-4">
-        {mode === 'demo'
-          ? 'Estás viendo datos de ejemplo. En uso real, el sistema empieza cargando una empresa, un contacto y una oportunidad.'
-          : 'Todavía no hay datos cargados. Empezá por estos pasos para activar el sistema.'}
+        Todavía no hay datos cargados. Empezá por estos pasos para activar el sistema.
       </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {steps.map(step => {
           const Icon = step.icon
           return (

@@ -1,5 +1,7 @@
 # Diseño Motor IA PLIFE — FASE 12O-A
 
+> **Histórico (FASE 15B):** OpenAI fue removido del proyecto. Las menciones a OpenAI / GPT / `OPENAI_API_KEY` son registro histórico; los motores operan en modo determinístico interno.
+
 ## Identidad del módulo
 
 **Nombre:** Motor IA PLIFE  

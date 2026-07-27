@@ -1,5 +1,7 @@
 # Auditoría Motor IA PLIFE — FASE 12O-A
 
+> **Histórico (FASE 15B):** OpenAI fue removido del proyecto. Las menciones a OpenAI / GPT / `OPENAI_API_KEY` son registro histórico; los motores operan en modo determinístico interno.
+
 ## Estado actual de la infraestructura IA
 
 El proyecto ya tiene infraestructura IA funcional. No es un punto de partida en cero:

@@ -51,10 +51,6 @@ const STAGE_COPY: Record<string, { focus: string; detail: string }> = {
     focus: 'proponer un borrador de mensaje comercial consultivo',
     detail: 'Este módulo generaría un borrador prudente para revisión del asesor antes de cualquier envío.',
   },
-  'Compliance': {
-    focus: 'revisar riesgos en el material comercial propuesto',
-    detail: 'Este módulo señalaría afirmaciones sensibles y recordaría límites de compliance antes de usar el mensaje.',
-  },
   'Próximo paso': {
     focus: 'sugerir la acción más relevante para las próximas 48 horas',
     detail: 'Este módulo propondría un siguiente paso concreto y verificable para el seguimiento comercial.',
@@ -106,7 +102,7 @@ function buildStageOutput(
     categoryLine.trim(),
     LIMITS_BLOCK,
     '',
-    'Modo: ejecución mock del Motor IA PLIFE — sin OpenAI ni fuentes externas.',
+    'Modo: ejecución mock de los Motores PLIFE — determinístico interno, sin proveedor ni fuentes externas.',
   ].filter(Boolean).join('\n')
 }
 

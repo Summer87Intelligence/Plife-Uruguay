@@ -1,5 +1,8 @@
 # Checklist QA — Staging
 
+> **Nota (FASE 15B):** OpenAI fue removido. Los ítems que mencionan `OPENAI_API_KEY`
+> / OpenAI son **históricos**; hoy los motores operan en modo determinístico interno.
+
 Validación manual post-deploy en Vercel. Ejecutar en orden con un usuario con rol `admin` o `asesor` según se indica.
 
 **URL base:** `https://tu-proyecto.vercel.app`  

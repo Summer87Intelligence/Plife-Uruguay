@@ -25,10 +25,10 @@ test.describe('Admin System /app/admin/system', () => {
     await expect(activeStatus).toBeVisible()
   })
 
-  test('muestra estado de IA y modo demo', async ({ page }) => {
+  test('muestra estado de motores internos y modo demo', async ({ page }) => {
     await expect(page.getByText(/modo demo/i).first()).toBeVisible()
-    // The IA section has both the label "IA (OpenAI)" and a status badge — check either
-    await expect(page.getByText(/IA \(OpenAI\)/i).first()).toBeVisible()
+    // FASE 15B: la sección muestra el estado de los motores internos (sin proveedor externo)
+    await expect(page.getByText(/motores internos/i).first()).toBeVisible()
   })
 
   test('muestra contadores de tablas', async ({ page }) => {
@@ -49,19 +49,16 @@ test.describe('Admin System /app/admin/system', () => {
 
   test('no expone tokens, API keys ni secrets', async ({ page }) => {
     const content = await page.content()
-    // Check that no OpenAI key format appears in rendered HTML
+    // Guarda genérica: ningún formato de clave secreta debe aparecer en el HTML.
     // Note: eyJ... patterns are legitimate JWT session tokens embedded by Next.js — not checked here
     expect(content).not.toMatch(/sk-[A-Za-z0-9]{48,}/)
-    expect(content).not.toMatch(/OPENAI_API_KEY\s*=\s*sk-/)
     // Supabase service role key (starts with eyJ but is much longer and contains "service_role")
     expect(content).not.toContain('service_role')
   })
 
-  test('últimas interacciones IA y revisiones compliance cargan', async ({ page }) => {
+  test('últimas interacciones IA cargan', async ({ page }) => {
     // Should show either records or "sin registros"
     const aiSection = page.getByText(/últimas.*interacciones|sin interacciones/i).first()
     await expect(aiSection).toBeVisible()
-    const complianceSection = page.getByText(/últimas.*revisiones|sin revisiones/i).first()
-    await expect(complianceSection).toBeVisible()
   })
 })

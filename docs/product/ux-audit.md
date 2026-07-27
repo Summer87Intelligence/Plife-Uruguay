@@ -1,5 +1,7 @@
 # FASE 12D — Auditoría UX operativa
 
+> **Histórico (FASE 15B):** OpenAI fue removido del proyecto. Las menciones a OpenAI / GPT / `OPENAI_API_KEY` son registro histórico; los motores operan en modo determinístico interno.
+
 **Fecha:** 2026-07-01  
 **Alcance:** 10 secciones principales de PLIFE Growth OS  
 **Criterios:** título, subtítulo, CTA, primer paso, empty states, botones, jerga, acción recomendada

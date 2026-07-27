@@ -1,5 +1,9 @@
 # CI y tests — PLIFE Growth OS
 
+> **Nota (FASE 15B):** OpenAI fue removido. Las referencias a `OPENAI_API_KEY` /
+> OpenAI en este documento son **históricas**. Los motores operan en modo
+> determinístico interno; los tests validan reglas determinísticas, no proveedores externos.
+
 ## Qué valida CI
 
 El workflow `.github/workflows/ci.yml` corre en cada `push` y `pull_request` a `main`:

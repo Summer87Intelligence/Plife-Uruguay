@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 import { login, hasCredentials } from './helpers/auth'
 import { ROUTES } from './helpers/routes'
 
-test.describe('Ayuda contextual — orientación de uso por sección', () => {
+test.describe('Ayuda contextual ��� orientación de uso por sección', () => {
   test.beforeEach(async ({ page }) => {
     test.skip(!hasCredentials(), 'Requiere E2E_USER_EMAIL y E2E_USER_PASSWORD en .env.test')
     await login(page)
@@ -50,15 +50,6 @@ test.describe('Ayuda contextual — orientación de uso por sección', () => {
 
     await expect(
       page.getByText(/funciona mejor cuando hay empresas cargadas/i).first()
-    ).toBeVisible({ timeout: 10_000 })
-  })
-
-  test('/app/compliance: muestra orientación de uso', async ({ page }) => {
-    await page.goto(ROUTES.compliance)
-    await page.waitForLoadState('networkidle', { timeout: 20_000 }).catch(() => {})
-
-    await expect(
-      page.getByText(/Pegá un mensaje comercial/i).first()
     ).toBeVisible({ timeout: 10_000 })
   })
 

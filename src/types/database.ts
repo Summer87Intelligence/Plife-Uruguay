@@ -11,9 +11,12 @@ export type ActivityType = 'llamada' | 'reunion' | 'mensaje' | 'email' | 'nota' 
 export type CampaignStatus = 'borrador' | 'activa' | 'pausada' | 'finalizada' | 'archivada'
 export type CampaignType = 'duenos_pymes' | 'empresas_familiares' | 'estudios_contables' | 'estudios_juridicos' | 'clinicas' | 'empresas_tech' | 'constructoras' | 'clubes_asociaciones' | 'profesionales_independientes' | 'ejecutivos' | 'reclutamiento_asesores' | 'general'
 export type DocumentStatus = 'activo' | 'inactivo' | 'en_revision' | 'archivado'
+// LEGADO: Compliance fue removido del producto en FASE 15C. Este tipo y las tablas
+// `compliance_rules` / `compliance_reviews` se conservan sólo como espejo del schema
+// remoto de Supabase (no se aplicó SQL). Ninguna pantalla ni motor los usa.
 export type ComplianceAction = 'aprobado' | 'bloqueado' | 'revision_requerida' | 'modificado'
 
-// --- Motor IA PLIFE (FASE 12O-B) -------------------------------------------
+// --- Motor de prompts PLIFE (FASE 12O-B) -----------------------------------
 export type AIPromptStatus = 'draft' | 'validated' | 'archived'
 export type AIExecutionEntityType = 'company' | 'contact' | 'opportunity' | 'campaign'
 export type AIExecutionRunStatus = 'queued' | 'running' | 'completed' | 'completed_with_errors' | 'failed'
@@ -49,6 +52,29 @@ export interface TeamMember {
   team_id: string
   profile_id: string
   joined_at: string
+}
+
+// Gestión de Pólizas — Bloque Técnico 1 (catálogos, sin tabla `polizas` todavía)
+export interface Insurer {
+  id: string
+  name: string
+  normalized_name: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  created_by: string | null
+  updated_by: string | null
+}
+
+export interface InsuranceBranch {
+  id: string
+  name: string
+  normalized_name: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  created_by: string | null
+  updated_by: string | null
 }
 
 export interface Contact {
@@ -133,12 +159,85 @@ export interface Opportunity {
   company_id: string | null
   assigned_to: string | null
   campaign_id: string | null
+  lead_id: string | null
   last_activity_at: string | null
   deleted_at: string | null
   created_at: string
   updated_at: string
   created_by: string | null
   updated_by: string | null
+}
+
+export interface Lead {
+  id: string
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+  assigned_to: string | null
+  created_by: string | null
+  title: string
+  display_name: string | null
+  lead_type: string
+  source: string
+  status: string
+  pipeline_stage: string
+  priority: string
+  temperature: string
+  interest_area: string | null
+  phone: string | null
+  email: string | null
+  company_name_raw: string | null
+  person_name_raw: string | null
+  company_id: string | null
+  contact_id: string | null
+  campaign_id: string | null
+  radar_source_id: string | null
+  opportunity_id: string | null
+  next_action: string | null
+  next_action_date: string | null
+  notes: string | null
+  converted_at: string | null
+  discarded_at: string | null
+  discard_reason: string | null
+  metadata: Json
+}
+
+// Propuestas persistidas (FASE 15L, aplicada en Supabase dev). El borrador vive en
+// `draft` (JSONB, fuente de verdad); los campos de texto son denormalizaciones.
+// status: draft/in_review/ready/used/archived · source: lead/campaign/radar/manual/
+// market_observation/other · target_type: person/company/segment/unknown.
+export interface Proposal {
+  id: string
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+  created_by: string
+  assigned_to: string | null
+  title: string
+  status: string
+  source: string
+  source_id: string | null
+  source_title: string | null
+  source_context: string | null
+  lead_id: string | null
+  campaign_id: string | null
+  radar_context: Json | null
+  target_type: string
+  target_description: string | null
+  context: string
+  objective: string | null
+  known_problem: string | null
+  desired_outcome: string | null
+  notes: string | null
+  draft: Json
+  summary: string | null
+  target_audience: string | null
+  problem: string | null
+  opportunity: string | null
+  proposed_offer: string | null
+  score_snapshot: Json | null
+  qualification_snapshot: Json | null
+  metadata: Json
 }
 
 export interface OpportunityWithRelations extends Opportunity {
@@ -253,6 +352,8 @@ export interface AIInteraction {
   created_at: string
 }
 
+// LEGADO (FASE 15C): Compliance removido del producto. Tipo conservado sólo como
+// espejo del schema remoto de Supabase; sin uso en la aplicación.
 export interface ComplianceRule {
   id: string
   name: string
@@ -352,7 +453,7 @@ export interface ObjectionItem {
   created_by: string | null
 }
 
-// --- Motor IA PLIFE (FASE 12O-B) -------------------------------------------
+// --- Motor de prompts PLIFE (FASE 12O-B) -----------------------------------
 
 export interface AIStage {
   id: string
@@ -503,15 +604,39 @@ export interface Database {
       profiles: TableDef<Profile>
       teams: TableDef<Team, [Rel<'teams_leader_id_fkey', 'leader_id', 'profiles'>]>
       team_members: TableDef<TeamMember>
+      // Gestión de Pólizas — Bloque Técnico 1
+      insurers: TableDef<Insurer, [
+        Rel<'insurers_created_by_fkey', 'created_by', 'profiles'>,
+        Rel<'insurers_updated_by_fkey', 'updated_by', 'profiles'>,
+      ]>
+      insurance_branches: TableDef<InsuranceBranch, [
+        Rel<'insurance_branches_created_by_fkey', 'created_by', 'profiles'>,
+        Rel<'insurance_branches_updated_by_fkey', 'updated_by', 'profiles'>,
+      ]>
       contacts: TableDef<Contact, [
         Rel<'contacts_company_id_fkey', 'company_id', 'companies'>,
         Rel<'contacts_assigned_to_fkey', 'assigned_to', 'profiles'>,
       ]>
       companies: TableDef<Company>
+      leads: TableDef<Lead, [
+        Rel<'leads_assigned_to_fkey', 'assigned_to', 'profiles'>,
+        Rel<'leads_created_by_fkey', 'created_by', 'profiles'>,
+        Rel<'leads_company_id_fkey', 'company_id', 'companies'>,
+        Rel<'leads_contact_id_fkey', 'contact_id', 'contacts'>,
+        Rel<'leads_campaign_id_fkey', 'campaign_id', 'campaigns'>,
+        Rel<'leads_opportunity_id_fkey', 'opportunity_id', 'opportunities'>,
+      ]>
+      proposals: TableDef<Proposal, [
+        Rel<'proposals_assigned_to_fkey', 'assigned_to', 'profiles'>,
+        Rel<'proposals_created_by_fkey', 'created_by', 'profiles'>,
+        Rel<'proposals_lead_id_fkey', 'lead_id', 'leads'>,
+        Rel<'proposals_campaign_id_fkey', 'campaign_id', 'campaigns'>,
+      ]>
       opportunities: TableDef<Opportunity, [
         Rel<'opportunities_contact_id_fkey', 'contact_id', 'contacts'>,
         Rel<'opportunities_company_id_fkey', 'company_id', 'companies'>,
         Rel<'opportunities_assigned_to_fkey', 'assigned_to', 'profiles'>,
+        Rel<'opportunities_lead_id_fkey', 'lead_id', 'leads'>,
       ]>
       activities: TableDef<Activity, [Rel<'activities_created_by_fkey', 'created_by', 'profiles'>]>
       notes: TableDef<Note>
@@ -526,7 +651,7 @@ export interface Database {
       training_modules: TableDef<TrainingModule>
       roleplay_sessions: TableDef<RoleplaySession>
       objections_library: TableDef<ObjectionItem>
-      // Motor IA PLIFE (FASE 12O-B)
+      // Motor de prompts PLIFE (FASE 12O-B)
       ai_stages: TableDef<AIStage>
       ai_categories: TableDef<AICategory>
       ai_prompts: TableDef<AIPrompt, [
@@ -564,6 +689,8 @@ export interface Database {
       }
       get_user_role: { Args: Record<never, never>; Returns: UserRole }
       is_admin_or_direccion: { Args: Record<never, never>; Returns: boolean }
+      // FASE 15L — soft-delete seguro de propuestas (SECURITY DEFINER).
+      soft_delete_proposal: { Args: { p_id: string }; Returns: undefined }
     }
     Enums: {
       user_role: UserRole
@@ -578,7 +705,7 @@ export interface Database {
       campaign_type: CampaignType
       document_status: DocumentStatus
       compliance_action: ComplianceAction
-      // Motor IA PLIFE (FASE 12O-B)
+      // Motor de prompts PLIFE (FASE 12O-B)
       ai_prompt_status: AIPromptStatus
       ai_execution_entity_type: AIExecutionEntityType
       ai_execution_run_status: AIExecutionRunStatus

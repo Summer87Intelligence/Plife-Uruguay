@@ -108,7 +108,7 @@ export function CampaignForm({ onSuccess, onCancel, mode = 'create', campaignId,
   if (created) {
     return (
       <CreateSuccessPanel
-        message="Campaña creada. Siguiente paso recomendado: revisar el detalle y activarla cuando esté lista."
+        message="Campaña creada. Siguiente paso: definí qué empresas o contactos vas a trabajar y registrá oportunidades cuando aparezca interés real."
         primaryAction={{ label: 'Ver campaña', href: `/app/campanas/${created.id}` }}
         secondaryAction={{ label: 'Ver todas las campañas', href: '/app/campanas' }}
         onClose={onSuccess}

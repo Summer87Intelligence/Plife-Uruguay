@@ -18,6 +18,9 @@
 .DS_Store
 *.pem
 
+# local data backups (dev cleanup exports — never commit; may contain personal data)
+/backups/
+
 # debug
 npm-debug.log*
 yarn-debug.log*

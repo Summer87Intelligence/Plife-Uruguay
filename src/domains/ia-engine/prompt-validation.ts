@@ -97,7 +97,7 @@ export function validateStructuredPrompt(prompt: StructuredPromptValidationInput
   if (!isEmpty(prompt.constraints) && prompt.constraints.trim().length < MIN_CONSTRAINTS_LENGTH) {
     suggestions.push({
       suggestion_type: 'weak_constraints',
-      reason: 'Las restricciones son demasiado breves para mitigar riesgos comerciales y de compliance.',
+      reason: 'Las restricciones son demasiado breves para mitigar riesgos comerciales.',
       suggested_content: 'Ampliá las restricciones con límites explícitos, prohibiciones y requisitos de revisión humana.',
     })
   } else if (!isEmpty(prompt.constraints) && !hasExplicitLimits(prompt.constraints)) {
@@ -109,14 +109,6 @@ export function validateStructuredPrompt(prompt: StructuredPromptValidationInput
   }
 
   const categoryKey = prompt.categoryKey?.toLowerCase() ?? null
-
-  if (categoryKey === 'compliance' && !hasExplicitLimits(prompt.constraints)) {
-    suggestions.push({
-      suggestion_type: 'compliance_limits',
-      reason: 'Prompt de compliance sin límites explícitos en restricciones.',
-      suggested_content: 'Agregá restricciones que prohíban promesas, diagnósticos o afirmaciones no verificadas, y exijan revisión humana.',
-    })
-  }
 
   if (categoryKey === 'mensajes' && !hasHumanReviewMention(`${prompt.constraints}\n${prompt.output_format}`)) {
     suggestions.push({

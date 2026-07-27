@@ -1,4 +1,10 @@
 -- =============================================================================
+-- HISTÓRICO — OpenAI removido en FASE 15B.
+-- Los defaults provider='openai' / model='gpt-4o-mini' quedan como registro
+-- histórico del schema. La app YA NO usa OpenAI: los motores operan en modo
+-- determinístico interno (model_used = 'internal-deterministic'). No se aplica
+-- ningún cambio a Supabase desde esta fase.
+-- =============================================================================
 -- PLIFE Growth OS — MOTOR IA: SCHEMA (FASE 12O-B)
 -- =============================================================================
 -- Crea las 8 tablas nuevas del Motor IA PLIFE.

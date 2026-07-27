@@ -1,4 +1,4 @@
-import type { ContactStatus, CompanyB2BStatus, OpportunityStage, RiskLevel, ActivityType, CampaignStatus, CampaignType, UserRole, ComplianceAction } from '@/types/database'
+import type { ContactStatus, CompanyB2BStatus, OpportunityStage, RiskLevel, ActivityType, CampaignStatus, CampaignType, UserRole } from '@/types/database'
 
 export const CONTACT_STATUS_LABELS: Record<ContactStatus, string> = {
   nuevo: 'Nuevo',
@@ -92,20 +92,6 @@ export const RISK_LEVEL_COLORS: Record<RiskLevel, string> = {
   critico: 'bg-red-100 text-red-800',
 }
 
-export const COMPLIANCE_ACTION_LABELS: Record<ComplianceAction, string> = {
-  aprobado: 'Aprobado',
-  modificado: 'Requiere ajustes',
-  revision_requerida: 'Revisión requerida',
-  bloqueado: 'Bloqueado',
-}
-
-export const COMPLIANCE_ACTION_COLORS: Record<ComplianceAction, string> = {
-  aprobado: 'bg-green-100 text-green-800',
-  modificado: 'bg-yellow-100 text-yellow-800',
-  revision_requerida: 'bg-orange-100 text-orange-800',
-  bloqueado: 'bg-red-100 text-red-800',
-}
-
 export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
   llamada: 'Llamada',
   reunion: 'Reunión',
@@ -172,9 +158,8 @@ export const NAV_ITEMS = [
   { href: '/app/oportunidades', label: 'Oportunidades', icon: 'TrendingUp' },
   { href: '/app/radar-b2b', label: 'Radar B2B', icon: 'Radar' },
   { href: '/app/campanas', label: 'Campañas', icon: 'Megaphone' },
-  { href: '/app/copiloto', label: 'Copiloto IA', icon: 'Bot' },
+  { href: '/app/copiloto', label: 'Copiloto', icon: 'Bot' },
   { href: '/app/conocimiento', label: 'Conocimiento', icon: 'BookOpen' },
-  { href: '/app/compliance', label: 'Compliance', icon: 'ShieldCheck' },
   { href: '/app/academia', label: 'Academia', icon: 'GraduationCap' },
   { href: '/app/direccion', label: 'Dirección', icon: 'BarChart3' },
   { href: '/app/admin', label: 'Admin', icon: 'Settings' },

@@ -7,7 +7,6 @@ import type { Database } from '@/types/database'
 export type AgentName =
   | 'advisor_copilot'
   | 'b2b_research'
-  | 'compliance_agent'
   | 'campaign_agent'
 
 export interface ResolvedPrompt {
@@ -46,7 +45,7 @@ Mensaje sugerido:
 Qué evitar decir:
 Próximo paso:`,
     userPromptTemplate: null,
-    model: 'gpt-4o-mini',
+    model: 'internal-deterministic',
     temperature: 0.5,
     maxTokens: 1200,
   },
@@ -66,24 +65,9 @@ Contacto ideal:
 Riesgo:
 Próximo paso:`,
     userPromptTemplate: null,
-    model: 'gpt-4o-mini',
+    model: 'internal-deterministic',
     temperature: 0.4,
     maxTokens: 1000,
-  },
-  compliance_agent: {
-    promptVersionId: null,
-    systemPrompt: `${GLOBAL_GUARDRAILS}
-
-Sos un revisor de compliance comercial para seguros. Evaluás un mensaje y detectás afirmaciones riesgosas (promesas de cobertura, garantías, negación de riesgo, comparaciones de inversión, etc.).
-
-Respondé en texto plano:
-Nivel de riesgo: (bajo / medio / alto / critico)
-Problemas detectados:
-Versión sugerida (segura):`,
-    userPromptTemplate: null,
-    model: 'gpt-4o-mini',
-    temperature: 0.2,
-    maxTokens: 800,
   },
   campaign_agent: {
     promptVersionId: null,
@@ -93,7 +77,7 @@ Sos un estratega de campañas B2B de PLIFE. Generás material comercial para un 
 
 Según lo que se te pida, generá texto plano claro y accionable (mensaje inicial, guion de llamada, objeciones esperadas o secuencia de seguimiento).`,
     userPromptTemplate: null,
-    model: 'gpt-4o-mini',
+    model: 'internal-deterministic',
     temperature: 0.6,
     maxTokens: 1200,
   },

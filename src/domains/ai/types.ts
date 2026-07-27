@@ -1,12 +1,10 @@
 // Shared AI types & constants. Kept out of the 'use server' actions file because
 // a "use server" module may only export async functions (not objects/values).
 import type { RiskLevel } from '@/types/database'
-import type { ComplianceResult } from '@/lib/ai/compliance'
 
 export interface AIResult {
   response: string
   riskLevel: RiskLevel
-  compliance: ComplianceResult
   knowledgeUsed: boolean
   interactionId?: string
   documentsUsed?: string[]

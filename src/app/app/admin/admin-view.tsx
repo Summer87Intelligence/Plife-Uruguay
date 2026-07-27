@@ -1,22 +1,27 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import { Settings, Users, Bot, Shield, Sparkles, Database } from 'lucide-react'
+import { Settings, Users, Bot, Shield, Sparkles, Database, Building2, Layers } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Avatar } from '@/components/ui/avatar'
 import { ROLE_LABELS } from '@/lib/constants'
 import { isDemoMode } from '@/lib/demo'
-import type { Profile, Team, AIPromptVersion } from '@/types/database'
+import { CatalogManager } from '@/components/admin/catalog-manager'
+import { createInsurer, updateInsurerName, setInsurerActive } from '@/domains/insurers/actions'
+import { createInsuranceBranch, updateInsuranceBranchName, setInsuranceBranchActive } from '@/domains/insurance-branches/actions'
+import type { Profile, Team, AIPromptVersion, Insurer, InsuranceBranch } from '@/types/database'
 
 interface AdminViewProps {
   users: Profile[]
   teams: (Team & { leader?: { full_name: string } | null })[]
   prompts: AIPromptVersion[]
+  insurers: Insurer[]
+  insuranceBranches: InsuranceBranch[]
 }
 
-type Tab = 'usuarios' | 'equipos' | 'agentes_ia'
+type Tab = 'usuarios' | 'equipos' | 'agentes_ia' | 'aseguradoras' | 'ramos'
 
-export function AdminView({ users, teams, prompts }: AdminViewProps) {
+export function AdminView({ users, teams, prompts, insurers, insuranceBranches }: AdminViewProps) {
   const [tab, setTab] = useState<Tab>('usuarios')
 
   return (
@@ -55,6 +60,8 @@ export function AdminView({ users, teams, prompts }: AdminViewProps) {
           { id: 'usuarios', label: 'Usuarios', icon: Users },
           { id: 'equipos', label: 'Equipos', icon: Shield },
           { id: 'agentes_ia', label: 'Agentes IA', icon: Bot },
+          { id: 'aseguradoras', label: 'Aseguradoras', icon: Building2 },
+          { id: 'ramos', label: 'Ramos', icon: Layers },
         ] as const).map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors ${tab === t.id ? 'bg-[#1B3A6B] text-white' : 'text-gray-600 hover:bg-gray-50'}`}>
             <t.icon className="h-4 w-4" />
@@ -116,6 +123,11 @@ export function AdminView({ users, teams, prompts }: AdminViewProps) {
             <CardTitle>Agentes IA activos ({prompts.length})</CardTitle>
           </CardHeader>
           <CardContent>
+            {prompts.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-8">
+                No hay agentes IA configurados. La configuración de motores está en Motores.
+              </p>
+            ) : (
             <ul className="divide-y divide-gray-50">
               {prompts.map(prompt => (
                 <li key={prompt.id} className="py-3">
@@ -133,6 +145,45 @@ export function AdminView({ users, teams, prompts }: AdminViewProps) {
                 </li>
               ))}
             </ul>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {tab === 'aseguradoras' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Aseguradoras</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CatalogManager
+              entityLabel="aseguradora"
+              entityLabelPlural="aseguradoras"
+              newItemLabel="Nueva aseguradora"
+              items={insurers}
+              onCreate={(name) => createInsurer({ name })}
+              onUpdate={updateInsurerName}
+              onSetActive={setInsurerActive}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {tab === 'ramos' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Ramos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CatalogManager
+              entityLabel="ramo"
+              entityLabelPlural="ramos"
+              newItemLabel="Nuevo ramo"
+              items={insuranceBranches}
+              onCreate={(name) => createInsuranceBranch({ name })}
+              onUpdate={updateInsuranceBranchName}
+              onSetActive={setInsuranceBranchActive}
+            />
           </CardContent>
         </Card>
       )}

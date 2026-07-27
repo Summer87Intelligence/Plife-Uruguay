@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { getProfile } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { PipelineView } from './pipeline-view'
+import { isDemoMode } from '@/lib/demo'
+import { DEMO_OPORTUNIDADES } from '@/lib/demo/universe'
 
 export default async function OportunidadesPage({
   searchParams,
@@ -12,6 +14,20 @@ export default async function OportunidadesPage({
   if (!profile) redirect('/login')
 
   const params = await searchParams
+
+  if (isDemoMode()) {
+    return (
+      <PipelineView
+        opportunities={DEMO_OPORTUNIDADES}
+        profile={profile}
+        autoOpenNew={params.nuevo === '1'}
+        initialContactId={params.contacto}
+        initialCompanyId={params.empresa}
+        initialSearch={params.q}
+      />
+    )
+  }
+
   const supabase = await createClient()
 
   let query = supabase

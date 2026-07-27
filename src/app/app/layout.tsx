@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { devAuthLog, getSessionAndProfile, isValidProfile } from '@/lib/auth'
+import { isDemoModeAuthEnabled } from '@/lib/demo-mode-auth'
 import { AppSidebar } from '@/components/layout/app-sidebar'
 import { AppHeader } from '@/components/layout/app-header'
 
@@ -25,6 +26,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       <AppSidebar profile={profile} />
       <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
+        {isDemoModeAuthEnabled() && (
+          <div className="shrink-0 border-b border-amber-200 bg-amber-50 px-4 py-1 text-center text-xs font-medium text-amber-700">
+            Modo Demo — sin autenticación real, solo para validación
+          </div>
+        )}
         <AppHeader profile={profile} />
         <main className="flex-1 overflow-y-auto p-6">
           {children}

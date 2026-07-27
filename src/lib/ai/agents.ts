@@ -1,10 +1,9 @@
-// High-level agent runner. Orchestrates: resolve prompt -> call provider ->
-// deterministic risk detection -> persist trace. Server-side only.
+// High-level agent runner. Orchestrates: resolve prompt -> call provider
+// (internal deterministic) -> persist trace. Server-side only.
 import { createClient } from '@/lib/supabase/server'
 import { chatComplete, isAIConfigured, AINotConfiguredError, AI_NOT_CONFIGURED_MESSAGE } from '@/lib/ai/provider'
 import { resolvePrompt, renderUserPrompt, type AgentName } from '@/lib/ai/prompts'
 import { logAIInteraction } from '@/lib/ai/trace'
-import { runDeterministicCompliance } from '@/lib/ai/compliance'
 import type { RiskLevel } from '@/types/database'
 
 export { AI_NOT_CONFIGURED_MESSAGE, isAIConfigured }
@@ -58,8 +57,10 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
     maxTokens: prompt.maxTokens,
   })
 
-  // Deterministic risk detection over the generated response.
-  const compliance = runDeterministicCompliance(content)
+  // Motor interno determinístico: sin capa de análisis de riesgo (removida en
+  // FASE 15C). La traza registra un nivel de riesgo neutro por defecto.
+  const riskLevel: RiskLevel = 'bajo'
+  const riskFlags: string[] = []
 
   const interactionId = await logAIInteraction(supabase, {
     agentName: input.agentName,
@@ -70,8 +71,8 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
     response: content,
     modelUsed: model,
     tokensUsed,
-    riskLevel: compliance.riskLevel,
-    riskFlags: compliance.triggeredRules,
+    riskLevel,
+    riskFlags,
     documentsUsed: input.documentsUsed,
     contactId: input.contactId,
     companyId: input.companyId,
@@ -81,8 +82,8 @@ export async function runAgent(input: AgentInput): Promise<AgentOutput> {
 
   return {
     response: content,
-    riskLevel: compliance.riskLevel,
-    riskFlags: compliance.triggeredRules,
+    riskLevel,
+    riskFlags,
     documentsUsed: input.documentsUsed ?? [],
     documentNames: input.documentNames ?? [],
     tokensUsed: tokensUsed ?? 0,

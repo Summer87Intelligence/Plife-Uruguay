@@ -113,7 +113,7 @@ export function DashboardTab({
             <EmptyState
               icon={Activity}
               title="Sin ejecuciones"
-              description="Todavía no hay ejecuciones del Motor IA PLIFE."
+              description="Todavía no hay ejecuciones de los Motores PLIFE."
             />
           ) : (
             <div className="overflow-x-auto">
@@ -180,7 +180,7 @@ export function DashboardTab({
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <CheckCircle2 className={`h-4 w-4 ${systemOk ? 'text-green-500' : 'text-gray-300'}`} />
-                <span className="text-gray-600">Revisión humana y compliance integrados en el flujo PLIFE</span>
+                <span className="text-gray-600">Revisión humana integrada en el flujo PLIFE</span>
               </div>
             </div>
           </CardContent>

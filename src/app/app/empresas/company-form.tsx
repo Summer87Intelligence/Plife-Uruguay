@@ -6,7 +6,9 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { CreateSuccessPanel } from '@/components/ui/create-success-panel'
+import { DuplicateWarningPanel } from '@/components/ui/duplicate-warning'
 import { createCompany, updateCompany, type CompanyFormData } from '@/domains/companies/actions'
+import type { CompanyDuplicateMatch } from '@/domains/duplicates/types'
 import { B2B_STATUS_LABELS } from '@/lib/constants'
 
 const statusOptions = Object.entries(B2B_STATUS_LABELS).map(([value, label]) => ({ value, label }))
@@ -40,6 +42,8 @@ export function CompanyForm({ onSuccess, onCancel, mode = 'create', companyId, i
   const [error, setError] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [created, setCreated] = useState<{ id: string } | null>(null)
+  const [duplicates, setDuplicates] = useState<CompanyDuplicateMatch[] | null>(null)
+  const [pendingPayload, setPendingPayload] = useState<CompanyFormData | null>(null)
   const [form, setForm] = useState({
     name: initial?.name ?? '',
     industry: initial?.industry ?? '',
@@ -77,13 +81,36 @@ export function CompanyForm({ onSuccess, onCancel, mode = 'create', companyId, i
     return errs
   }
 
+  async function submitCompany(payload: CompanyFormData, confirmDuplicates = false) {
+    setLoading(true)
+    setError('')
+    const result = mode === 'edit' && companyId
+      ? await updateCompany(companyId, payload)
+      : await createCompany(payload, confirmDuplicates ? { confirmDuplicates: true } : undefined)
+    if ('duplicates' in result && result.duplicates.length > 0) {
+      setDuplicates(result.duplicates)
+      setPendingPayload(payload)
+      setLoading(false)
+    } else if ('error' in result && result.error) {
+      setError(result.error)
+      setLoading(false)
+    } else if (mode === 'create' && 'data' in result && result.data) {
+      router.refresh()
+      setCreated({ id: result.data.id })
+      setDuplicates(null)
+      setPendingPayload(null)
+      setLoading(false)
+    } else {
+      router.refresh()
+      onSuccess?.()
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const fieldErrors = validate()
     if (Object.keys(fieldErrors).length > 0) { setErrors(fieldErrors); return }
     setErrors({})
-    setLoading(true)
-    setError('')
     const payload = {
       ...form,
       name: form.name.trim(),
@@ -91,20 +118,25 @@ export function CompanyForm({ onSuccess, onCancel, mode = 'create', companyId, i
       estimated_employees: form.estimated_employees ? Number(form.estimated_employees) : undefined,
       b2b_score: form.b2b_score !== '' ? Number(form.b2b_score) : undefined,
     } as CompanyFormData
-    const result = mode === 'edit' && companyId
-      ? await updateCompany(companyId, payload)
-      : await createCompany(payload)
-    if (result.error) {
-      setError(result.error)
-      setLoading(false)
-    } else if (mode === 'create' && result.data) {
-      router.refresh()
-      setCreated({ id: result.data.id })
-      setLoading(false)
-    } else {
-      router.refresh()
-      onSuccess?.()
-    }
+    await submitCompany(payload)
+  }
+
+  async function handleConfirmDuplicate() {
+    if (!pendingPayload) return
+    await submitCompany(pendingPayload, true)
+  }
+
+  if (duplicates && duplicates.length > 0) {
+    return (
+      <DuplicateWarningPanel
+        title="Posible empresa duplicada"
+        description="Encontramos una empresa parecida. Revisala antes de crear una nueva para mantener la base ordenada."
+        companyMatches={duplicates}
+        onConfirm={handleConfirmDuplicate}
+        onCancel={() => { setDuplicates(null); setPendingPayload(null) }}
+        loading={loading}
+      />
+    )
   }
 
   if (created) {
@@ -151,7 +183,7 @@ export function CompanyForm({ onSuccess, onCancel, mode = 'create', companyId, i
           </div>
           <Input label="Instagram" value={form.instagram_url} onChange={e => set('instagram_url', e.target.value)} placeholder="https://instagram.com/..." />
           <Input label="Fuente del dato" value={form.source} onChange={e => set('source', e.target.value)} placeholder="Referido, LinkedIn, evento..." />
-          <Textarea label="Riesgos u observaciones" value={form.risk_notes} onChange={e => set('risk_notes', e.target.value)} rows={2} placeholder="Aspectos comerciales o de compliance a tener en cuenta..." />
+          <Textarea label="Riesgos u observaciones" value={form.risk_notes} onChange={e => set('risk_notes', e.target.value)} rows={2} placeholder="Aspectos comerciales a tener en cuenta..." />
           <Textarea label="Notas internas" value={form.notes} onChange={e => set('notes', e.target.value)} rows={2} placeholder="Contexto adicional para el equipo..." />
         </div>
       </details>

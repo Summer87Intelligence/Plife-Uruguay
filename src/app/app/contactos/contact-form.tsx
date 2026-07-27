@@ -6,7 +6,9 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { CreateSuccessPanel } from '@/components/ui/create-success-panel'
+import { DuplicateWarningPanel } from '@/components/ui/duplicate-warning'
 import { createContact, updateContact, type ContactFormData } from '@/domains/contacts/actions'
+import type { ContactDuplicateMatch } from '@/domains/duplicates/types'
 import { CONTACT_STATUS_LABELS } from '@/lib/constants'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
@@ -33,6 +35,8 @@ export function ContactForm({ onSuccess, onCancel, mode = 'create', contactId, i
   const [error, setError] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [created, setCreated] = useState<{ id: string } | null>(null)
+  const [duplicates, setDuplicates] = useState<ContactDuplicateMatch[] | null>(null)
+  const [pendingPayload, setPendingPayload] = useState<ContactFormData | null>(null)
   const [form, setForm] = useState({
     first_name: initial?.first_name ?? '',
     last_name: initial?.last_name ?? '',
@@ -66,33 +70,61 @@ export function ContactForm({ onSuccess, onCancel, mode = 'create', contactId, i
     return errs
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    const fieldErrors = validate()
-    if (Object.keys(fieldErrors).length > 0) { setErrors(fieldErrors); return }
-    setErrors({})
+  async function submitContact(payload: ContactFormData, confirmDuplicates = false) {
     setLoading(true)
     setError('')
-    const payload = {
-      ...form,
-      first_name: form.first_name.trim(),
-      last_name: form.last_name.trim(),
-      email: form.email.trim(),
-    }
     const result = mode === 'edit' && contactId
-      ? await updateContact(contactId, payload as Partial<ContactFormData>)
-      : await createContact(payload as ContactFormData)
-    if (result.error) {
+      ? await updateContact(contactId, payload)
+      : await createContact(payload, confirmDuplicates ? { confirmDuplicates: true } : undefined)
+    if ('duplicates' in result && result.duplicates.length > 0) {
+      setDuplicates(result.duplicates)
+      setPendingPayload(payload)
+      setLoading(false)
+    } else if ('error' in result && result.error) {
       setError(result.error)
       setLoading(false)
-    } else if (mode === 'create' && result.data) {
+    } else if (mode === 'create' && 'data' in result && result.data) {
       router.refresh()
       setCreated({ id: result.data.id })
+      setDuplicates(null)
+      setPendingPayload(null)
       setLoading(false)
     } else {
       router.refresh()
       onSuccess?.()
     }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    const fieldErrors = validate()
+    if (Object.keys(fieldErrors).length > 0) { setErrors(fieldErrors); return }
+    setErrors({})
+    const payload = {
+      ...form,
+      first_name: form.first_name.trim(),
+      last_name: form.last_name.trim(),
+      email: form.email.trim(),
+    } as ContactFormData
+    await submitContact(payload)
+  }
+
+  async function handleConfirmDuplicate() {
+    if (!pendingPayload) return
+    await submitContact(pendingPayload, true)
+  }
+
+  if (duplicates && duplicates.length > 0) {
+    return (
+      <DuplicateWarningPanel
+        title="Posible contacto duplicado"
+        description="Encontramos un contacto parecido o con el mismo email/teléfono. Revisalo antes de crear otro."
+        contactMatches={duplicates}
+        onConfirm={handleConfirmDuplicate}
+        onCancel={() => { setDuplicates(null); setPendingPayload(null) }}
+        loading={loading}
+      />
+    )
   }
 
   if (created) {

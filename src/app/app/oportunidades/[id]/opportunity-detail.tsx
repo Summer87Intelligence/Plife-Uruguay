@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { useState } from 'react'
-import { Plus, AlertTriangle, Calendar, Pencil, Trophy, CircleX, UserCircle, Megaphone, Building2, ShieldCheck, List } from 'lucide-react'
+import { Plus, AlertTriangle, Calendar, Pencil, Trophy, CircleX, UserCircle, Megaphone, Building2, List } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Select } from '@/components/ui/select'
@@ -23,6 +23,7 @@ import { updateOpportunityStage, updateOpportunity, closeOpportunity } from '@/d
 import { useRouter } from 'next/navigation'
 import type { Profile, Opportunity, Note, Contact, Company, AIExecutionRun } from '@/types/database'
 import { EntityAIAnalysisCard } from '@/components/ia/entity-ai-analysis-card'
+import { SectionGuideCard } from '@/components/guidance/section-guide-card'
 
 type OpportunityWithRelations = Opportunity & {
   contact?: Pick<Contact, 'id' | 'first_name' | 'last_name' | 'phone' | 'email'> | null
@@ -154,7 +155,7 @@ export function OpportunityDetail({ opportunity, activities, advisors, campaign,
               { id: 'seguimiento', label: 'Generar seguimiento', run: () => runCopilot({ helpType: 'seguimiento', opportunityId: opportunity.id }) },
               { id: 'objecion', label: 'Responder objeción', run: () => runCopilot({ helpType: 'objecion', opportunityId: opportunity.id }) },
             ]}
-            onSaveActivity={async (content) => { await saveAIAsActivity({ title: 'Copiloto IA', content, opportunityId: opportunity.id }); router.refresh() }}
+            onSaveActivity={async (content) => { await saveAIAsActivity({ title: 'Copiloto', content, opportunityId: opportunity.id }); router.refresh() }}
           />
           <Dialog open={editOpen} onOpenChange={setEditOpen}>
             <DialogTrigger asChild>
@@ -234,7 +235,6 @@ export function OpportunityDetail({ opportunity, activities, advisors, campaign,
           ...(campaign
             ? [{ label: 'Ver campaña', href: `/app/campanas/${campaign.id}`, icon: Megaphone }]
             : []),
-          { label: 'Revisar mensaje', href: '/app/compliance', icon: ShieldCheck },
           { label: 'Ir al pipeline', href: '/app/oportunidades', icon: List },
         ]}
       />
@@ -358,16 +358,30 @@ export function OpportunityDetail({ opportunity, activities, advisors, campaign,
             </CardContent>
           </Card>
 
-          {aiProfile && (
-            <EntityAIAnalysisCard
-              entityType="opportunity"
-              entityId={opportunity.id}
-              entityLabel={opportunity.title}
-              profileId={aiProfile.id}
-              profileName={aiProfile.name}
-              latestRun={latestAiRun}
+          {!opportunity.next_action && !isClosed && (
+            <SectionGuideCard
+              title="Definí un próximo paso"
+              description="Esta oportunidad no tiene próximo paso definido. Sin seguimiento, puede perderse."
+              nextStep="Atención: sin próximo paso"
               compact
             />
+          )}
+
+          {aiProfile && (
+            <>
+              <EntityAIAnalysisCard
+                entityType="opportunity"
+                entityId={opportunity.id}
+                entityLabel={opportunity.title}
+                profileId={aiProfile.id}
+                profileName={aiProfile.name}
+                latestRun={latestAiRun}
+                compact
+              />
+              <p className="text-xs text-gray-400 -mt-3 px-1">
+                El análisis IA ayuda a preparar el seguimiento, pero no define primas, coberturas ni condiciones de póliza.
+              </p>
+            </>
           )}
 
           {(opportunity.detected_need || opportunity.suggested_product) && (

@@ -1,5 +1,9 @@
 # Guía de deploy en staging (Vercel)
 
+> **Nota (FASE 15B):** OpenAI fue removido del proyecto. Toda referencia a
+> `OPENAI_API_KEY` / OpenAI en este documento es **histórica** y ya no aplica:
+> no se configura ninguna clave de proveedor de IA en ningún entorno.
+
 Referencia operativa para dejar una instancia de PLIFE Growth OS corriendo en Vercel conectada a Supabase.
 
 ---

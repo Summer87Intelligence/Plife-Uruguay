@@ -63,7 +63,7 @@ export function MockExecutionForm({ profiles, defaultProfileId }: MockExecutionF
         setError(result.error)
         return
       }
-      setSuccess(`Ejecución mock completada. Run ID: ${result.data?.runId}`)
+      setSuccess(`Ejecución completada. Run ID: ${result.data?.runId}`)
       router.refresh()
     })
   }
@@ -72,9 +72,9 @@ export function MockExecutionForm({ profiles, defaultProfileId }: MockExecutionF
     <Card className="border-gray-100">
       <CardContent className="p-5 space-y-4">
         <div>
-          <p className="text-sm font-semibold text-gray-900">Ejecutar prueba del Motor IA</p>
+          <p className="text-sm font-semibold text-gray-900">Ejecutar prueba de los Motores</p>
           <p className="text-xs text-gray-500 mt-1">
-            Esta ejecución usa modo simulado. No consume OpenAI y no genera recomendaciones finales.
+            Esta ejecución usa el motor interno (sin proveedor externo) y no genera recomendaciones finales.
           </p>
         </div>
 
